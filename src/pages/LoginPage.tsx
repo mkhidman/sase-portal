@@ -56,8 +56,6 @@ export function LoginPage() {
             <button className="button primary full" disabled={submitting}>{submitting ? 'Memproses…' : 'Masuk'}</button>
           </form>
         )}
-
-        <p className="login-note">Development build ini sudah memakai struktur data Supabase. Mode demo hanya menjadi fallback agar UI dapat langsung diuji.</p>
       </section>
     </main>
   )
