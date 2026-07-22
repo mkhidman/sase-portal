@@ -132,7 +132,7 @@ export function ClassProgressionPage() {
       setConfirmOpen(false)
       setSelectedIds([])
       setNotes('')
-      setMessage(`${count} jamaah berhasil dipindahkan dari ${sourceClass?.name ?? 'kelas asal'} ke ${targetClass?.name ?? 'kelas tujuan'}.`)
+      setMessage(`${count} warga berhasil dipindahkan dari ${sourceClass?.name ?? 'kelas asal'} ke ${targetClass?.name ?? 'kelas tujuan'}.`)
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : 'Perubahan kelas gagal disimpan.')
     } finally {
@@ -158,10 +158,10 @@ export function ClassProgressionPage() {
 
   function exportHistory() {
     downloadCsv('riwayat-kenaikan-dan-mutasi-kelas.csv', [
-      ['Tanggal Efektif', 'Nama Jamaah', 'Jenis Perubahan', 'Kelas Asal', 'Kelas Tujuan', 'Kategori Sebelumnya', 'Kategori Baru', 'Catatan', 'Dicatat Pada'],
+      ['Tanggal Efektif', 'Nama Warga', 'Jenis Perubahan', 'Kelas Asal', 'Kelas Tujuan', 'Kategori Sebelumnya', 'Kategori Baru', 'Catatan', 'Dicatat Pada'],
       ...filteredHistory.map((item) => [
         item.effectiveDate,
-        personMap.get(item.jamaahId)?.fullName ?? 'Jamaah tidak ditemukan',
+        personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan',
         changeTypeLabel(item.changeType),
         item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-',
         item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-',
@@ -177,7 +177,7 @@ export function ClassProgressionPage() {
     <>
       <PageHeader
         title="Kenaikan & Mutasi Kelas"
-        description="Pindahkan banyak jamaah sekaligus, pertahankan kelas tambahan, dan simpan histori perubahan secara permanen."
+        description="Pindahkan banyak warga sekaligus, pertahankan kelas tambahan, dan simpan histori perubahan secara permanen."
         actions={<button className="button outline" type="button" onClick={exportHistory}><Download size={16} /> Ekspor Riwayat</button>}
       />
 
@@ -193,7 +193,7 @@ export function ClassProgressionPage() {
 
       <section className="stats-grid four-columns compact-stats progression-stats">
         <StatCard label="Anggota Kelas Asal" value={sourceMembers.length} note={sourceClass?.name ?? 'Pilih kelas'} icon={<UsersRound size={18} />} />
-        <StatCard label="Jamaah Dipilih" value={selectedIds.length} note="Siap dipindahkan" icon={<CheckSquare2 size={18} />} />
+        <StatCard label="Warga Dipilih" value={selectedIds.length} note="Siap dipindahkan" icon={<CheckSquare2 size={18} />} />
         <StatCard label="Kelas Tujuan" value={targetClass?.name ?? '-'} note={recommendedTarget?.id === targetClassId ? 'Rekomendasi alur' : 'Pilihan manual'} icon={<Shuffle size={18} />} />
         <StatCard label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} note={updateCensus ? 'Disesuaikan otomatis' : 'Tidak diubah'} icon={<Sparkles size={18} />} />
       </section>
@@ -238,7 +238,7 @@ export function ClassProgressionPage() {
         {sameClass ? <div className="notice danger-notice">Kelas asal dan kelas tujuan harus berbeda.</div> : null}
 
         <div className="toolbar progression-toolbar">
-          <label className="search-field"><Search size={16} /><input placeholder="Cari jamaah pada kelas asal…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+          <label className="search-field"><Search size={16} /><input placeholder="Cari warga pada kelas asal…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
           <button className="button outline small" type="button" onClick={toggleAllFiltered} disabled={!filteredMembers.length}>
             <CheckSquare2 size={15} /> {allFilteredSelected ? 'Batalkan pilihan tampil' : 'Pilih semua tampil'}
           </button>
@@ -246,7 +246,7 @@ export function ClassProgressionPage() {
 
         <div className="table-wrap progression-member-table">
           <table>
-            <thead><tr><th className="checkbox-column">Pilih</th><th>Jamaah</th><th>Kategori Saat Ini</th><th>Kelas Lain Tetap Dipertahankan</th><th>Rencana</th></tr></thead>
+            <thead><tr><th className="checkbox-column">Pilih</th><th>Warga</th><th>Kategori Saat Ini</th><th>Kelas Lain Tetap Dipertahankan</th><th>Rencana</th></tr></thead>
             <tbody>
               {filteredMembers.length ? memberPagination.pageItems.map((person) => {
                 const otherClasses = person.classIds.filter((id) => id !== sourceClassId).map((id) => classMap.get(id) ?? 'Kelas')
@@ -260,7 +260,7 @@ export function ClassProgressionPage() {
                     <td><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
                   </tr>
                 )
-              }) : <tr><td colSpan={5}><div className="empty-state">Belum ada jamaah aktif pada kelas asal ini.</div></td></tr>}
+              }) : <tr><td colSpan={5}><div className="empty-state">Belum ada warga aktif pada kelas asal ini.</div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -269,18 +269,18 @@ export function ClassProgressionPage() {
         <div className="progression-submit-row">
           <label>Catatan perubahan (opsional)<input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contoh: kenaikan kelas tahun ajaran 2026/2027" /></label>
           <button className="button primary" type="button" disabled={!selectedIds.length || !targetClassId || sameClass || closed} onClick={() => setConfirmOpen(true)}>
-            <Shuffle size={16} /> Proses {selectedIds.length} Jamaah
+            <Shuffle size={16} /> Proses {selectedIds.length} Warga
           </button>
         </div>
       </article>
 
       <article className="card class-history-card">
         <div className="card-heading">
-          <div><h2>Riwayat Kelas Jamaah</h2><p>Riwayat tidak mengubah absensi lama dan digunakan untuk mempertahankan konteks laporan historis.</p></div>
+          <div><h2>Riwayat Kelas Warga</h2><p>Riwayat tidak mengubah absensi lama dan digunakan untuk mempertahankan konteks laporan historis.</p></div>
           <span className="badge muted"><History size={13} /> {filteredHistory.length} perubahan</span>
         </div>
         <div className="toolbar">
-          <label className="search-field"><Search size={16} /><input placeholder="Cari jamaah, kelas, atau catatan…" value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} /></label>
+          <label className="search-field"><Search size={16} /><input placeholder="Cari warga, kelas, atau catatan…" value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} /></label>
           <select value={historyClassId} onChange={(event) => setHistoryClassId(event.target.value)}>
             <option value="all">Semua kelas</option>
             {activeClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -288,12 +288,12 @@ export function ClassProgressionPage() {
         </div>
         <div className="table-wrap history-table">
           <table>
-            <thead><tr><th>Tanggal Efektif</th><th>Jamaah</th><th>Perubahan Kelas</th><th>Perubahan Kategori</th><th>Jenis</th><th>Catatan</th></tr></thead>
+            <thead><tr><th>Tanggal Efektif</th><th>Warga</th><th>Perubahan Kelas</th><th>Perubahan Kategori</th><th>Jenis</th><th>Catatan</th></tr></thead>
             <tbody>
               {filteredHistory.length ? historyPagination.pageItems.map((item) => (
                 <tr key={item.id}>
                   <td><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
-                  <td><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Jamaah tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data jamaah'} /></td>
+                  <td><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
                   <td><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
                   <td>{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
                   <td><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
@@ -310,12 +310,12 @@ export function ClassProgressionPage() {
         open={confirmOpen}
         title="Konfirmasi Perubahan Kelas"
         onClose={() => !saving && setConfirmOpen(false)}
-        footer={<><button className="button outline" disabled={saving} onClick={() => setConfirmOpen(false)}>Batal</button><button className="button primary" disabled={saving} onClick={() => void submitTransition()}>{saving ? 'Memproses…' : `Konfirmasi ${selectedIds.length} Jamaah`}</button></>}
+        footer={<><button className="button outline" disabled={saving} onClick={() => setConfirmOpen(false)}>Batal</button><button className="button primary" disabled={saving} onClick={() => void submitTransition()}>{saving ? 'Memproses…' : `Konfirmasi ${selectedIds.length} Warga`}</button></>}
       >
         <div className="transition-confirmation">
           <span className="transition-confirmation-icon"><Shuffle size={22} /></span>
           <div>
-            <strong>{changeTypeLabel(changeType)} untuk {selectedIds.length} jamaah</strong>
+            <strong>{changeTypeLabel(changeType)} untuk {selectedIds.length} warga</strong>
             <p>{sourceClass?.name ?? '-'} <ArrowRight size={13} /> {targetClass?.name ?? '-'}</p>
           </div>
         </div>

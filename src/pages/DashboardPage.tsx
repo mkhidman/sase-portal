@@ -78,7 +78,7 @@ export function DashboardPage() {
       {loading ? <div className="notice">Memuat data…</div> : null}
 
       <section className="stats-grid three-columns">
-        <StatCard label="Total Jamaah" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
+        <StatCard label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
         <StatCard label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi tersimpan`} icon={<CalendarCheck2 size={20} />} />
         <StatCard label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
       </section>
@@ -119,7 +119,7 @@ export function DashboardPage() {
         <article className="card dashboard-data-quality">
           <div className="dashboard-help">
             <ShieldCheck size={22} />
-            <div><strong>Kualitas data {dataQuality.completenessPercent}%</strong><p>{criticalDataIssues ? `${criticalDataIssues} temuan kritis perlu dibereskan sebelum pilot penuh.` : `${dataQuality.peopleWithIssues} jamaah masih memiliki data yang perlu dilengkapi.`}</p></div>
+            <div><strong>Kualitas data {dataQuality.completenessPercent}%</strong><p>{criticalDataIssues ? `${criticalDataIssues} temuan kritis perlu dibereskan sebelum pilot penuh.` : `${dataQuality.peopleWithIssues} warga masih memiliki data yang perlu dilengkapi.`}</p></div>
             <button className="button outline small" type="button" onClick={() => navigate('/kualitas-data')}>Periksa data</button>
           </div>
         </article>
@@ -127,7 +127,7 @@ export function DashboardPage() {
 
       <article className="card dashboard-followup">
         <div className="card-heading">
-          <div><h2>Jamaah Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan berjalan.</p></div>
+          <div><h2>Warga Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan berjalan.</p></div>
           <button className="text-button" onClick={() => navigate('/tindak-lanjut')}>Kelola semua</button>
         </div>
         <div className="dashboard-risk-list">
@@ -137,13 +137,13 @@ export function DashboardPage() {
               <span className={`badge ${risk.level === 'priority' ? 'danger' : 'warning'}`}>{risk.attendanceRate}%</span>
             </button>
           ))}
-          {!topRisks.length ? <div className="empty-state">Belum ada jamaah yang memerlukan tindak lanjut.</div> : null}
+          {!topRisks.length ? <div className="empty-state">Belum ada warga yang memerlukan tindak lanjut.</div> : null}
         </div>
       </article>
 
       <article className="card dashboard-help">
         <BookOpenCheck size={22} />
-        <div><strong>Ketuntasan materi tidak sama dengan kehadiran sesi.</strong><p>Jamaah yang tidak hadir tetap dapat ditandai tuntas melalui penyusulan mandiri tanpa mengubah status absensi awal.</p></div>
+        <div><strong>Ketuntasan materi tidak sama dengan kehadiran sesi.</strong><p>Peserta yang tidak hadir tetap dapat ditandai tuntas melalui penyusulan mandiri tanpa mengubah status absensi awal.</p></div>
         <span className="badge muted"><UserRoundCheck size={12} /> {attendanceRisks.length} perlu perhatian</span>
       </article>
     </>

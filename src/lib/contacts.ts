@@ -15,7 +15,7 @@ export function preferredContactForJamaah(
     return {
       name: jamaah.fullName,
       phone: jamaah.phone.trim(),
-      relationship: 'Jamaah',
+      relationship: 'Warga',
       source: 'jamaah',
     }
   }

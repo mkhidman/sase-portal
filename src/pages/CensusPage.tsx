@@ -97,16 +97,16 @@ export function CensusPage() {
     try {
       await saveJamaah({ ...form, fullName: form.fullName.trim(), phone: form.phone.trim() })
       setModalOpen(false)
-      setPageMessage('Data jamaah berhasil disimpan.')
+      setPageMessage('Data warga berhasil disimpan.')
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menyimpan jamaah.')
+      setMessage(cause instanceof Error ? cause.message : 'Gagal menyimpan warga.')
     } finally {
       setSaving(false)
     }
   }
 
   function exportData() {
-    downloadCsv('data-sensus-jamaah.csv', [
+    downloadCsv('data-sensus-warga.csv', [
       ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Usia', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
       ...jamaah.map((item) => [
         item.fullName,
@@ -130,7 +130,7 @@ export function CensusPage() {
   }
 
   function downloadTemplate() {
-    downloadCsv('template-import-sensus-jamaah.csv', [
+    downloadCsv('template-import-sensus-warga.csv', [
       ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
       ['Ahmad Fauzan', 'Laki-laki', '2014-04-14', '081234567890', 'Caberawit', 'Caberawit Kelas C', 'Aktif'],
       ['Nur Aisyah', 'Perempuan', '', '081234567891', 'Remaja', 'Remaja | Pengajian Umum', 'Aktif'],
@@ -171,7 +171,7 @@ export function CensusPage() {
     try {
       const imported = await importJamaah(valid)
       setImportOpen(false)
-      setPageMessage(`${imported} jamaah berhasil diimpor. ${importSummary.duplicate} duplikat dan ${importSummary.invalid} baris bermasalah dilewati.`)
+      setPageMessage(`${imported} warga berhasil diimpor. ${importSummary.duplicate} duplikat dan ${importSummary.invalid} baris bermasalah dilewati.`)
     } catch (cause) {
       setImportError(cause instanceof Error ? cause.message : 'Import data gagal.')
     } finally {
@@ -182,14 +182,14 @@ export function CensusPage() {
   return (
     <>
       <PageHeader
-        title="Data Sensus Jamaah"
+        title="Data Sensus Warga"
         description="Kategori sensus dipisahkan dari kelas pengajian. Perubahan status aktif dikelola melalui Status & Arsip agar riwayatnya tersimpan."
         actions={
           <>
             <Link className="button outline" to="/arsip-jamaah"><Archive size={16} /> Status & Arsip</Link>
             <button className="button outline" onClick={openImport}><Upload size={16} /> Import CSV</button>
             <button className="button outline" onClick={exportData}><Download size={16} /> Ekspor CSV</button>
-            <button className="button primary" onClick={openCreate}><Plus size={16} /> Tambah Jamaah</button>
+            <button className="button primary" onClick={openCreate}><Plus size={16} /> Tambah Warga</button>
           </>
         }
       />
@@ -207,7 +207,7 @@ export function CensusPage() {
         <div className="card-heading">
           <div>
             <h2>Ringkasan Kategori Sensus</h2>
-            <p>Jumlah jamaah aktif laki-laki dan perempuan pada setiap kategori sensus.</p>
+            <p>Jumlah warga aktif laki-laki dan perempuan pada setiap kategori sensus.</p>
           </div>
           <button className="button outline small" type="button" onClick={exportCensusSummary}><FileDown size={15} /> Ekspor Ringkasan</button>
         </div>
@@ -233,7 +233,7 @@ export function CensusPage() {
         </div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Jamaah</th><th>Usia</th><th>Kategori sensus</th><th>Kelas pengajian</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Warga</th><th>Usia</th><th>Kategori sensus</th><th>Kelas pengajian</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody>
               {pagination.pageItems.map((item) => (
                 <tr key={item.id}>
@@ -253,7 +253,7 @@ export function CensusPage() {
 
       <Modal
         open={modalOpen}
-        title={jamaah.some((item) => item.id === form.id) ? 'Edit Jamaah' : 'Tambah Jamaah'}
+        title={jamaah.some((item) => item.id === form.id) ? 'Edit Warga' : 'Tambah Warga'}
         onClose={() => setModalOpen(false)}
         wide
         footer={<><button className="button outline" onClick={() => setModalOpen(false)}>Batal</button><button className="button primary" disabled={saving} onClick={() => void submit()}>{saving ? 'Menyimpan…' : 'Simpan'}</button></>}
@@ -279,7 +279,7 @@ export function CensusPage() {
           <>
             <button className="button outline" disabled={importing} onClick={() => setImportOpen(false)}>Batal</button>
             <button className="button primary" disabled={importing || importSummary.valid === 0} onClick={() => void submitImport()}>
-              {importing ? 'Mengimpor…' : `Import ${importSummary.valid} Jamaah`}
+              {importing ? 'Mengimpor…' : `Import ${importSummary.valid} Warga`}
             </button>
           </>
         }

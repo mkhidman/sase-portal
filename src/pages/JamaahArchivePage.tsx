@@ -125,7 +125,7 @@ export function JamaahArchivePage() {
   async function submitChange() {
     if (!selectedPerson || !form.effectiveDate) return
     if (changeMode === 'reactivate' && !form.classIds.length) {
-      setMessage('Pilih minimal satu kelas untuk mengaktifkan kembali jamaah.')
+      setMessage('Pilih minimal satu kelas untuk mengaktifkan kembali warga.')
       return
     }
     if (closed) {
@@ -155,11 +155,11 @@ export function JamaahArchivePage() {
   }
 
   function exportHistory() {
-    downloadCsv('riwayat-status-jamaah.csv', [
-      ['Tanggal Efektif', 'Nama Jamaah', 'Perubahan', 'Alasan', 'Kelas Terkait', 'Catatan', 'Waktu Dicatat'],
+    downloadCsv('riwayat-status-warga.csv', [
+      ['Tanggal Efektif', 'Nama Warga', 'Perubahan', 'Alasan', 'Kelas Terkait', 'Catatan', 'Waktu Dicatat'],
       ...statusHistory.map((item) => [
         item.effectiveDate,
-        personMap.get(item.jamaahId)?.fullName ?? 'Jamaah',
+        personMap.get(item.jamaahId)?.fullName ?? 'Warga',
         item.newActive ? 'Diaktifkan kembali' : 'Dinonaktifkan / diarsipkan',
         JAMAAH_STATUS_REASON_LABELS[item.reason],
         item.classIds.map((id) => classMap.get(id) ?? id).join(' | '),
@@ -174,22 +174,22 @@ export function JamaahArchivePage() {
   return (
     <>
       <PageHeader
-        title="Status & Arsip Jamaah"
-        description="Nonaktifkan jamaah tanpa menghapus absensi lama, simpan alasan dan tanggal efektif, lalu aktifkan kembali bila diperlukan."
+        title="Status & Arsip Warga"
+        description="Nonaktifkan warga tanpa menghapus absensi lama, simpan alasan dan tanggal efektif, lalu aktifkan kembali bila diperlukan."
         actions={<button className="button outline" type="button" onClick={exportHistory}><Download size={16} /> Ekspor Riwayat</button>}
       />
 
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats archive-stats">
-        <StatCard label="Jamaah Aktif" value={activeCount} note="Masuk kelas dan absensi" icon={<UserCheck size={18} />} />
-        <StatCard label="Jamaah Nonaktif" value={inactiveCount} note="Tersimpan dalam arsip" icon={<Archive size={18} />} />
+        <StatCard label="Warga Aktif" value={activeCount} note="Masuk kelas dan absensi" icon={<UserCheck size={18} />} />
+        <StatCard label="Warga Nonaktif" value={inactiveCount} note="Tersimpan dalam arsip" icon={<Archive size={18} />} />
         <StatCard label="Perubahan Bulan Ini" value={changesThisMonth} note="Aktif maupun nonaktif" icon={<CalendarDays size={18} />} />
         <StatCard label="Pernah Aktif Kembali" value={restoredCount} note="Riwayat reaktivasi" icon={<RotateCcw size={18} />} />
       </section>
 
       <div className="notice archive-notice">
-        Jamaah yang diarsipkan tidak muncul pada daftar absensi baru dan keanggotaannya dilepas dari kelas aktif. Absensi, ketuntasan materi, serta laporan periode lama tetap dipertahankan.
+        Warga yang diarsipkan tidak muncul pada daftar absensi baru dan keanggotaannya dilepas dari kelas aktif. Absensi, ketuntasan materi, serta laporan periode lama tetap dipertahankan.
       </div>
 
       <article className="card">
@@ -208,7 +208,7 @@ export function JamaahArchivePage() {
 
         <div className="table-wrap archive-table">
           <table>
-            <thead><tr><th>Jamaah</th><th>Kategori</th><th>Kelas aktif/terakhir</th><th>Status</th><th>Perubahan terakhir</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Warga</th><th>Kategori</th><th>Kelas aktif/terakhir</th><th>Status</th><th>Perubahan terakhir</th><th>Aksi</th></tr></thead>
             <tbody>
               {pagination.pageItems.map((person) => {
                 const latest = latestHistory(person.id)
@@ -238,7 +238,7 @@ export function JamaahArchivePage() {
                   </tr>
                 )
               })}
-              {!filtered.length ? <tr><td colSpan={6}><div className="empty-state">Data jamaah tidak ditemukan.</div></td></tr> : null}
+              {!filtered.length ? <tr><td colSpan={6}><div className="empty-state">Data warga tidak ditemukan.</div></td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -247,7 +247,7 @@ export function JamaahArchivePage() {
 
       <Modal
         open={changeOpen && Boolean(selectedPerson)}
-        title={changeMode === 'reactivate' ? 'Aktifkan Kembali Jamaah' : 'Arsipkan Jamaah'}
+        title={changeMode === 'reactivate' ? 'Aktifkan Kembali Warga' : 'Arsipkan Warga'}
         onClose={() => !saving && setChangeOpen(false)}
         wide
         footer={
@@ -263,7 +263,7 @@ export function JamaahArchivePage() {
           <>
             <div className={`archive-modal-summary ${changeMode === 'reactivate' ? 'restore' : 'deactivate'}`}>
               {changeMode === 'reactivate' ? <UserCheck size={22} /> : <Archive size={22} />}
-              <div><strong>{selectedPerson.fullName}</strong><p>{changeMode === 'reactivate' ? 'Jamaah akan kembali muncul pada kelas dan absensi baru.' : 'Data lama tidak dihapus dan tetap tersedia pada laporan historis.'}</p></div>
+              <div><strong>{selectedPerson.fullName}</strong><p>{changeMode === 'reactivate' ? 'Warga akan kembali muncul pada kelas dan absensi baru.' : 'Data lama tidak dihapus dan tetap tersedia pada laporan historis.'}</p></div>
             </div>
             <div className="form-grid archive-form-grid">
               <label>Tanggal efektif *<input type="date" value={form.effectiveDate} onChange={(event) => setForm({ ...form, effectiveDate: event.target.value })} /></label>

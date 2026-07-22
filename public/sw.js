@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sensus-jamaah-shell-v13-1'
+const CACHE_NAME = 'sase-portal-shell-v13-2'
 const APP_SHELL = [
   '/',
   '/offline.html',

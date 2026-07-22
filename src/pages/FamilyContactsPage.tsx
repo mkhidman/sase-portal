@@ -170,7 +170,7 @@ export function FamilyContactsPage() {
   }
 
   async function removeSelectedFamily(family: Family) {
-    if (!window.confirm(`Hapus data ${family.name}? Keanggotaan keluarga akan dilepas, tetapi data jamaah tetap tersimpan.`)) return
+    if (!window.confirm(`Hapus data ${family.name}? Keanggotaan keluarga akan dilepas, tetapi data warga tetap tersimpan.`)) return
     try {
       await deleteFamily(family.id)
       setMessage('Data keluarga berhasil dihapus.')
@@ -224,23 +224,23 @@ export function FamilyContactsPage() {
     <>
       <PageHeader
         title="Keluarga & Kontak Wali"
-        description="Kelompokkan jamaah dalam satu keluarga dan simpan nomor wali yang dapat dihubungi saat tindak lanjut absensi."
+        description="Kelompokkan warga dalam satu keluarga dan simpan nomor wali yang dapat dihubungi saat tindak lanjut absensi."
         actions={canManage ? <><button className="button outline" onClick={() => openCreateGuardian()}><UserRound size={16} /> Tambah Kontak Wali</button><button className="button primary" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button></> : undefined}
       />
 
       <section className="stats-grid four-columns compact-stats">
         <StatCard label="Keluarga Tercatat" value={accessibleFamilies.length} note="Kelompok keluarga yang dapat dilihat" icon={<House size={20} />} />
-        <StatCard label="Jamaah Terhubung" value={linkedJamaahCount} note="Memiliki data keluarga" icon={<UsersRound size={20} />} />
+        <StatCard label="Warga Terhubung" value={linkedJamaahCount} note="Memiliki data keluarga" icon={<UsersRound size={20} />} />
         <StatCard label="Kontak Wali" value={visibleContacts.length} note="Nomor wali tersimpan" icon={<UserRound size={20} />} />
         <StatCard label="Tanpa Kontak" value={withoutContact} note="Tidak memiliki nomor sendiri/wali" icon={<span>!</span>} />
       </section>
 
       {message ? <div className={`inline-message page-message ${message.startsWith('Gagal') ? 'error' : ''}`}>{message}</div> : null}
 
-      <label className="search-field family-global-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari keluarga, jamaah, atau nomor kontak…" /></label>
+      <label className="search-field family-global-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari keluarga, warga, atau nomor kontak…" /></label>
 
       <article className="card family-section">
-        <div className="card-heading"><div><h2>Daftar Keluarga</h2><p>Satu jamaah hanya dapat terhubung ke satu keluarga, tetapi dapat memiliki beberapa kontak wali.</p></div></div>
+        <div className="card-heading"><div><h2>Daftar Keluarga</h2><p>Satu warga hanya dapat terhubung ke satu keluarga, tetapi dapat memiliki beberapa kontak wali.</p></div></div>
         <div className="family-card-grid">
           {visibleFamilies.map((family) => {
             const members = familyMembers.filter((item) => item.familyId === family.id && (canManage || visibleIds.has(item.jamaahId)))
@@ -267,10 +267,10 @@ export function FamilyContactsPage() {
       </article>
 
       <article className="card family-section">
-        <div className="card-heading"><div><h2>Kontak Jamaah dan Wali</h2><p>Nomor jamaah diprioritaskan. Jika kosong, sistem menggunakan kontak wali utama untuk tombol WhatsApp pada tindak lanjut.</p></div></div>
+        <div className="card-heading"><div><h2>Kontak Warga dan Wali</h2><p>Nomor warga diprioritaskan. Jika kosong, sistem menggunakan kontak wali utama untuk tombol WhatsApp pada tindak lanjut.</p></div></div>
         <div className="table-wrap guardian-table">
           <table>
-            <thead><tr><th>Jamaah</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Warga</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
             <tbody>
               {contactPagination.pageItems.map((person) => {
                 const membership = membershipByJamaah.get(person.id)
@@ -288,7 +288,7 @@ export function FamilyContactsPage() {
                   </tr>
                 )
               })}
-              {!contactRows.length ? <tr><td colSpan={5}><div className="empty-state">Tidak ada jamaah yang sesuai pencarian.</div></td></tr> : null}
+              {!contactRows.length ? <tr><td colSpan={5}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -307,7 +307,7 @@ export function FamilyContactsPage() {
           <label>Alamat<input value={familyForm.address} onChange={(event) => setFamilyForm({ ...familyForm, address: event.target.value })} placeholder="Alamat keluarga" /></label>
           <label className="form-span-two">Catatan<textarea rows={3} value={familyForm.notes} onChange={(event) => setFamilyForm({ ...familyForm, notes: event.target.value })} placeholder="Catatan tambahan yang perlu diketahui pengurus" /></label>
         </div>
-        <div className="family-member-heading"><div><strong>Anggota keluarga</strong><small>{memberDrafts.length} jamaah dipilih</small></div><label className="search-field"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="Cari jamaah…" /></label></div>
+        <div className="family-member-heading"><div><strong>Anggota keluarga</strong><small>{memberDrafts.length} warga dipilih</small></div><label className="search-field"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="Cari warga…" /></label></div>
         <div className="family-member-picker">
           {memberCandidates.map((person) => {
             const selected = memberDrafts.find((item) => item.jamaahId === person.id)
@@ -332,11 +332,11 @@ export function FamilyContactsPage() {
         footer={<><button className="button outline" disabled={saving} onClick={() => setGuardianOpen(false)}>Batal</button><button className="button primary" disabled={saving} onClick={() => void submitGuardian()}>{saving ? 'Menyimpan…' : 'Simpan Kontak'}</button></>}
       >
         <div className="form-grid one-column">
-          <label>Jamaah *<select value={guardianForm.jamaahId} onChange={(event) => setGuardianForm({ ...guardianForm, jamaahId: event.target.value })}>{[...jamaah].sort((a, b) => a.fullName.localeCompare(b.fullName, 'id')).map((item) => <option key={item.id} value={item.id}>{item.fullName} · {item.censusCategory}{item.active ? '' : ' · Nonaktif'}</option>)}</select></label>
+          <label>Warga *<select value={guardianForm.jamaahId} onChange={(event) => setGuardianForm({ ...guardianForm, jamaahId: event.target.value })}>{[...jamaah].sort((a, b) => a.fullName.localeCompare(b.fullName, 'id')).map((item) => <option key={item.id} value={item.id}>{item.fullName} · {item.censusCategory}{item.active ? '' : ' · Nonaktif'}</option>)}</select></label>
           <label>Nama kontak *<input value={guardianForm.fullName} onChange={(event) => setGuardianForm({ ...guardianForm, fullName: event.target.value })} placeholder="Nama orang tua atau wali" /></label>
           <label>Hubungan<select value={guardianForm.relationship} onChange={(event) => setGuardianForm({ ...guardianForm, relationship: event.target.value as GuardianRelationship })}>{GUARDIAN_RELATIONSHIPS.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Nomor WhatsApp *<input inputMode="tel" value={guardianForm.phone} onChange={(event) => setGuardianForm({ ...guardianForm, phone: event.target.value })} placeholder="08xxxxxxxxxx" /></label>
-          <label className="simple-checkbox"><input type="checkbox" checked={guardianForm.isPrimary} onChange={(event) => setGuardianForm({ ...guardianForm, isPrimary: event.target.checked })} /> Jadikan kontak utama untuk jamaah ini</label>
+          <label className="simple-checkbox"><input type="checkbox" checked={guardianForm.isPrimary} onChange={(event) => setGuardianForm({ ...guardianForm, isPrimary: event.target.checked })} /> Jadikan kontak utama untuk warga ini</label>
           <label>Catatan<textarea rows={3} value={guardianForm.notes} onChange={(event) => setGuardianForm({ ...guardianForm, notes: event.target.value })} placeholder="Contoh: dapat dihubungi setelah pukul 17.00" /></label>
         </div>
         {guardianContacts.some((item) => item.id === guardianForm.id) ? <button className="button danger guardian-delete" disabled={saving} onClick={() => { const contact = guardianContacts.find((item) => item.id === guardianForm.id); if (contact) { setGuardianOpen(false); void removeSelectedGuardian(contact) } }}><Trash2 size={15} /> Hapus Kontak</button> : null}

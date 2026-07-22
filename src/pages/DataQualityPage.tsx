@@ -130,7 +130,7 @@ export function DataQualityPage() {
       />
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard label="Kelengkapan Data" value={`${result.completenessPercent}%`} note="Jamaah aktif tanpa temuan" icon={<ShieldCheck size={20} />} />
+        <StatCard label="Kelengkapan Data" value={`${result.completenessPercent}%`} note="Warga aktif tanpa temuan" icon={<ShieldCheck size={20} />} />
         <StatCard label="Temuan Kritis" value={critical} note="Menghambat proses absensi" icon={<CircleAlert size={20} />} />
         <StatCard label="Perlu Diperiksa" value={warnings} note="Kontak atau klasifikasi" icon={<AlertTriangle size={20} />} />
         <StatCard label="Potensi Duplikat" value={result.duplicates.length} note={`${mergeHistory.length} pernah digabung`} icon={<UsersRound size={20} />} />
@@ -139,7 +139,7 @@ export function DataQualityPage() {
       <article className="card data-quality-summary">
         <div className="data-quality-meter" aria-label={`Kelengkapan ${result.completenessPercent}%`}><span style={{ width: `${result.completenessPercent}%` }} /></div>
         <div>
-          <strong>{result.peopleWithIssues ? `${result.peopleWithIssues} jamaah masih memiliki temuan` : 'Seluruh data aktif lolos pemeriksaan dasar'}</strong>
+          <strong>{result.peopleWithIssues ? `${result.peopleWithIssues} warga masih memiliki temuan` : 'Seluruh data aktif lolos pemeriksaan dasar'}</strong>
           <p>Pemeriksaan tidak mengubah data secara otomatis. Penggabungan duplikat hanya berjalan setelah Superadmin memilih data utama dan mengonfirmasi hasil akhirnya.</p>
         </div>
       </article>
@@ -147,7 +147,7 @@ export function DataQualityPage() {
       <article className="card">
         <div className="card-heading"><div><h2>Daftar Temuan</h2><p>Prioritaskan temuan kritis sebelum aplikasi digunakan pada sesi nyata.</p></div></div>
         <div className="toolbar">
-          <label className="search-field"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari jamaah atau jenis masalah…" /></label>
+          <label className="search-field"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari warga atau jenis masalah…" /></label>
           <select value={severity} onChange={(event) => setSeverity(event.target.value as DataQualitySeverity | '')}>
             <option value="">Semua tingkat</option><option value="critical">Kritis</option><option value="warning">Perlu diperiksa</option><option value="info">Pelengkap</option>
           </select>
@@ -245,7 +245,7 @@ export function DataQualityPage() {
               <label className="field"><span>Tanggal lahir (opsional)</span><input type="date" value={mergeProfile.birthDate} onChange={(event) => setMergeProfile({ ...mergeProfile, birthDate: event.target.value })} /></label>
               <label className="field"><span>Nomor WhatsApp</span><input value={mergeProfile.phone} onChange={(event) => setMergeProfile({ ...mergeProfile, phone: event.target.value })} /></label>
               <label className="field"><span>Kategori sensus</span><select value={mergeProfile.censusCategory} onChange={(event) => setMergeProfile({ ...mergeProfile, censusCategory: event.target.value as Jamaah['censusCategory'] })}>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
-              <label className="field"><span>Status jamaah</span><select value={String(mergeProfile.active)} disabled><option value="true">Aktif</option><option value="false">Nonaktif</option></select><small>Status aktif dipertahankan bila salah satu data masih aktif.</small></label>
+              <label className="field"><span>Status warga</span><select value={String(mergeProfile.active)} disabled><option value="true">Aktif</option><option value="false">Nonaktif</option></select><small>Status aktif dipertahankan bila salah satu data masih aktif.</small></label>
             </div>
             <div className="merge-union-note"><strong>Kelas hasil gabungan:</strong> {[...new Set([...primaryPerson.classIds, ...duplicatePerson.classIds])].map((id) => classNameById.get(id)).filter(Boolean).join(', ') || 'Belum ada kelas'}</div>
             {relatedCounts(primaryPerson.id).family && relatedCounts(duplicatePerson.id).family && relatedCounts(primaryPerson.id).family !== relatedCounts(duplicatePerson.id).family

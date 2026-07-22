@@ -203,7 +203,7 @@ export function MonthlyReportPage() {
     <>
       <PageHeader
         title="Laporan Bulanan"
-        description="Ringkasan evaluasi kelas, kehadiran jamaah, ketuntasan materi, dan kesiapan tutup periode."
+        description="Ringkasan evaluasi kelas, kehadiran peserta, ketuntasan materi, dan kesiapan tutup periode."
         actions={<button className="button primary" type="button" onClick={exportPdf}><Download size={16} /> Unduh Laporan PDF</button>}
       />
 
@@ -228,7 +228,7 @@ export function MonthlyReportPage() {
       <section className="stats-grid four-columns report-stats">
         <StatCard label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<span>S</span>} />
         <StatCard label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<span>%</span>} />
-        <StatCard label="Jamaah Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<span>J</span>} />
+        <StatCard label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<span>P</span>} />
         <StatCard label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<span>!</span>} />
       </section>
 
@@ -240,7 +240,7 @@ export function MonthlyReportPage() {
         <div className="card-heading">
           <div>
             <h2>Komposisi Sensus Per Jenis Kelamin</h2>
-            <p>Posisi jamaah aktif pada akhir {monthLabel(month)} sesuai filter kelas.</p>
+            <p>Posisi warga aktif pada akhir {monthLabel(month)} sesuai filter kelas.</p>
           </div>
         </div>
         <div className="census-gender-grid">

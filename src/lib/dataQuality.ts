@@ -120,7 +120,7 @@ export function analyzeDataQuality(
     const phone = normalizePhone(person.phone)
 
     if (!person.classIds.length) {
-      addIssue(person, 'no_class', 'critical', 'Belum memiliki kelas', 'Jamaah aktif tidak akan muncul pada daftar absensi kelas mana pun.')
+      addIssue(person, 'no_class', 'critical', 'Belum memiliki kelas', 'Warga aktif tidak akan muncul pada daftar absensi kelas mana pun.')
     }
     if (!phone && !hasGuardianPhone) {
       addIssue(person, 'no_contact', 'warning', 'Tidak memiliki kontak', 'Nomor pribadi dan kontak wali belum tersedia untuk kebutuhan tindak lanjut.')
@@ -135,7 +135,7 @@ export function analyzeDataQuality(
       addIssue(person, 'invalid_phone', 'warning', 'Nomor WhatsApp terlalu pendek', 'Periksa kembali format nomor agar tombol WhatsApp dapat digunakan.')
     }
     if (!hasExpectedPrimaryClass(person, classNameById)) {
-      addIssue(person, 'category_class_mismatch', 'warning', 'Kategori dan kelas tidak selaras', 'Jamaah belum memiliki kelas utama yang sesuai dengan kategori sensusnya.')
+      addIssue(person, 'category_class_mismatch', 'warning', 'Kategori dan kelas tidak selaras', 'Warga belum memiliki kelas utama yang sesuai dengan kategori sensusnya.')
     }
 
     const age = ageFromBirthDate(person.birthDate)

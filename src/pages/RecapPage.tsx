@@ -147,7 +147,7 @@ export function RecapPage() {
               <div className="detail-attendance-rate">
                 <small>Persentase Kehadiran</small>
                 <strong>{detailAttendancePercentage}%</strong>
-                <span>{detailCounts.present} hadir dari {detailTotal} jamaah</span>
+                <span>{detailCounts.present} hadir dari {detailTotal} peserta</span>
               </div>
             </div>
             <div className="detail-counts">

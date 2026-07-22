@@ -40,7 +40,7 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
   if (role === 'superadmin') {
     return [
       {
-        id: 'data-jamaah', label: 'Data Jamaah', icon: Database,
+        id: 'data-jamaah', label: 'Data Warga', icon: Database,
         items: [
           { to: '/sensus', label: 'Data Sensus', icon: Database },
           { to: '/kualitas-data', label: 'Kualitas Data', icon: ShieldCheck },
@@ -89,7 +89,7 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
       ],
     },
     {
-      id: 'jamaah', label: 'Jamaah', icon: Users,
+      id: 'jamaah', label: 'Warga', icon: Users,
       items: [
         { to: '/tindak-lanjut', label: 'Tindak Lanjut', icon: UserRoundCheck },
         { to: '/keluarga-wali', label: 'Keluarga & Wali', icon: ContactRound },
@@ -127,8 +127,8 @@ export function AppLayout() {
       {mobileOpen ? <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} /> : null}
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
         <div className="brand-row">
-          <span className="brand-mark">SJ</span>
-          <span><strong>Sensus Jamaah</strong><small>Administrasi pengajian</small></span>
+          <span className="brand-mark">SP</span>
+          <span><strong>SASE Portal</strong><small>Administrasi warga pengajian</small></span>
           <button className="sidebar-close" type="button" onClick={() => setMobileOpen(false)}><X size={18} /></button>
         </div>
         <nav className="sidebar-nav">

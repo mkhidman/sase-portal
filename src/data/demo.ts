@@ -3,7 +3,7 @@ import { addIsoDays, localIsoDate, monthValue } from '../lib/utils'
 
 export const DEMO_SUPERADMIN: AppUser = {
   id: 'user-superadmin',
-  name: 'Superadmin Jamaah',
+  name: 'Superadmin SASE',
   email: 'superadmin@example.test',
   role: 'superadmin',
   assignedClassIds: [],
@@ -134,7 +134,7 @@ export function createDemoBootstrap(): BootstrapData {
     ],
     admins: [DEMO_ADMIN, DEMO_ADMIN_2],
     followUps: [
-      { id: 'followup-demo-1', jamaahId: 'j-10', classId: CLASS_IDS.praRemaja, periodMonth: month, status: 'contacted', triggerType: 'consecutive_absence', attendanceRate: 0, absenceCount: 1, consecutiveAbsence: 1, notes: 'Sudah dihubungi wali untuk memastikan kondisi jamaah.', nextFollowUpDate: addIsoDays(2), recordedBy: DEMO_ADMIN.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'followup-demo-1', jamaahId: 'j-10', classId: CLASS_IDS.praRemaja, periodMonth: month, status: 'contacted', triggerType: 'consecutive_absence', attendanceRate: 0, absenceCount: 1, consecutiveAbsence: 1, notes: 'Sudah dihubungi wali untuk memastikan kondisi warga.', nextFollowUpDate: addIsoDays(2), recordedBy: DEMO_ADMIN.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     ],
     reportingPeriods: [],
     classHistory: [

@@ -12,14 +12,14 @@ const ACTION_LABELS: Record<AuditAction, string> = {
 }
 
 const ENTITY_LABELS: Record<string, string> = {
-  jamaah: 'Data jamaah',
+  jamaah: 'Data warga',
   schedules: 'Jadwal',
   attendance_sessions: 'Sesi absensi',
   material_completions: 'Ketuntasan materi',
   admin_class_assignments: 'Penugasan Admin',
   reporting_periods: 'Periode laporan',
   class_membership_history: 'Riwayat kelas',
-  jamaah_status_history: 'Status jamaah',
+  jamaah_status_history: 'Status warga',
 }
 
 export function AuditPage() {
@@ -47,7 +47,7 @@ export function AuditPage() {
     <>
       <PageHeader
         title="Riwayat Aktivitas"
-        description="Jejak perubahan penting pada data sensus, jadwal, absensi, materi, tindak lanjut, periode laporan, perubahan kelas, status/arsip jamaah, dan penugasan Admin."
+        description="Jejak perubahan penting pada data sensus, jadwal, absensi, materi, tindak lanjut, periode laporan, perubahan kelas, status/arsip warga, dan penugasan Admin."
       />
 
       <section className="stats-grid three-columns compact-stats">

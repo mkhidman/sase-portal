@@ -253,7 +253,7 @@ export function AttendancePage() {
     <>
       <PageHeader
         title="Absensi Kelas"
-        description="Status awal seluruh jamaah adalah Alpa. Ubah hanya yang Hadir, Izin, atau Sakit."
+        description="Status awal seluruh peserta adalah Alpa. Ubah hanya yang Hadir, Izin, atau Sakit."
         actions={<button className="button primary" disabled={saving || periodClosed || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
       />
 
@@ -280,7 +280,7 @@ export function AttendancePage() {
 
         <div className={`notice ${isMandatoryMaterial(materialType) ? 'warning-notice' : ''}`}>
           {isMandatoryMaterial(materialType)
-            ? `${materialDisplayName(materialType, materialName)} dipantau per bulan. Jamaah yang hadir dan memenuhi kategori peserta akan otomatis ditandai tuntas.`
+            ? `${materialDisplayName(materialType, materialName)} dipantau per bulan. Peserta yang hadir dan memenuhi kategori akan otomatis ditandai tuntas.`
             : 'Materi reguler hanya dicatat pada rekap sesi dan tidak masuk target Hasda/ASAD.'}
         </div>
 
@@ -289,7 +289,7 @@ export function AttendancePage() {
           <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {counts[status]}</span>)}</div>
         </div>
 
-        <label className="search-field attendance-search"><Search size={16} /><input placeholder="Cari nama jamaah…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        <label className="search-field attendance-search"><Search size={16} /><input placeholder="Cari nama peserta…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
 
         {isGeneral ? (
           <div className="general-attendance-grid">
@@ -300,7 +300,7 @@ export function AttendancePage() {
             })}
           </div>
         ) : (
-          <div className="attendance-list">{filteredMembers.length ? filteredMembers.map((person) => attendanceItem(person.id)) : <div className="empty-state">Belum ada jamaah pada kelas ini.</div>}</div>
+          <div className="attendance-list">{filteredMembers.length ? filteredMembers.map((person) => attendanceItem(person.id)) : <div className="empty-state">Belum ada peserta pada kelas ini.</div>}</div>
         )}
 
         <div className="draft-note">

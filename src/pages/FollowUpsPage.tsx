@@ -123,7 +123,7 @@ export function FollowUpsPage() {
 
   return (
     <>
-      <PageHeader title="Pemantauan & Tindak Lanjut" description="Jamaah mulai masuk daftar tinjauan setelah tercatat minimal 4 kali Alpa dalam bulan yang dipilih." />
+      <PageHeader title="Pemantauan & Tindak Lanjut" description="Warga mulai masuk daftar tinjauan setelah tercatat minimal 4 kali Alpa dalam bulan yang dipilih." />
 
       {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Catatan tindak lanjut hanya dapat dilihat.</div> : null}
 
@@ -139,7 +139,7 @@ export function FollowUpsPage() {
           <label>Kelas<select value={effectiveClassId} onChange={(event) => setClassId(event.target.value)}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
           <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}><option value="open">Belum selesai</option><option value="all">Semua status</option>{STATUS_OPTIONS.map((status) => <option value={status} key={status}>{FOLLOW_UP_STATUS_LABELS[status]}</option>)}</select></label>
         </div>
-        <label className="search-field followup-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama jamaah…" /></label>
+        <label className="search-field followup-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama warga…" /></label>
 
         <div className="followup-list">
           {risks.map((risk) => {
@@ -169,7 +169,7 @@ export function FollowUpsPage() {
               </article>
             )
           })}
-          {!risks.length ? <div className="empty-state">Tidak ada jamaah yang memenuhi filter tindak lanjut.</div> : null}
+          {!risks.length ? <div className="empty-state">Tidak ada warga yang memenuhi filter tindak lanjut.</div> : null}
         </div>
         {message ? <div className="inline-message">{message}</div> : null}
       </article>
@@ -184,7 +184,7 @@ export function FollowUpsPage() {
             <div className="form-grid one-column">
               <label>Status<select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as FollowUpStatus }))}>{STATUS_OPTIONS.map((status) => <option value={status} key={status}>{FOLLOW_UP_STATUS_LABELS[status]}</option>)}</select></label>
               <label>Tanggal tindak lanjut berikutnya<input type="date" disabled={form.status === 'resolved'} value={form.status === 'resolved' ? '' : form.nextFollowUpDate} onChange={(event) => setForm((current) => ({ ...current, nextFollowUpDate: event.target.value }))} /></label>
-              <label>Catatan<textarea rows={5} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Contoh: sudah menghubungi wali, jamaah sedang sakit, rencana kunjungan…" /></label>
+              <label>Catatan<textarea rows={5} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Contoh: sudah menghubungi wali, warga sedang sakit, rencana kunjungan…" /></label>
             </div>
             <div className="modal-inline-actions">
               {selected.followUp ? <button className="button danger" type="button" disabled={working || periodClosed} onClick={() => void remove()}><Trash2 size={15} /> Hapus Catatan</button> : <span />}

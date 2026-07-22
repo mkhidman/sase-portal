@@ -251,7 +251,7 @@ export function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8A
   const pdf = new PdfDocument()
   const drawPageHeader = () => {
     pdf.fillRect(0, PAGE_HEIGHT - 58, PAGE_WIDTH, 58, [31, 111, 74])
-    pdf.text('Laporan Bulanan Sensus & Pengajian Jamaah', MARGIN, PAGE_HEIGHT - 26, 16, true, [255, 255, 255])
+    pdf.text('Laporan Bulanan Sensus & Pengajian Warga', MARGIN, PAGE_HEIGHT - 26, 16, true, [255, 255, 255])
     pdf.text(`${input.monthLabel} | ${input.classLabel} | Periode ${input.periodStatus}`, MARGIN, PAGE_HEIGHT - 43, 8, false, [255, 255, 255])
     pdf.cursorY = PAGE_HEIGHT - 76
   }
@@ -263,7 +263,7 @@ export function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8A
   const cards: Array<[string, string]> = [
     ['Total Sesi', String(input.totals.sessions)],
     ['Kehadiran', `${input.totals.attendanceRate}%`],
-    ['Jamaah Tercatat', String(input.totals.jamaah)],
+    ['Peserta Tercatat', String(input.totals.jamaah)],
     ['Tindak Lanjut', String(input.totals.openFollowUps)],
   ]
   cards.forEach(([label, value], index) => {
@@ -308,10 +308,10 @@ export function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8A
   )
 
   pdf.table(
-    ['Kelas', 'Nama Jamaah', 'Kategori', 'Sesi', 'H', 'I', 'S', 'A', 'Kehadiran', 'Hasda', 'ASAD', 'Tindak Lanjut'],
+    ['Kelas', 'Nama Peserta', 'Kategori', 'Sesi', 'H', 'I', 'S', 'A', 'Kehadiran', 'Hasda', 'ASAD', 'Tindak Lanjut'],
     input.jamaah.map((row) => [row.className, row.fullName, row.censusCategory, row.sessions, row.present, row.excused, row.sick, row.absent, `${row.attendanceRate}%`, row.hasda, row.asad, row.followUp]),
     [100, 120, 75, 34, 26, 26, 26, 26, 56, 42, 42, 77],
-    { title: 'Detail Kehadiran Jamaah', fontSize: 6 },
+    { title: 'Detail Kehadiran Peserta', fontSize: 6 },
   )
 
   if (input.periodNotes) {

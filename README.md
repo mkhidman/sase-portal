@@ -1,4 +1,4 @@
-# Sensus Jamaah
+# SASE Portal
 
 Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/ASAD, rekap, dan penggabungan data duplikat.
 
@@ -105,7 +105,7 @@ Aturan konflik utama:
 
 ## Fase 11: pilot dan hardening
 
-- Halaman Kualitas Data untuk menemukan jamaah aktif tanpa kelas, kontak kosong, wali anak belum diisi, tanggal lahir kosong, ketidaksesuaian kategori/kelas, dan rekomendasi Pengajian Usia Istimewa.
+- Halaman Kualitas Data untuk menemukan warga aktif tanpa kelas, kontak kosong, wali anak belum diisi, tanggal lahir kosong, ketidaksesuaian kategori/kelas, dan rekomendasi Pengajian Usia Istimewa.
 - Deteksi kandidat data duplikat dari nama, tanggal lahir, dan nomor WhatsApp tanpa menggabungkan data secara otomatis.
 - Dashboard Superadmin menampilkan indikator kelengkapan data.
 - Absensi memakai nomor revisi agar dua Admin tidak saling menimpa sesi yang sama.
@@ -227,3 +227,12 @@ supabase/
 Setelah migration 001–013 aktif, jalankan `supabase/migrations/014_admin_account_management.sql`, lalu deploy Edge Function `invite-admin` dan `manage-admin`.
 
 Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset password sementara, kewajiban ganti password, pemindahan penugasan kelas, dan perlindungan agar kelas tidak kehilangan wali.
+
+## Perubahan istilah versi 0.13.2
+
+- Nama aplikasi yang tampil ke pengguna: **SASE Portal**.
+- Data utama menggunakan istilah **Warga**.
+- Pada konteks kelas digunakan istilah **Anggota Kelas**.
+- Pada konteks absensi dan laporan sesi digunakan istilah **Peserta**.
+- Nama tabel, tipe TypeScript, route, dan migration yang masih memakai `jamaah` tidak diubah agar kompatibilitas Supabase tetap terjaga.
+- Metadata Open Graph untuk WhatsApp/media sosial berada di `index.html`, sedangkan gambar preview berada di `public/og-image.png`.

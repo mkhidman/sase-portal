@@ -1,3 +1,11 @@
+## 0.13.2
+
+- Mengganti istilah antarmuka utama dari “Jamaah” menjadi “Warga”, “Anggota Kelas”, atau “Peserta” sesuai konteks.
+- Mengubah identitas aplikasi yang tampil ke pengguna menjadi SASE Portal.
+- Menambahkan metadata Open Graph dan Twitter Card untuk pratinjau WhatsApp/media sosial.
+- Menambahkan gambar berbagi sosial khusus berukuran 1200×630.
+- Nama tabel, tipe data, route, dan migration Supabase tetap dipertahankan agar kompatibilitas database tidak berubah.
+
 ## 0.13.1
 
 - Menambahkan ringkasan ketuntasan Hasda dan ASAD per jenis kelamin.

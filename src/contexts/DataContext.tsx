@@ -485,7 +485,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       async applyClassTransition(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat melakukan kenaikan atau mutasi kelas.')
-        if (!input.jamaahIds.length) throw new Error('Pilih minimal satu jamaah.')
+        if (!input.jamaahIds.length) throw new Error('Pilih minimal satu warga.')
         if (input.fromClassId === input.toClassId) throw new Error('Kelas asal dan kelas tujuan harus berbeda.')
         if (isPeriodClosed(input.effectiveDate.slice(0, 7))) throw new Error('Periode tanggal efektif sudah ditutup.')
 
@@ -534,12 +534,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return changed
       },
       async setJamaahActiveStatus(input) {
-        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah status jamaah.')
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah status warga.')
         if (isPeriodClosed(input.effectiveDate.slice(0, 7))) throw new Error('Periode tanggal efektif sudah ditutup.')
         const person = data.jamaah.find((item) => item.id === input.jamaahId)
-        if (!person) throw new Error('Data jamaah tidak ditemukan.')
-        if (person.active === input.active) throw new Error(input.active ? 'Jamaah sudah aktif.' : 'Jamaah sudah nonaktif.')
-        if (input.active && !input.classIds.length) throw new Error('Pilih minimal satu kelas ketika mengaktifkan kembali jamaah.')
+        if (!person) throw new Error('Data warga tidak ditemukan.')
+        if (person.active === input.active) throw new Error(input.active ? 'Warga sudah aktif.' : 'Warga sudah nonaktif.')
+        if (input.active && !input.classIds.length) throw new Error('Pilih minimal satu kelas ketika mengaktifkan kembali warga.')
 
         if (!isDemoMode) {
           await changeJamaahStatus(input)
@@ -572,12 +572,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       async saveFamily(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah data keluarga.')
         if (!input.family.name.trim()) throw new Error('Nama keluarga wajib diisi.')
-        if (!input.members.length) throw new Error('Pilih minimal satu jamaah sebagai anggota keluarga.')
+        if (!input.members.length) throw new Error('Pilih minimal satu warga sebagai anggota keluarga.')
         const memberIds = new Set(input.members.map((item) => item.jamaahId))
         const conflict = data.familyMembers.find((item) => memberIds.has(item.jamaahId) && item.familyId !== input.family.id)
         if (conflict) {
           const person = data.jamaah.find((item) => item.id === conflict.jamaahId)
-          throw new Error(`${person?.fullName ?? 'Jamaah'} sudah terdaftar pada keluarga lain.`)
+          throw new Error(`${person?.fullName ?? 'Warga'} sudah terdaftar pada keluarga lain.`)
         }
         const saved = await upsertFamily(input)
         await updateData((current) => ({
@@ -606,7 +606,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah kontak wali.')
         if (!input.fullName.trim()) throw new Error('Nama kontak wali wajib diisi.')
         if (!input.phone.trim()) throw new Error('Nomor WhatsApp kontak wali wajib diisi.')
-        if (!data.jamaah.some((item) => item.id === input.jamaahId)) throw new Error('Data jamaah tidak ditemukan.')
+        if (!data.jamaah.some((item) => item.id === input.jamaahId)) throw new Error('Data warga tidak ditemukan.')
         const saved = await upsertGuardianContact(input)
         await updateData((current) => ({
           ...current,
@@ -628,11 +628,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }))
       },
       async mergeDuplicateJamaah(input) {
-        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menggabungkan data jamaah.')
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menggabungkan data warga.')
         if (input.primaryJamaahId === input.duplicateJamaahId) throw new Error('Data utama dan data duplikat harus berbeda.')
         const primary = data.jamaah.find((item) => item.id === input.primaryJamaahId)
         const duplicate = data.jamaah.find((item) => item.id === input.duplicateJamaahId)
-        if (!primary || !duplicate) throw new Error('Salah satu data jamaah tidak ditemukan.')
+        if (!primary || !duplicate) throw new Error('Salah satu data warga tidak ditemukan.')
         if (!input.mergedProfile.fullName.trim()) throw new Error('Nama hasil penggabungan wajib diisi.')
 
         const result = await mergeJamaahDuplicates(input)

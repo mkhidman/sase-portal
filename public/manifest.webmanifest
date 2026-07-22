@@ -1,14 +1,24 @@
 {
-  "name": "Sensus Jamaah",
-  "short_name": "Sensus Jamaah",
-  "description": "Pendataan sensus, keluarga, kelas pengajian, absensi, serta ketuntasan Hasda dan ASAD.",
+  "name": "SASE Portal",
+  "short_name": "SASE",
+  "description": "Sistem sensus, keluarga, kelas, absensi, dan pemantauan warga pengajian.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f7f5",
   "theme_color": "#123c2a",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

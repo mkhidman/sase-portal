@@ -42,7 +42,7 @@ export function mergeDemoJamaah(
 ): BootstrapData {
   const primary = data.jamaah.find((item) => item.id === input.primaryJamaahId)
   const duplicate = data.jamaah.find((item) => item.id === input.duplicateJamaahId)
-  if (!primary || !duplicate) throw new Error('Salah satu data jamaah tidak ditemukan.')
+  if (!primary || !duplicate) throw new Error('Salah satu data warga tidak ditemukan.')
 
   const mergedClassIds = [...new Set([...primary.classIds, ...duplicate.classIds])]
   const mergedPrimary = { ...primary, ...input.mergedProfile, classIds: mergedClassIds }

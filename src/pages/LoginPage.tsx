@@ -29,8 +29,8 @@ export function LoginPage() {
     <main className="login-page">
       <section className="login-card">
         <div className="login-brand">
-          <span className="brand-mark">SJ</span>
-          <span><strong>Sensus Jamaah</strong><small>Sensus, absensi, dan pemantauan materi</small></span>
+          <span className="brand-mark">SP</span>
+          <span><strong>SASE Portal</strong><small>Sensus, absensi, dan pemantauan warga pengajian</small></span>
         </div>
         <div className="login-heading">
           <h1>Masuk ke aplikasi</h1>
