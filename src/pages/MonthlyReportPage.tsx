@@ -103,8 +103,16 @@ export function MonthlyReportPage() {
       person.active && person.classIds.some((id) => selectedClassIds.has(id)) && isEligibleForMaterial(materialType, person, classMap),
     )
     const unique = [...new Map(participants.map((person) => [person.id, person])).values()]
-    const done = unique.filter((person) => materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)).length
-    return { total: unique.length, done, percent: percentage(done, unique.length) }
+    const isCompleted = (personId: string) => materialCompletions.some(
+      (item) => item.month === month && item.materialType === materialType && item.jamaahId === personId,
+    )
+    const done = unique.filter((person) => isCompleted(person.id)).length
+    const byGender = (gender: 'Laki-laki' | 'Perempuan') => {
+      const genderParticipants = unique.filter((person) => person.gender === gender)
+      const genderDone = genderParticipants.filter((person) => isCompleted(person.id)).length
+      return { done: genderDone, total: genderParticipants.length, percent: percentage(genderDone, genderParticipants.length) }
+    }
+    return { total: unique.length, done, percent: percentage(done, unique.length), male: byGender('Laki-laki'), female: byGender('Perempuan') }
   }
 
   const hasda = materialTotals('hasda')
@@ -153,6 +161,10 @@ export function MonthlyReportPage() {
       totals: { sessions: sessions.length, attendanceRate: averageAttendance, present: totalPresent, records: totalRecords, jamaah: uniqueJamaah, openFollowUps },
       readiness,
       census: censusGenderSummary,
+      materials: [
+        { materialName: 'Hasda', male: hasda.male, female: hasda.female, total: { done: hasda.done, total: hasda.total, percent: hasda.percent } },
+        { materialName: 'ASAD', male: asad.male, female: asad.female, total: { done: asad.done, total: asad.total, percent: asad.percent } },
+      ],
       classes: classReports.map((report) => ({
         className: report.className,
         sessions: report.sessions.length,
@@ -241,6 +253,30 @@ export function MonthlyReportPage() {
                 <span className="census-total"><small>Total</small><b>{item.total}</b></span>
               </div>
             </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="card monthly-material-gender-summary">
+        <div className="card-heading">
+          <div>
+            <h2>Ketuntasan Hasda & ASAD per Jenis Kelamin</h2>
+            <p>Jumlah tuntas dibanding total peserta yang wajib menerima materi pada {monthLabel(month)}.</p>
+          </div>
+        </div>
+        <div className="monthly-material-grid">
+          {[{ label: 'Hasda', data: hasda }, { label: 'ASAD', data: asad }].map((item) => (
+            <section className="monthly-material-card" key={item.label}>
+              <div className="monthly-material-card-heading">
+                <strong>{item.label}</strong>
+                <span className={`badge ${item.data.percent === 100 ? 'success' : 'warning'}`}>{item.data.percent}%</span>
+              </div>
+              <div className="monthly-material-gender-values">
+                <span><small>Laki-laki</small><b>{item.data.male.done} dari {item.data.male.total}</b><em>{item.data.male.percent}%</em></span>
+                <span><small>Perempuan</small><b>{item.data.female.done} dari {item.data.female.total}</b><em>{item.data.female.percent}%</em></span>
+                <span className="material-total"><small>Total</small><b>{item.data.done} dari {item.data.total}</b><em>{item.data.percent}%</em></span>
+              </div>
+            </section>
           ))}
         </div>
       </article>

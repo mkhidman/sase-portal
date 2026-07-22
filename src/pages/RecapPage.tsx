@@ -101,7 +101,7 @@ export function RecapPage() {
         <StatCard label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<span>!</span>} />
       </section>
 
-      <article className="card mb3">
+      <article className="card">
         <div className="toolbar recap-toolbar">
           <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
           <label>Kelas<select value={classId} onChange={(event) => setClassId(event.target.value)}><option value="all">Semua kelas</option>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>

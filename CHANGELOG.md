@@ -1,3 +1,10 @@
+## 0.13.1
+
+- Menambahkan ringkasan ketuntasan Hasda dan ASAD per jenis kelamin.
+- Menampilkan jumlah Laki-laki dan Perempuan yang tuntas dibanding total peserta.
+- Menambahkan ringkasan yang sama ke Laporan Bulanan dan PDF.
+- Tidak memerlukan migration Supabase baru.
+
 ## 0.13.0
 
 - Menambahkan status aktif/nonaktif akun Admin dan pengamanan akses pada RLS.

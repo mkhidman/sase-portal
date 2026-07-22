@@ -127,8 +127,8 @@ export function AppLayout() {
       {mobileOpen ? <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} /> : null}
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
         <div className="brand-row">
-          <span className="brand-mark">SP</span>
-          <span><strong>Sase Portal</strong><small>Administrasi DKM Nurul Islam</small></span>
+          <span className="brand-mark">SJ</span>
+          <span><strong>Sensus Jamaah</strong><small>Administrasi pengajian</small></span>
           <button className="sidebar-close" type="button" onClick={() => setMobileOpen(false)}><X size={18} /></button>
         </div>
         <nav className="sidebar-nav">

@@ -32,11 +32,18 @@ export function MaterialsPage() {
 
   const periodClosed = isPeriodClosed(month)
 
-  const completed = participants.filter((person) =>
-    materialCompletions.some(
-      (item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id,
-    ),
-  ).length
+  const isCompleted = (personId: string) => materialCompletions.some(
+    (item) => item.month === month && item.materialType === materialType && item.jamaahId === personId,
+  )
+
+  const completed = participants.filter((person) => isCompleted(person.id)).length
+  const genderProgress = (gender: 'Laki-laki' | 'Perempuan') => {
+    const genderParticipants = participants.filter((person) => person.gender === gender)
+    const done = genderParticipants.filter((person) => isCompleted(person.id)).length
+    return { done, total: genderParticipants.length, percent: percentage(done, genderParticipants.length) }
+  }
+  const maleProgress = genderProgress('Laki-laki')
+  const femaleProgress = genderProgress('Perempuan')
 
   async function toggle(personId: string) {
     const person = participants.find((item) => item.id === personId)
@@ -66,6 +73,35 @@ export function MaterialsPage() {
         </div>
 
         <ProgressBlock title={MATERIAL_LABELS[materialType]} percent={percentage(completed, participants.length)} done={completed} total={participants.length} />
+
+        <section className="material-gender-summary" aria-label={`Ringkasan ${MATERIAL_LABELS[materialType]} per jenis kelamin`}>
+          <div className="material-gender-summary-heading">
+            <div>
+              <strong>Ringkasan per Jenis Kelamin</strong>
+              <small>Jumlah tuntas dibanding total peserta pada bulan dan kelompok yang dipilih.</small>
+            </div>
+          </div>
+          <div className="material-gender-grid">
+            <article className="material-gender-card">
+              <span>Laki-laki</span>
+              <strong>{maleProgress.done} dari {maleProgress.total}</strong>
+              <small>{maleProgress.percent}% tuntas</small>
+              <div className="progress-track compact"><span style={{ width: `${maleProgress.percent}%` }} /></div>
+            </article>
+            <article className="material-gender-card">
+              <span>Perempuan</span>
+              <strong>{femaleProgress.done} dari {femaleProgress.total}</strong>
+              <small>{femaleProgress.percent}% tuntas</small>
+              <div className="progress-track compact"><span style={{ width: `${femaleProgress.percent}%` }} /></div>
+            </article>
+            <article className="material-gender-card total">
+              <span>Total Peserta</span>
+              <strong>{completed} dari {participants.length}</strong>
+              <small>{percentage(completed, participants.length)}% tuntas</small>
+              <div className="progress-track compact"><span style={{ width: `${percentage(completed, participants.length)}%` }} /></div>
+            </article>
+          </div>
+        </section>
 
         <div className="section-heading"><div><h2>{effectiveGroup} · {MATERIAL_LABELS[materialType]}</h2><p>Penyusulan mandiri tidak mengubah absensi sesi sebelumnya.</p></div></div>
         <div className="completion-list">

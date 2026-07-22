@@ -144,7 +144,7 @@ export function DataQualityPage() {
         </div>
       </article>
 
-      <article className="card mb3">
+      <article className="card">
         <div className="card-heading"><div><h2>Daftar Temuan</h2><p>Prioritaskan temuan kritis sebelum aplikasi digunakan pada sesi nyata.</p></div></div>
         <div className="toolbar">
           <label className="search-field"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari jamaah atau jenis masalah…" /></label>
@@ -168,7 +168,7 @@ export function DataQualityPage() {
         <Pagination page={issuePagination.page} pageSize={issuePagination.pageSize} totalItems={filteredIssues.length} onPageChange={issuePagination.setPage} onPageSizeChange={issuePagination.setPageSize} />
       </article>
 
-      <article className="card mb3">
+      <article className="card">
         <div className="card-heading"><div><h2>Potensi Data Duplikat</h2><p>Bandingkan, pilih data utama, lalu gabungkan seluruh relasi dalam satu transaksi.</p></div></div>
         <div className="duplicate-list">
           {duplicatePagination.pageItems.map((candidate) => {

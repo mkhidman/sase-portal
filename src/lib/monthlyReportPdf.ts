@@ -34,6 +34,13 @@ export interface MonthlyCensusPdfRow {
   total: number
 }
 
+export interface MonthlyMaterialGenderPdfRow {
+  materialName: string
+  male: { done: number; total: number; percent: number }
+  female: { done: number; total: number; percent: number }
+  total: { done: number; total: number; percent: number }
+}
+
 export interface MonthlyReportPdfInput {
   month: string
   monthLabel: string
@@ -50,6 +57,7 @@ export interface MonthlyReportPdfInput {
   }
   readiness: Array<{ label: string; ready: boolean }>
   census: MonthlyCensusPdfRow[]
+  materials: MonthlyMaterialGenderPdfRow[]
   classes: MonthlyClassPdfRow[]
   jamaah: MonthlyJamaahPdfRow[]
 }
@@ -277,6 +285,19 @@ export function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8A
     input.census.map((row) => [row.categoryName, row.male, row.female, row.total]),
     [360, 138, 138, 138],
     { title: 'Komposisi Sensus Per Jenis Kelamin', fontSize: 7 },
+  )
+
+  pdf.table(
+    ['Materi', 'Laki-laki', 'Perempuan', 'Total', 'Persentase'],
+    input.materials.map((row) => [
+      row.materialName,
+      `${row.male.done} dari ${row.male.total} (${row.male.percent}%)`,
+      `${row.female.done} dari ${row.female.total} (${row.female.percent}%)`,
+      `${row.total.done} dari ${row.total.total}`,
+      `${row.total.percent}%`,
+    ]),
+    [150, 180, 180, 130, 134],
+    { title: 'Ketuntasan Hasda & ASAD Per Jenis Kelamin', fontSize: 7 },
   )
 
   pdf.table(
