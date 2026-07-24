@@ -864,6 +864,19 @@ textarea { width: 100%; resize: vertical; }
 .primary-family-contact { display: flex !important; align-items: center; gap: 6px !important; font-size: 9px !important; font-weight: 800 !important; white-space: nowrap; }
 .primary-family-contact input, .simple-checkbox input { width: auto !important; min-height: 0 !important; accent-color: var(--primary); }
 .simple-checkbox { display: flex !important; grid-auto-flow: column; justify-content: flex-start; align-items: center; gap: 8px !important; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; background: #f8fbf9; }
+.guardian-self-button { width: 100%; justify-content: center; }
+.guardian-picker-field { display: grid; gap: 8px; }
+.guardian-picker-field > span { font-size: 11px; font-weight: 800; }
+.selected-guardian-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid #9cc4aa; border-radius: 11px; background: #f7fbf8; }
+.selected-guardian-card .person { min-width: 0; }
+.selected-guardian-card > div:last-child { flex: 0 0 auto; display: grid; gap: 3px; text-align: right; }
+.selected-guardian-card strong { font-size: 10px; }
+.selected-guardian-card small { display: flex; align-items: center; justify-content: flex-end; gap: 4px; color: var(--primary); font-size: 8px; font-weight: 800; }
+.guardian-candidate-list { max-height: 230px; display: grid; gap: 6px; overflow-y: auto; padding-right: 3px; }
+.guardian-candidate-list > button { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--text); text-align: left; }
+.guardian-candidate-list > button:hover, .guardian-candidate-list > button.selected { border-color: #9cc4aa; background: #f7fbf8; }
+.guardian-candidate-list > button .person { min-width: 0; }
+.guardian-candidate-list > button > span { flex: 0 0 auto; color: var(--muted); font-size: 9px; font-weight: 700; }
 .guardian-delete { margin-top: 14px; }
 
 @media (max-width: 980px) {
@@ -876,6 +889,9 @@ textarea { width: 100%; resize: vertical; }
   .family-member-row { grid-template-columns: 1fr; }
   .family-member-row select { margin-left: 31px; width: calc(100% - 31px); }
   .primary-family-contact { margin-left: 31px; }
+  .selected-guardian-card, .guardian-candidate-list > button { align-items: flex-start; flex-direction: column; }
+  .selected-guardian-card > div:last-child { text-align: left; }
+  .selected-guardian-card small { justify-content: flex-start; }
   .compact-actions { flex-wrap: wrap; }
 }
 

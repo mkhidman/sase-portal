@@ -67,7 +67,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('jamaah_status_history').select('id,jamaah_id,previous_active,new_active,reason,effective_date,notes,class_ids,changed_by,created_at').order('effective_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
     fetchAllRows(() => client.from('families').select('id,name,address,notes,created_at,updated_at').order('name').order('id')),
     fetchAllRows(() => client.from('family_members').select('family_id,jamaah_id,relationship,is_primary_contact').order('family_id').order('jamaah_id')),
-    fetchAllRows(() => client.from('guardian_contacts').select('id,jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name').order('id')),
+    fetchAllRows(() => client.from('guardian_contacts').select('id,jamaah_id,guardian_jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name').order('id')),
     fetchAllRows(() => client.from('jamaah_merge_history').select('id,primary_jamaah_id,duplicate_jamaah_id,primary_name,duplicate_name,merged_profile,duplicate_snapshot,moved_counts,family_conflict,merged_by,merged_at').order('merged_at', { ascending: false }).order('id')),
   ])
 
@@ -252,6 +252,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   const guardianContacts: GuardianContact[] = (guardianContactsResult.data ?? []).map((row: any) => ({
     id: row.id,
     jamaahId: row.jamaah_id,
+    guardianJamaahId: row.guardian_jamaah_id ?? null,
     fullName: row.full_name,
     relationship: row.relationship,
     phone: row.phone ?? '',
@@ -668,12 +669,11 @@ export async function removeFamily(id: string): Promise<void> {
 export async function upsertGuardianContact(contact: GuardianContact): Promise<GuardianContact> {
   if (isDemoMode) return contact
   const client = requireSupabase()
-  const { data: contactId, error } = await client.rpc('save_guardian_contact', {
+  const { data: contactId, error } = await client.rpc('save_linked_guardian_contact', {
     target_contact_id: contact.id.startsWith('new-') ? null : contact.id,
     target_jamaah_id: contact.jamaahId,
-    contact_name: contact.fullName.trim(),
+    selected_guardian_jamaah_id: contact.guardianJamaahId,
     contact_relationship: contact.relationship,
-    contact_phone: contact.phone.trim(),
     contact_is_primary: contact.isPrimary,
     contact_notes: contact.notes.trim() || null,
   })
@@ -681,13 +681,14 @@ export async function upsertGuardianContact(contact: GuardianContact): Promise<G
   if (typeof contactId !== 'string') throw new Error('Kontak wali tersimpan, tetapi ID kontak tidak diterima.')
   const result = await client
     .from('guardian_contacts')
-    .select('id,jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at')
+    .select('id,jamaah_id,guardian_jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at')
     .eq('id', contactId)
     .single()
   if (result.error) throw result.error
   return {
     id: result.data.id as string,
     jamaahId: result.data.jamaah_id,
+    guardianJamaahId: result.data.guardian_jamaah_id,
     fullName: result.data.full_name,
     relationship: result.data.relationship,
     phone: result.data.phone ?? '',

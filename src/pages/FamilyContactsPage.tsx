@@ -1,6 +1,7 @@
 import {
   ExternalLink,
   House,
+  Link2,
   MessageCircle,
   Pencil,
   Plus,
@@ -49,6 +50,7 @@ const EMPTY_FAMILY: Family = {
 const EMPTY_GUARDIAN: GuardianContact = {
   id: '',
   jamaahId: '',
+  guardianJamaahId: null,
   fullName: '',
   relationship: 'Ayah',
   phone: '',
@@ -80,6 +82,7 @@ export function FamilyContactsPage() {
   const [memberSearch, setMemberSearch] = useState('')
   const [guardianOpen, setGuardianOpen] = useState(false)
   const [guardianForm, setGuardianForm] = useState<GuardianContact>(EMPTY_GUARDIAN)
+  const [guardianSearch, setGuardianSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
@@ -115,7 +118,7 @@ export function FamilyContactsPage() {
 
   const visibleContacts = guardianContacts.filter((item) => visibleIds.has(item.jamaahId))
   const linkedJamaahCount = new Set(familyMembers.filter((item) => canManage || visibleIds.has(item.jamaahId)).map((item) => item.jamaahId)).size
-  const withoutContact = pageJamaah.filter((item) => !preferredContactForJamaah(item, guardianContacts)).length
+  const withoutContact = pageJamaah.filter((item) => !preferredContactForJamaah(item, guardianContacts, jamaah)).length
 
   function openCreateFamily() {
     const now = new Date().toISOString()
@@ -184,23 +187,55 @@ export function FamilyContactsPage() {
   function openCreateGuardian(person?: Jamaah) {
     const now = new Date().toISOString()
     setGuardianForm({ ...EMPTY_GUARDIAN, id: `new-${crypto.randomUUID()}`, jamaahId: person?.id ?? pageJamaah[0]?.id ?? '', createdAt: now, updatedAt: now })
+    setGuardianSearch('')
     setModalError(null)
     setGuardianOpen(true)
   }
 
   function openEditGuardian(contact: GuardianContact) {
     setGuardianForm({ ...contact })
+    setGuardianSearch(contact.guardianJamaahId ? '' : contact.fullName)
     setModalError(null)
     setGuardianOpen(true)
+  }
+
+  function selectGuardian(person: Jamaah) {
+    const isSelf = person.id === guardianForm.jamaahId
+    setGuardianForm((current) => ({
+      ...current,
+      guardianJamaahId: person.id,
+      fullName: person.fullName,
+      phone: person.phone,
+      relationship: isSelf ? 'Diri Sendiri' : current.relationship === 'Diri Sendiri' ? 'Wali' : current.relationship,
+    }))
+    setGuardianSearch('')
+  }
+
+  function selectGuardianTarget(jamaahId: string) {
+    setGuardianForm((current) => ({
+      ...current,
+      jamaahId,
+      relationship: current.guardianJamaahId === jamaahId
+        ? 'Diri Sendiri'
+        : current.relationship === 'Diri Sendiri' ? 'Wali' : current.relationship,
+    }))
   }
 
   async function submitGuardian() {
     setSaving(true)
     setModalError(null)
     try {
-      await saveGuardianContact({ ...guardianForm, fullName: guardianForm.fullName.trim(), phone: guardianForm.phone.trim(), notes: guardianForm.notes.trim(), updatedAt: new Date().toISOString() })
+      const selectedGuardian = guardianForm.guardianJamaahId ? jamaahMap.get(guardianForm.guardianJamaahId) : null
+      if (!selectedGuardian) throw new Error('Pilih wali dari data warga.')
+      await saveGuardianContact({
+        ...guardianForm,
+        fullName: selectedGuardian.fullName,
+        phone: selectedGuardian.phone,
+        notes: guardianForm.notes.trim(),
+        updatedAt: new Date().toISOString(),
+      })
       setGuardianOpen(false)
-      setMessage('Kontak wali berhasil disimpan.')
+      setMessage('Data wali berhasil ditautkan ke warga.')
     } catch (cause) {
       setModalError(cause instanceof Error ? cause.message : 'Gagal menyimpan kontak wali.')
     } finally {
@@ -209,7 +244,8 @@ export function FamilyContactsPage() {
   }
 
   async function removeSelectedGuardian(contact: GuardianContact) {
-    if (!window.confirm(`Hapus kontak ${contact.fullName}?`)) return
+    const linked = contact.guardianJamaahId ? jamaahMap.get(contact.guardianJamaahId) : null
+    if (!window.confirm(`Hapus wali ${linked?.fullName ?? contact.fullName}?`)) return
     try {
       await deleteGuardianContact(contact.id)
       setMessage('Kontak wali berhasil dihapus.')
@@ -222,18 +258,46 @@ export function FamilyContactsPage() {
     .filter((item) => !memberSearch || item.fullName.toLowerCase().includes(memberSearch.toLowerCase()))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, 'id'))
 
+  const selectedGuardian = guardianForm.guardianJamaahId ? jamaahMap.get(guardianForm.guardianJamaahId) ?? null : null
+  const guardianTargetMembership = membershipByJamaah.get(guardianForm.jamaahId)
+  const guardianQuery = guardianSearch.trim().toLowerCase()
+  const alreadySelectedGuardianIds = new Set(guardianContacts
+    .filter((item) => item.jamaahId === guardianForm.jamaahId && item.id !== guardianForm.id)
+    .map((item) => item.guardianJamaahId)
+    .filter(Boolean))
+  const guardianCandidates = jamaah
+    .filter((item) => !alreadySelectedGuardianIds.has(item.id))
+    .filter((item) => !guardianQuery || [item.fullName, item.phone, item.censusCategory].join(' ').toLowerCase().includes(guardianQuery))
+    .sort((first, second) => {
+      const firstFamily = membershipByJamaah.get(first.id)?.familyId
+      const secondFamily = membershipByJamaah.get(second.id)?.familyId
+      const firstSameFamily = Boolean(guardianTargetMembership && firstFamily === guardianTargetMembership.familyId)
+      const secondSameFamily = Boolean(guardianTargetMembership && secondFamily === guardianTargetMembership.familyId)
+      return Number(secondSameFamily) - Number(firstSameFamily) || first.fullName.localeCompare(second.fullName, 'id')
+    })
+    .slice(0, 10)
+
+  function resolvedGuardian(contact: GuardianContact) {
+    const linked = contact.guardianJamaahId ? jamaahMap.get(contact.guardianJamaahId) : null
+    return {
+      name: linked?.fullName ?? contact.fullName,
+      phone: linked?.phone ?? contact.phone,
+      linked: Boolean(linked),
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Keluarga & Kontak Wali"
-        description={canManage ? 'Kelompokkan warga dalam satu keluarga dan simpan nomor wali yang dapat dihubungi saat tindak lanjut absensi.' : 'Daftar lengkap warga aktif, keluarga, dan wali dari kelas yang Anda ampu.'}
-        actions={canManage ? <><button className="button outline" onClick={() => openCreateGuardian()}><UserRound size={16} /> Tambah Kontak Wali</button><button className="button primary" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button></> : undefined}
+        description={canManage ? 'Kelompokkan warga dalam keluarga dan tautkan wali ke data warga yang sudah tercatat.' : 'Daftar lengkap warga aktif, keluarga, dan wali dari kelas yang Anda ampu.'}
+        actions={canManage ? <><button className="button outline" onClick={() => openCreateGuardian()}><UserRound size={16} /> Tambah Wali</button><button className="button primary" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button></> : undefined}
       />
 
       <section className="stats-grid four-columns compact-stats">
         <StatCard label="Keluarga Tercatat" value={accessibleFamilies.length} note="Kelompok keluarga yang dapat dilihat" icon={<House size={20} />} />
         <StatCard label="Warga Terhubung" value={linkedJamaahCount} note="Memiliki data keluarga" icon={<UsersRound size={20} />} />
-        <StatCard label="Kontak Wali" value={visibleContacts.length} note="Nomor wali tersimpan" icon={<UserRound size={20} />} />
+        <StatCard label="Wali Tertaut" value={visibleContacts.filter((item) => item.guardianJamaahId).length} note={`${visibleContacts.length} relasi wali tercatat`} icon={<UserRound size={20} />} />
         <StatCard label="Tanpa Kontak" value={withoutContact} note="Tidak memiliki nomor sendiri/wali" icon={<span>!</span>} />
       </section>
 
@@ -269,7 +333,7 @@ export function FamilyContactsPage() {
       </article>
 
       <article className="card family-section">
-        <div className="card-heading"><div><h2>Data Warga dan Wali</h2><p>Profil dan kelas warga ditampilkan bersama kontaknya. Nomor warga diprioritaskan; jika kosong, sistem menggunakan kontak wali utama.</p></div></div>
+        <div className="card-heading"><div><h2>Data Warga dan Wali</h2><p>Wali dipilih dari data warga. Nomor warga diprioritaskan; jika kosong, sistem menggunakan nomor wali utama yang tertaut.</p></div></div>
         <div className="table-wrap guardian-table">
           <table>
             <thead><tr><th>Warga</th><th>Profil & Kelas</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
@@ -278,7 +342,7 @@ export function FamilyContactsPage() {
                 const membership = membershipByJamaah.get(person.id)
                 const family = membership ? familyMap.get(membership.familyId) : null
                 const contacts = guardianContacts.filter((item) => item.jamaahId === person.id).sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-                const preferred = preferredContactForJamaah(person, guardianContacts)
+                const preferred = preferredContactForJamaah(person, guardianContacts, jamaah)
                 const waNumber = preferred ? normalizeWhatsappNumber(preferred.phone) : ''
                 const age = ageFromBirthDate(person.birthDate)
                 const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
@@ -288,7 +352,10 @@ export function FamilyContactsPage() {
                     <td><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
                     <td>{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
                     <td>{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
-                    <td><div className="guardian-contact-list">{contacts.map((contact) => <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{contact.fullName}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}</small></button>)}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
+                    <td><div className="guardian-contact-list">{contacts.map((contact) => {
+                      const resolved = resolvedGuardian(contact)
+                      return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
+                    })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
                     <td><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
                   </tr>
                 )
@@ -332,19 +399,37 @@ export function FamilyContactsPage() {
 
       <Modal
         open={guardianOpen}
-        title={guardianContacts.some((item) => item.id === guardianForm.id) ? 'Edit Kontak Wali' : 'Tambah Kontak Wali'}
+        title={guardianContacts.some((item) => item.id === guardianForm.id) ? 'Edit Wali' : 'Tambah Wali'}
         onClose={() => !saving && setGuardianOpen(false)}
-        footer={<><button className="button outline" disabled={saving} onClick={() => setGuardianOpen(false)}>Batal</button><button className="button primary" disabled={saving} onClick={() => void submitGuardian()}>{saving ? 'Menyimpan…' : 'Simpan Kontak'}</button></>}
+        footer={<><button className="button outline" disabled={saving} onClick={() => setGuardianOpen(false)}>Batal</button><button className="button primary" disabled={saving || !guardianForm.guardianJamaahId} onClick={() => void submitGuardian()}>{saving ? 'Menyimpan…' : 'Simpan Wali'}</button></>}
       >
         <div className="form-grid one-column">
-          <label>Warga *<select value={guardianForm.jamaahId} onChange={(event) => setGuardianForm({ ...guardianForm, jamaahId: event.target.value })}>{[...jamaah].sort((a, b) => a.fullName.localeCompare(b.fullName, 'id')).map((item) => <option key={item.id} value={item.id}>{item.fullName} · {item.censusCategory}{item.active ? '' : ' · Nonaktif'}</option>)}</select></label>
-          <label>Nama kontak *<input value={guardianForm.fullName} onChange={(event) => setGuardianForm({ ...guardianForm, fullName: event.target.value })} placeholder="Nama orang tua atau wali" /></label>
-          <label>Hubungan<select value={guardianForm.relationship} onChange={(event) => setGuardianForm({ ...guardianForm, relationship: event.target.value as GuardianRelationship })}>{GUARDIAN_RELATIONSHIPS.map((item) => <option key={item}>{item}</option>)}</select></label>
-          <label>Nomor WhatsApp *<input inputMode="tel" value={guardianForm.phone} onChange={(event) => setGuardianForm({ ...guardianForm, phone: event.target.value })} placeholder="08xxxxxxxxxx" /></label>
-          <label className="simple-checkbox"><input type="checkbox" checked={guardianForm.isPrimary} onChange={(event) => setGuardianForm({ ...guardianForm, isPrimary: event.target.checked })} /> Jadikan kontak utama untuk warga ini</label>
+          <label>Warga yang menerima wali *<select value={guardianForm.jamaahId} onChange={(event) => selectGuardianTarget(event.target.value)}>{[...jamaah].sort((a, b) => a.fullName.localeCompare(b.fullName, 'id')).map((item) => <option key={item.id} value={item.id}>{item.fullName} · {item.censusCategory}{item.active ? '' : ' · Nonaktif'}</option>)}</select></label>
+          <button className="button soft guardian-self-button" type="button" onClick={() => {
+            const person = jamaahMap.get(guardianForm.jamaahId)
+            if (person) selectGuardian(person)
+          }}><UserRound size={15} /> Jadikan warga ini sebagai wali dirinya sendiri</button>
+
+          <div className="guardian-picker-field">
+            <span>Pilih wali dari data warga *</span>
+            {selectedGuardian ? <div className="selected-guardian-card"><Person name={selectedGuardian.fullName} meta={`${selectedGuardian.censusCategory}${selectedGuardian.active ? '' : ' · Nonaktif'}`} /><div><strong>{selectedGuardian.phone || 'Nomor belum diisi'}</strong><small><Link2 size={11} /> Tertaut ke Data Sensus</small></div></div> : guardianForm.fullName ? <div className="notice warning-notice">Data lama: <strong>{guardianForm.fullName}</strong> belum tertaut. Cari dan pilih warga yang sesuai sebelum menyimpan.</div> : null}
+            <label className="search-field"><Search size={15} /><input value={guardianSearch} onChange={(event) => setGuardianSearch(event.target.value)} placeholder="Cari nama, kategori, atau nomor WhatsApp…" /></label>
+            <div className="guardian-candidate-list">
+              {guardianCandidates.map((person) => {
+                const sameFamily = Boolean(guardianTargetMembership && membershipByJamaah.get(person.id)?.familyId === guardianTargetMembership.familyId)
+                const selected = person.id === guardianForm.guardianJamaahId
+                return <button className={selected ? 'selected' : ''} type="button" key={person.id} onClick={() => selectGuardian(person)}><Person name={person.fullName} meta={`${person.censusCategory}${person.active ? '' : ' · Nonaktif'}`} /><span>{person.id === guardianForm.jamaahId ? 'Diri sendiri' : sameFamily ? 'Satu keluarga' : person.phone || 'Nomor belum diisi'}</span></button>
+              })}
+              {!guardianCandidates.length ? <div className="empty-state">Tidak ada warga yang sesuai pencarian.</div> : null}
+            </div>
+          </div>
+
+          <label>Hubungan<select value={guardianForm.relationship} disabled={guardianForm.guardianJamaahId === guardianForm.jamaahId} onChange={(event) => setGuardianForm({ ...guardianForm, relationship: event.target.value as GuardianRelationship })}>{guardianForm.guardianJamaahId === guardianForm.jamaahId ? <option>Diri Sendiri</option> : GUARDIAN_RELATIONSHIPS.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Nomor WhatsApp wali<input value={selectedGuardian?.phone ?? guardianForm.phone} readOnly placeholder="Belum diisi pada Data Sensus" /><small>Nomor mengikuti profil warga terpilih. Perbarui melalui menu Data Sensus jika perlu.</small></label>
+          <label className="simple-checkbox"><input type="checkbox" checked={guardianForm.isPrimary} onChange={(event) => setGuardianForm({ ...guardianForm, isPrimary: event.target.checked })} /> Jadikan wali utama untuk warga ini</label>
           <label>Catatan<textarea rows={3} value={guardianForm.notes} onChange={(event) => setGuardianForm({ ...guardianForm, notes: event.target.value })} placeholder="Contoh: dapat dihubungi setelah pukul 17.00" /></label>
         </div>
-        {guardianContacts.some((item) => item.id === guardianForm.id) ? <button className="button danger guardian-delete" disabled={saving} onClick={() => { const contact = guardianContacts.find((item) => item.id === guardianForm.id); if (contact) { setGuardianOpen(false); void removeSelectedGuardian(contact) } }}><Trash2 size={15} /> Hapus Kontak</button> : null}
+        {guardianContacts.some((item) => item.id === guardianForm.id) ? <button className="button danger guardian-delete" disabled={saving} onClick={() => { const contact = guardianContacts.find((item) => item.id === guardianForm.id); if (contact) { setGuardianOpen(false); void removeSelectedGuardian(contact) } }}><Trash2 size={15} /> Hapus Wali</button> : null}
         {modalError ? <div className="form-error">{modalError}</div> : null}
       </Modal>
     </>

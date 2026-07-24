@@ -19,7 +19,7 @@ export type ReportingPeriodStatus = 'open' | 'closed'
 export type ClassChangeType = 'promotion' | 'transfer' | 'manual'
 export type JamaahStatusReason = 'moved' | 'stopped' | 'graduated' | 'deceased' | 'duplicate' | 'other' | 'reactivated'
 export type FamilyRelationship = 'Kepala Keluarga' | 'Pasangan' | 'Anak' | 'Orang Tua' | 'Saudara' | 'Lainnya'
-export type GuardianRelationship = 'Ayah' | 'Ibu' | 'Wali' | 'Suami' | 'Istri' | 'Anak' | 'Saudara' | 'Lainnya'
+export type GuardianRelationship = 'Diri Sendiri' | 'Ayah' | 'Ibu' | 'Wali' | 'Suami' | 'Istri' | 'Anak' | 'Saudara' | 'Lainnya'
 
 export interface AppUser {
   id: string
@@ -159,6 +159,7 @@ export interface FamilyMember {
 export interface GuardianContact {
   id: string
   jamaahId: string
+  guardianJamaahId: string | null
   fullName: string
   relationship: GuardianRelationship
   phone: string

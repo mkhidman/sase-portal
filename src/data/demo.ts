@@ -153,9 +153,10 @@ export function createDemoBootstrap(): BootstrapData {
       { familyId: 'family-demo-2', jamaahId: 'j-05', relationship: 'Anak', isPrimaryContact: false },
     ],
     guardianContacts: [
-      { id: 'guardian-demo-1', jamaahId: 'j-03', fullName: 'Bapak Arif', relationship: 'Ayah', phone: '081234567830', isPrimary: true, notes: 'Dapat dihubungi sore hari.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      { id: 'guardian-demo-2', jamaahId: 'j-04', fullName: 'Bapak Arif', relationship: 'Ayah', phone: '081234567830', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      { id: 'guardian-demo-3', jamaahId: 'j-05', fullName: 'Ibu Lina', relationship: 'Ibu', phone: '081234567831', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'guardian-demo-1', jamaahId: 'j-03', guardianJamaahId: 'j-16', fullName: 'Bapak Hendra', relationship: 'Ayah', phone: '081234567806', isPrimary: true, notes: 'Dapat dihubungi sore hari.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'guardian-demo-2', jamaahId: 'j-04', guardianJamaahId: 'j-16', fullName: 'Bapak Hendra', relationship: 'Ayah', phone: '081234567806', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'guardian-demo-3', jamaahId: 'j-05', guardianJamaahId: 'j-15', fullName: 'Ibu Nurhayati', relationship: 'Ibu', phone: '081234567805', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'guardian-demo-4', jamaahId: 'j-16', guardianJamaahId: 'j-16', fullName: 'Bapak Hendra', relationship: 'Diri Sendiri', phone: '081234567806', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     ],
     mergeHistory: [],
     auditLogs: [
@@ -175,7 +176,7 @@ export function loadDemoBootstrap(): BootstrapData {
   }
   try {
     const parsed = JSON.parse(stored) as BootstrapData
-    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1 })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: parsed.guardianContacts ?? [], mergeHistory: parsed.mergeHistory ?? [] }
+    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1 })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [] }
   } catch {
     const initial = createDemoBootstrap()
     saveDemoBootstrap(initial)

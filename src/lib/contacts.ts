@@ -10,6 +10,7 @@ export interface PreferredContact {
 export function preferredContactForJamaah(
   jamaah: Jamaah,
   guardianContacts: GuardianContact[],
+  allJamaah: Jamaah[] = [],
 ): PreferredContact | null {
   if (jamaah.phone.trim()) {
     return {
@@ -20,8 +21,18 @@ export function preferredContactForJamaah(
     }
   }
 
+  const peopleById = new Map(allJamaah.map((person) => [person.id, person]))
   const contacts = guardianContacts
-    .filter((item) => item.jamaahId === jamaah.id && item.phone.trim())
+    .filter((item) => item.jamaahId === jamaah.id)
+    .map((item) => {
+      const linked = item.guardianJamaahId ? peopleById.get(item.guardianJamaahId) : null
+      return {
+        ...item,
+        fullName: linked?.fullName ?? item.fullName,
+        phone: linked?.phone ?? item.phone,
+      }
+    })
+    .filter((item) => item.phone.trim())
     .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.fullName.localeCompare(b.fullName, 'id'))
   const selected = contacts[0]
   if (!selected) return null

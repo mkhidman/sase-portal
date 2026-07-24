@@ -144,7 +144,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: cached.data.guardianContacts ?? [], mergeHistory: cached.data.mergeHistory ?? [] })
+        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [] })
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')
@@ -616,10 +616,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       async saveGuardianContact(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah kontak wali.')
-        if (!input.fullName.trim()) throw new Error('Nama kontak wali wajib diisi.')
-        if (!input.phone.trim()) throw new Error('Nomor WhatsApp kontak wali wajib diisi.')
         if (!data.jamaah.some((item) => item.id === input.jamaahId)) throw new Error('Data warga tidak ditemukan.')
-        const saved = await upsertGuardianContact(input)
+        const guardian = data.jamaah.find((item) => item.id === input.guardianJamaahId)
+        if (!guardian) throw new Error('Pilih wali dari data warga.')
+        const normalized = {
+          ...input,
+          fullName: guardian.fullName,
+          phone: guardian.phone,
+          relationship: input.jamaahId === guardian.id ? 'Diri Sendiri' as const : input.relationship,
+        }
+        const duplicate = data.guardianContacts.some((item) =>
+          item.id !== input.id
+          && item.jamaahId === input.jamaahId
+          && item.guardianJamaahId === guardian.id)
+        if (duplicate) throw new Error('Warga tersebut sudah terdaftar sebagai wali.')
+        const saved = await upsertGuardianContact(normalized)
         await updateData((current) => ({
           ...current,
           guardianContacts: [

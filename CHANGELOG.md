@@ -1,5 +1,9 @@
 ## Belum dirilis
 
+- Menautkan wali ke data warga agar nama dan nomor WhatsApp tidak perlu diketik ulang.
+- Menambahkan pencarian warga pada formulir wali dan mendukung hubungan `Diri Sendiri`.
+- Menjaga tautan wali ketika profil warga diperbarui atau data duplikat digabung.
+- Menambahkan migration `017_link_guardians_to_jamaah.sql`.
 - Menyatukan penyimpanan profil dan kelas warga dalam satu transaksi database.
 - Menyatukan absensi dan ketuntasan Hasda/ASAD dalam satu transaksi serta melindungi ketuntasan sesi utama dari pembatalan manual.
 - Mempertahankan default seluruh peserta sebagai Alpa dan melarang penyimpanan absensi sebelum tanggal pelaksanaan.

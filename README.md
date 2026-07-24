@@ -74,6 +74,8 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Mengelompokkan beberapa jamaah dalam satu data keluarga tanpa menggandakan data sensus.
 - Menyimpan nama keluarga, alamat, catatan, hubungan anggota, dan kontak keluarga utama.
 - Menyimpan beberapa kontak wali untuk setiap jamaah dengan satu kontak utama.
+- Wali ditautkan ke data warga yang sudah ada sehingga nama dan nomor WhatsApp mengikuti Data Sensus.
+- Kepala keluarga, suami, atau ayah dapat ditetapkan sebagai wali dirinya sendiri.
 - Admin dapat melihat keluarga dan kontak wali hanya untuk jamaah dari kelas yang diampunya.
 - Superadmin dapat menambah, mengubah, dan menghapus keluarga serta kontak wali.
 - Tombol WhatsApp pada Tindak Lanjut otomatis memakai nomor wali utama ketika nomor jamaah kosong.
@@ -164,10 +166,11 @@ Jalankan migration secara berurutan:
 14. `supabase/migrations/014_admin_account_management.sql`
 15. `supabase/migrations/015_admin_schedule_creation.sql`
 16. `supabase/migrations/016_integrity_hardening.sql`
+17. `supabase/migrations/017_link_guardians_to_jamaah.sql`
 
-Untuk project yang sudah menjalankan migration 001–015, cukup jalankan migration 016.
+Untuk project yang sudah menjalankan migration 001–016, cukup jalankan migration 017.
 
-Migration 016 wajib digunakan bersama versi frontend ini karena penyimpanan warga dan absensi memakai RPC transaksional baru. Migration 015 tetap diperlukan agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
+Migration 017 wajib digunakan bersama versi frontend ini karena penyimpanan wali memakai RPC relasi antarwarga. Migration 016 tetap diperlukan karena penyimpanan warga dan absensi memakai RPC transaksional, migration 015 agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
 
 ## Edge Function pembuatan Admin
 

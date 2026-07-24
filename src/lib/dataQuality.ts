@@ -56,7 +56,7 @@ function hasExpectedPrimaryClass(person: Jamaah, classNameById: Map<string, stri
   const names = person.classIds.map((id) => classNameById.get(id) ?? '')
   switch (person.censusCategory) {
     case 'Balita':
-      return names.some((name) => name === 'Playgroup')
+      return !person.classIds.length || names.some((name) => name === 'Playgroup')
     case 'Caberawit':
       return names.some((name) => ['PAUD', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C'].includes(name))
     case 'Pra Remaja':
@@ -101,6 +101,7 @@ export function analyzeDataQuality(
   guardianContacts: GuardianContact[],
 ): DataQualityResult {
   const active = jamaah.filter((person) => person.active)
+  const peopleById = new Map(jamaah.map((person) => [person.id, person]))
   const classNameById = new Map(classes.map((studyClass) => [studyClass.id, studyClass.name]))
   const guardianByJamaah = new Map<string, GuardianContact[]>()
   guardianContacts.forEach((contact) => {
@@ -116,10 +117,13 @@ export function analyzeDataQuality(
 
   active.forEach((person) => {
     const guardians = guardianByJamaah.get(person.id) ?? []
-    const hasGuardianPhone = guardians.some((contact) => normalizePhone(contact.phone).length >= 9)
+    const hasGuardianPhone = guardians.some((contact) => {
+      const linkedPhone = contact.guardianJamaahId ? peopleById.get(contact.guardianJamaahId)?.phone : null
+      return normalizePhone(linkedPhone ?? contact.phone).length >= 9
+    })
     const phone = normalizePhone(person.phone)
 
-    if (!person.classIds.length) {
+    if (!person.classIds.length && person.censusCategory !== 'Balita') {
       addIssue(person, 'no_class', 'critical', 'Belum memiliki kelas', 'Warga aktif tidak akan muncul pada daftar absensi kelas mana pun.')
     }
     if (!phone && !hasGuardianPhone) {

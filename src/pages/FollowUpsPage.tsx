@@ -150,7 +150,7 @@ export function FollowUpsPage() {
         <div className="followup-list">
           {risks.map((risk) => {
             const status = risk.followUp?.status ?? 'pending'
-            const preferredContact = preferredContactForJamaah(risk.jamaah, guardianContacts)
+            const preferredContact = preferredContactForJamaah(risk.jamaah, guardianContacts, jamaah)
             const waNumber = preferredContact ? normalizeWhatsappNumber(preferredContact.phone) : ''
             return (
               <article className={`followup-card ${risk.level === 'priority' ? 'priority' : ''}`} key={`${risk.classId}-${risk.jamaah.id}`}>

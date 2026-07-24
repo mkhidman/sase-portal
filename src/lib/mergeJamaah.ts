@@ -81,15 +81,22 @@ export function mergeDemoJamaah(
   const usedFamilyIds = new Set(familyMembers.map((item) => item.familyId))
   const families = data.families.filter((family) => usedFamilyIds.has(family.id))
 
-  const targetGuardians = data.guardianContacts.filter((item) => item.jamaahId === primary.id)
-  const targetGuardianKeys = new Set(targetGuardians.map((item) => `${item.fullName.trim().toLowerCase()}|${item.phone.replace(/\D/g, '')}`))
+  const normalizedGuardianLinks = data.guardianContacts.map((item) => item.guardianJamaahId === duplicate.id
+    ? { ...item, guardianJamaahId: primary.id, fullName: mergedPrimary.fullName, phone: mergedPrimary.phone }
+    : item)
+  const targetGuardians = normalizedGuardianLinks.filter((item) => item.jamaahId === primary.id)
+  const targetGuardianKeys = new Set(targetGuardians.map((item) => item.guardianJamaahId
+    ? `linked:${item.guardianJamaahId}`
+    : `legacy:${item.fullName.trim().toLowerCase()}|${item.phone.replace(/\D/g, '')}`))
   const hasTargetPrimary = targetGuardians.some((item) => item.isPrimary)
-  const movedGuardians = data.guardianContacts
+  const movedGuardians = normalizedGuardianLinks
     .filter((item) => item.jamaahId === duplicate.id)
-    .filter((item) => !targetGuardianKeys.has(`${item.fullName.trim().toLowerCase()}|${item.phone.replace(/\D/g, '')}`))
+    .filter((item) => !targetGuardianKeys.has(item.guardianJamaahId
+      ? `linked:${item.guardianJamaahId}`
+      : `legacy:${item.fullName.trim().toLowerCase()}|${item.phone.replace(/\D/g, '')}`))
     .map((item) => ({ ...item, jamaahId: primary.id, isPrimary: hasTargetPrimary ? false : item.isPrimary }))
   const guardianContacts = [
-    ...data.guardianContacts.filter((item) => item.jamaahId !== duplicate.id),
+    ...normalizedGuardianLinks.filter((item) => item.jamaahId !== duplicate.id),
     ...movedGuardians,
   ]
 
