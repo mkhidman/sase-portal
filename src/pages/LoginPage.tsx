@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { ShieldCheck, UserRoundCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export function LoginPage() {
   const { user, signIn, signInDemo, isDemo } = useAuth()
@@ -50,10 +51,11 @@ export function LoginPage() {
           </div>
         ) : (
           <form className="login-form" onSubmit={submit}>
+            {!isSupabaseConfigured ? <div className="notice danger-notice">Konfigurasi Supabase belum tersedia. Hubungi pengelola deployment.</div> : null}
             <label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
             <label>Password<input type="password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
             {error ? <p className="form-error">{error}</p> : null}
-            <button className="button primary full" disabled={submitting}>{submitting ? 'Memproses…' : 'Masuk'}</button>
+            <button className="button primary full" disabled={submitting || !isSupabaseConfigured}>{submitting ? 'Memproses…' : 'Masuk'}</button>
           </form>
         )}
 

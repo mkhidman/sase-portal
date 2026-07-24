@@ -2,6 +2,7 @@ import type { AttendanceStatus, BootstrapData, MaterialType } from '../types/dom
 
 const CACHE_PREFIX = 'sj-bootstrap-cache-v1'
 const DRAFT_PREFIX = 'sj-attendance-draft-v2'
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 export interface AttendanceDraft {
   userId: string
@@ -39,8 +40,14 @@ export function saveBootstrapCache(userId: string, data: BootstrapData): void {
 }
 
 export function loadBootstrapCache(userId: string): { data: BootstrapData; cachedAt: string } | null {
-  const cached = safeParse<{ data: BootstrapData; cachedAt: string }>(localStorage.getItem(bootstrapCacheKey(userId)))
+  const key = bootstrapCacheKey(userId)
+  const cached = safeParse<{ data: BootstrapData; cachedAt: string }>(localStorage.getItem(key))
   if (!cached) return null
+  const cachedAt = new Date(cached.cachedAt).getTime()
+  if (!Number.isFinite(cachedAt) || Date.now() - cachedAt > CACHE_MAX_AGE_MS) {
+    localStorage.removeItem(key)
+    return null
+  }
   return {
     ...cached,
     data: {
@@ -48,6 +55,17 @@ export function loadBootstrapCache(userId: string): { data: BootstrapData; cache
       attendanceSessions: (cached.data.attendanceSessions ?? []).map((session) => ({ ...session, revision: session.revision ?? 1 })),
     },
   }
+}
+
+export function clearUserOfflineData(userId: string): void {
+  localStorage.removeItem(bootstrapCacheKey(userId))
+  const draftPrefix = `${DRAFT_PREFIX}:${userId}:`
+  const keysToRemove: string[] = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key?.startsWith(draftPrefix)) keysToRemove.push(key)
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key))
 }
 
 function normalizedMaterialKey(materialName: string): string {

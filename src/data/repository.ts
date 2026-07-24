@@ -27,6 +27,19 @@ function requireSupabase() {
   return supabase
 }
 
+const DATA_PAGE_SIZE = 500
+
+async function fetchAllRows<T>(buildQuery: () => any): Promise<{ data: T[]; error: any }> {
+  const rows: T[] = []
+  for (let from = 0; ; from += DATA_PAGE_SIZE) {
+    const result = await buildQuery().range(from, from + DATA_PAGE_SIZE - 1)
+    if (result.error) return { data: rows, error: result.error }
+    const page = (result.data ?? []) as T[]
+    rows.push(...page)
+    if (page.length < DATA_PAGE_SIZE) return { data: rows, error: null }
+  }
+}
+
 type ProfileRow = {
   id: string
   full_name: string
@@ -43,19 +56,19 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
 
   const client = requireSupabase()
   const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult] = await Promise.all([
-    client.from('study_classes').select('id,name,active').order('sort_order'),
-    client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name'),
-    client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date'),
-    client.from('attendance_sessions').select('id,date,class_id,material_type,material_name,notes,saved_at,revision,attendance_records(jamaah_id,status)').order('date', { ascending: false }),
-    client.from('material_completions').select('id,month,material_type,jamaah_id,class_id,source,completed_on,source_session_id'),
-    client.from('jamaah_follow_ups').select('id,jamaah_id,class_id,period_month,status,trigger_type,attendance_rate,absence_count,consecutive_absence,notes,next_follow_up_date,recorded_by,created_at,updated_at'),
-    client.from('reporting_periods').select('id,month,status,closed_at,closed_by,notes,created_at,updated_at').order('month', { ascending: false }),
-    client.from('class_membership_history').select('id,jamaah_id,from_class_id,to_class_id,previous_census_category,new_census_category,effective_date,change_type,notes,changed_by,created_at').order('effective_date', { ascending: false }).order('created_at', { ascending: false }),
-    client.from('jamaah_status_history').select('id,jamaah_id,previous_active,new_active,reason,effective_date,notes,class_ids,changed_by,created_at').order('effective_date', { ascending: false }).order('created_at', { ascending: false }),
-    client.from('families').select('id,name,address,notes,created_at,updated_at').order('name'),
-    client.from('family_members').select('family_id,jamaah_id,relationship,is_primary_contact'),
-    client.from('guardian_contacts').select('id,jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name'),
-    client.from('jamaah_merge_history').select('id,primary_jamaah_id,duplicate_jamaah_id,primary_name,duplicate_name,merged_profile,duplicate_snapshot,moved_counts,family_conflict,merged_by,merged_at').order('merged_at', { ascending: false }),
+    fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
+    fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
+    fetchAllRows(() => client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date').order('id')),
+    fetchAllRows(() => client.from('attendance_sessions').select('id,date,class_id,material_type,material_name,notes,saved_at,revision,attendance_records(jamaah_id,status)').order('date', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('material_completions').select('id,month,material_type,jamaah_id,class_id,source,completed_on,source_session_id').order('id')),
+    fetchAllRows(() => client.from('jamaah_follow_ups').select('id,jamaah_id,class_id,period_month,status,trigger_type,attendance_rate,absence_count,consecutive_absence,notes,next_follow_up_date,recorded_by,created_at,updated_at').order('id')),
+    fetchAllRows(() => client.from('reporting_periods').select('id,month,status,closed_at,closed_by,notes,created_at,updated_at').order('month', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('class_membership_history').select('id,jamaah_id,from_class_id,to_class_id,previous_census_category,new_census_category,effective_date,change_type,notes,changed_by,created_at').order('effective_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('jamaah_status_history').select('id,jamaah_id,previous_active,new_active,reason,effective_date,notes,class_ids,changed_by,created_at').order('effective_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('families').select('id,name,address,notes,created_at,updated_at').order('name').order('id')),
+    fetchAllRows(() => client.from('family_members').select('family_id,jamaah_id,relationship,is_primary_contact').order('family_id').order('jamaah_id')),
+    fetchAllRows(() => client.from('guardian_contacts').select('id,jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name').order('id')),
+    fetchAllRows(() => client.from('jamaah_merge_history').select('id,primary_jamaah_id,duplicate_jamaah_id,primary_name,duplicate_name,merged_profile,duplicate_snapshot,moved_counts,family_conflict,merged_by,merged_at').order('merged_at', { ascending: false }).order('id')),
   ])
 
   const coreResults = [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult]
@@ -272,24 +285,19 @@ export async function persistDemo(data: BootstrapData): Promise<void> {
 export async function upsertJamaah(jamaah: Jamaah): Promise<Jamaah> {
   if (isDemoMode) return jamaah
   const client = requireSupabase()
-  const payload = {
-    id: jamaah.id.startsWith('new-') ? undefined : jamaah.id,
-    full_name: jamaah.fullName,
-    gender: jamaah.gender,
-    birth_date: jamaah.birthDate || null,
-    phone: jamaah.phone || null,
-    census_category: jamaah.censusCategory,
-    active: jamaah.active,
-  }
-  const { data, error } = await client.from('jamaah').upsert(payload).select('id').single()
+  const { data, error } = await client.rpc('save_jamaah_record', {
+    target_jamaah_id: jamaah.id.startsWith('new-') ? null : jamaah.id,
+    jamaah_full_name: jamaah.fullName,
+    jamaah_gender: jamaah.gender,
+    jamaah_birth_date: jamaah.birthDate || null,
+    jamaah_phone: jamaah.phone || null,
+    jamaah_census_category: jamaah.censusCategory,
+    jamaah_active: jamaah.active,
+    jamaah_class_ids: jamaah.classIds,
+  })
   if (error) throw error
-  const id = data.id as string
-  const deleteResult = await client.from('jamaah_classes').delete().eq('jamaah_id', id)
-  if (deleteResult.error) throw deleteResult.error
-  if (jamaah.classIds.length) {
-    const insertResult = await client.from('jamaah_classes').insert(jamaah.classIds.map((classId) => ({ jamaah_id: id, class_id: classId })))
-    if (insertResult.error) throw insertResult.error
-  }
+  if (typeof data !== 'string') throw new Error('Data warga tersimpan, tetapi ID warga tidak diterima.')
+  const id = data
   return { ...jamaah, id }
 }
 
@@ -329,10 +337,28 @@ export async function upsertSchedule(schedule: Schedule): Promise<Schedule> {
   return { ...schedule, id: data.id as string }
 }
 
-export async function upsertAttendanceSession(session: AttendanceSession, expectedRevision: number): Promise<AttendanceSession> {
-  if (isDemoMode) return { ...session, revision: Math.max(expectedRevision, 0) + 1 }
+export async function upsertAttendanceSession(
+  session: AttendanceSession,
+  expectedRevision: number,
+  completionJamaahIds: string[],
+): Promise<{ session: AttendanceSession; materialCompletions: MaterialCompletion[] }> {
+  if (isDemoMode) {
+    return {
+      session: { ...session, revision: Math.max(expectedRevision, 0) + 1 },
+      materialCompletions: completionJamaahIds.map((jamaahId) => ({
+        id: crypto.randomUUID(),
+        month: session.date.slice(0, 7),
+        materialType: session.materialType as MaterialCompletion['materialType'],
+        jamaahId,
+        classId: session.classId,
+        source: 'main_session',
+        completedOn: session.date,
+        sourceSessionId: session.id,
+      })),
+    }
+  }
   const client = requireSupabase()
-  const { data, error } = await client.rpc('save_attendance_session_safe', {
+  const { data, error } = await client.rpc('save_attendance_session_complete', {
     target_session_id: session.id,
     session_date: session.date,
     target_class_id: session.classId,
@@ -342,6 +368,7 @@ export async function upsertAttendanceSession(session: AttendanceSession, expect
     session_saved_at: session.savedAt,
     expected_revision: expectedRevision,
     record_items: Object.entries(session.statuses).map(([jamaahId, status]) => ({ jamaahId, status })),
+    completion_jamaah_ids: completionJamaahIds,
   })
   if (error) {
     if (error.message.includes('ATTENDANCE_CONFLICT')) {
@@ -349,9 +376,12 @@ export async function upsertAttendanceSession(session: AttendanceSession, expect
     }
     throw error
   }
-  const result = data as { id?: string; revision?: number; savedAt?: string } | null
+  const result = data as { id?: string; revision?: number; savedAt?: string; completions?: MaterialCompletion[] } | null
   if (!result?.id || typeof result.revision !== 'number') throw new Error('Absensi tersimpan, tetapi versi data tidak dapat diverifikasi.')
-  return { ...session, id: result.id, revision: result.revision, savedAt: result.savedAt ?? session.savedAt }
+  return {
+    session: { ...session, id: result.id, revision: result.revision, savedAt: result.savedAt ?? session.savedAt },
+    materialCompletions: result.completions ?? [],
+  }
 }
 
 export async function removeAttendanceSession(id: string): Promise<void> {

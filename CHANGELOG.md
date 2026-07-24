@@ -1,5 +1,15 @@
 ## Belum dirilis
 
+- Menyatukan penyimpanan profil dan kelas warga dalam satu transaksi database.
+- Menyatukan absensi dan ketuntasan Hasda/ASAD dalam satu transaksi serta melindungi ketuntasan sesi utama dari pembatalan manual.
+- Mempertahankan default seluruh peserta sebagai Alpa dan melarang penyimpanan absensi sebelum tanggal pelaksanaan.
+- Menggunakan snapshot historis pada progres materi, rekap, dashboard, dan tindak lanjut.
+- Menolak tanggal lahir serta tanggal efektif kelas/status yang berada di masa depan.
+- Membatasi cache data lokal selama 24 jam dan membersihkannya ketika pengguna keluar.
+- Memuat data Supabase secara bertahap agar tidak terpotong pada batas respons.
+- Mengubah konfigurasi produksi menjadi fail-closed ketika Supabase belum tersedia.
+- Memperkuat validasi Edge Function pengelolaan akun Admin.
+- Menambahkan migration `016_integrity_hardening.sql`.
 - Menambahkan filter Laki-laki/Perempuan pada pengisian absensi dan membuat aksi massal mengikuti gender yang dipilih.
 - Menambahkan kolom materi sambung/keterangan langsung pada formulir absensi.
 - Mengizinkan Admin membuat jadwal hanya untuk kelas yang diampunya melalui validasi frontend dan RLS.

@@ -163,10 +163,11 @@ Jalankan migration secara berurutan:
 13. `supabase/migrations/013_duplicate_merge.sql`
 14. `supabase/migrations/014_admin_account_management.sql`
 15. `supabase/migrations/015_admin_schedule_creation.sql`
+16. `supabase/migrations/016_integrity_hardening.sql`
 
-Untuk project yang sudah menjalankan migration 001–014, cukup jalankan migration 015.
+Untuk project yang sudah menjalankan migration 001–015, cukup jalankan migration 016.
 
-Migration 015 wajib agar Admin dapat membuat jadwal kelasnya sendiri. Migration 013 tetap diperlukan untuk penggabungan data duplikat dan migration 012 untuk perlindungan konflik edit absensi.
+Migration 016 wajib digunakan bersama versi frontend ini karena penyimpanan warga dan absensi memakai RPC transaksional baru. Migration 015 tetap diperlukan agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
 
 ## Edge Function pembuatan Admin
 

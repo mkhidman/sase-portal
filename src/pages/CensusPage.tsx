@@ -8,7 +8,7 @@ import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES } from '../lib/constants'
 import { buildJamaahImportPreview, type JamaahImportPreview } from '../lib/csvImport'
-import { ageFromBirthDate, downloadCsv } from '../lib/utils'
+import { ageFromBirthDate, downloadCsv, localIsoDate } from '../lib/utils'
 import type { CensusCategory, Gender, Jamaah } from '../types/domain'
 
 const EMPTY_FORM: Jamaah = {
@@ -76,7 +76,7 @@ export function CensusPage() {
   }, [jamaah, params])
 
   function openCreate() {
-    setForm({ ...EMPTY_FORM, id: crypto.randomUUID() })
+    setForm({ ...EMPTY_FORM, id: `new-${crypto.randomUUID()}` })
     setMessage(null)
     setModalOpen(true)
   }
@@ -261,11 +261,11 @@ export function CensusPage() {
         <div className="form-grid">
           <label>Nama lengkap *<input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} /></label>
           <label>Jenis kelamin<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as Gender })}><option>Laki-laki</option><option>Perempuan</option></select></label>
-          <label>Tanggal lahir (opsional)<input type="date" value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: event.target.value })} /></label>
+          <label>Tanggal lahir (opsional)<input type="date" max={localIsoDate()} value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: event.target.value })} /></label>
           <label>Nomor WhatsApp<input inputMode="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
           <label>Kategori sensus<select value={form.censusCategory} onChange={(event) => setForm({ ...form, censusCategory: event.target.value as CensusCategory })}>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
           <div className="status-readonly-field"><span>Status</span><strong className={`badge ${form.active ? 'success' : 'danger'}`}>{form.active ? 'Aktif' : 'Nonaktif'}</strong><small>Gunakan menu Status & Arsip untuk mengubah status agar alasan dan tanggal efektif tercatat.</small></div>
-          <fieldset className="form-span-two"><legend>Kelas pengajian yang diikuti</legend><div className="checkbox-grid">{classes.map((studyClass) => <label className="checkbox-card" key={studyClass.id}><input type="checkbox" checked={form.classIds.includes(studyClass.id)} onChange={(event) => setForm({ ...form, classIds: event.target.checked ? [...form.classIds, studyClass.id] : form.classIds.filter((id) => id !== studyClass.id) })} /><span>{studyClass.name}</span></label>)}</div></fieldset>
+          <fieldset className="form-span-two"><legend>Kelas pengajian yang diikuti</legend><div className="checkbox-grid">{classes.filter((studyClass) => studyClass.active).map((studyClass) => <label className="checkbox-card" key={studyClass.id}><input type="checkbox" checked={form.classIds.includes(studyClass.id)} onChange={(event) => setForm({ ...form, classIds: event.target.checked ? [...form.classIds, studyClass.id] : form.classIds.filter((id) => id !== studyClass.id) })} /><span>{studyClass.name}</span></label>)}</div></fieldset>
         </div>
         {message ? <p className="form-error">{message}</p> : null}
       </Modal>

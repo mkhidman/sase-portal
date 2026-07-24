@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { AppUser } from '../types/domain'
 import { DEMO_ADMIN, DEMO_SUPERADMIN } from '../data/demo'
 import { isDemoMode, supabase } from '../lib/supabase'
+import { clearUserOfflineData } from '../lib/offline'
 
 interface AuthContextValue {
   user: AppUser | null
@@ -60,6 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       return
     }
+    if (!supabase) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
 
     let active = true
     void supabase?.auth.getSession().then(async ({ data }) => {
@@ -79,7 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
-        setUser(null)
+        setUser((current) => {
+          if (current) clearUserOfflineData(current.id)
+          return null
+        })
         return
       }
       void loadSupabaseUser(session.user.id)
@@ -142,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(role === 'superadmin' ? DEMO_SUPERADMIN : DEMO_ADMIN)
       },
       async signOut() {
+        if (user) clearUserOfflineData(user.id)
         if (isDemoMode) {
           localStorage.removeItem(DEMO_ROLE_KEY)
           setUser(null)

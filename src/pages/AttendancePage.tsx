@@ -241,7 +241,7 @@ export function AttendancePage() {
               type="button"
               key={status}
               className={`status-button ${status} ${statuses[person.id] === status ? 'active' : ''}`}
-              disabled={periodClosed}
+              disabled={periodClosed || futureDate}
               onClick={() => changeStatuses({ ...statuses, [person.id]: status })}
               title={ATTENDANCE_LABELS[status]}
             >
@@ -255,27 +255,29 @@ export function AttendancePage() {
 
   const isGeneral = studyClass?.name === 'Pengajian Umum'
   const periodClosed = isPeriodClosed(date.slice(0, 7))
+  const futureDate = date > localIsoDate()
 
   return (
     <>
       <PageHeader
         title="Absensi Kelas"
         description="Status awal seluruh peserta adalah Alpa. Ubah hanya yang Hadir, Izin, atau Sakit."
-        actions={<button className="button primary" disabled={saving || periodClosed || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
+        actions={<button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
       />
 
       <article className="card attendance-card">
         <div className="attendance-filters">
           <label>Kelas pengajian<select value={classId} onChange={(event) => { persistDraftNow(); setClassId(event.target.value) }}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-          <label>Tanggal<input type="date" value={date} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
+          <label>Tanggal<input type="date" max={localIsoDate()} value={date} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
           <label>Materi<select value={materialType} onChange={(event) => { persistDraftNow(); setMaterialType(event.target.value as MaterialType); setMaterialName('') }}>{Object.entries(MATERIAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Jenis kelamin<select value={genderFilter} onChange={(event) => setGenderFilter(event.target.value as 'all' | Gender)}><option value="all">Semua warga</option><option value="Laki-laki">Laki-laki saja</option><option value="Perempuan">Perempuan saja</option></select></label>
-          <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>
+          <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed || futureDate} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>
         </div>
 
         {materialName ? <div className="attendance-material-info"><strong>{materialName}</strong>{notes ? <span>{notes}</span> : null}</div> : notes ? <div className="attendance-material-info"><strong>{materialDisplayName(materialType, materialName)}</strong><span>{notes}</span></div> : null}
 
         {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Absensi hanya dapat dilihat dan tidak dapat diubah.</div> : null}
+        {futureDate ? <div className="notice danger-notice">Jadwal ini belum berlangsung. Absensi dapat diisi mulai pada tanggal pelaksanaan.</div> : null}
 
         {conflictDetected ? (
           <div className="notice attendance-conflict-notice">
@@ -294,7 +296,7 @@ export function AttendancePage() {
         </div>
 
         <div className="attendance-toolbar">
-          <div className="button-row"><button className="button soft small" disabled={periodClosed || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
+          <div className="button-row"><button className="button soft small" disabled={periodClosed || futureDate || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || futureDate || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
           <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {filteredCounts[status]}</span>)}</div>
         </div>
 
@@ -321,7 +323,7 @@ export function AttendancePage() {
 
       <div className="attendance-mobile-save">
         <span><strong>{counts.present} hadir</strong><small>{dirty ? 'Draft tersimpan lokal' : `Versi ${existing?.revision ?? 0}`}</small></span>
-        <button className="button primary" disabled={saving || periodClosed || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
+        <button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
       </div>
     </>
   )

@@ -13,7 +13,7 @@ export function ClassesPage() {
           const members = jamaah.filter((person) => person.active && person.classIds.includes(studyClass.id))
           return (
             <article className="card class-card" key={studyClass.id}>
-              <div className="card-heading"><div><h2>{studyClass.name}</h2><p>{studyClass.name === '5 Unsur' ? 'Anggota ditentukan secara manual.' : 'Keanggotaan mengikuti data sensus warga.'}</p></div><span className="badge success">Aktif</span></div>
+              <div className="card-heading"><div><h2>{studyClass.name}</h2><p>{studyClass.name === '5 Unsur' ? 'Anggota ditentukan secara manual.' : 'Keanggotaan mengikuti data sensus warga.'}</p></div><span className={`badge ${studyClass.active ? 'success' : 'danger'}`}>{studyClass.active ? 'Aktif' : 'Nonaktif'}</span></div>
               <div className="class-summary">
                 <span><small>Total</small><strong>{members.length}</strong></span>
                 <span><small>Laki-laki</small><strong>{members.filter((person) => person.gender === 'Laki-laki').length}</strong></span>

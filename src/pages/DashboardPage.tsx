@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
 import { ATTENDANCE_LABELS } from '../lib/constants'
-import { attendanceCounts, formatDate, isEligibleForMaterial, localIsoDate, materialDisplayName, monthValue, percentage } from '../lib/utils'
+import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
 import { analyzeDataQuality } from '../lib/dataQuality'
 import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
@@ -16,6 +16,9 @@ export function DashboardPage() {
     classes,
     visibleClasses,
     visibleJamaah,
+    jamaah,
+    classHistory,
+    statusHistory,
     schedules,
     attendanceSessions,
     materialCompletions,
@@ -42,9 +45,15 @@ export function DashboardPage() {
     .filter((schedule) => visibleClassIds.has(schedule.classId) && schedule.date >= localIsoDate())
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5)
+  const materialSnapshot = useMemo(
+    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(selectedMonth))),
+    [classHistory, jamaah, selectedMonth, statusHistory],
+  )
 
   function materialProgress(material: 'hasda' | 'asad') {
-    const participants = visibleJamaah.filter((person) => isEligibleForMaterial(material, person, classNameMap))
+    const participants = materialSnapshot.filter(
+      (person) => person.active && person.classIds.some((id) => visibleClassIds.has(id)) && isEligibleForMaterial(material, person, classNameMap),
+    )
     const done = participants.filter((person) =>
       materialCompletions.some(
         (completion) => completion.month === selectedMonth && completion.materialType === material && completion.jamaahId === person.id,

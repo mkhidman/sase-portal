@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 import { PageHeader, Person, ProgressBlock } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
-import { formatDate, isEligibleForMaterial, monthValue, percentage } from '../lib/utils'
+import { formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
 
 const HASDA_GROUPS = ['Semua Peserta', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
 const ASAD_GROUPS = ['Semua Peserta', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
 
 export function MaterialsPage() {
-  const { classes, visibleClasses, visibleJamaah, materialCompletions, toggleFollowUp, isPeriodClosed } = useData()
+  const { classes, visibleClasses, jamaah, classHistory, statusHistory, materialCompletions, toggleFollowUp, isPeriodClosed } = useData()
   const [month, setMonth] = useState(monthValue())
   const [materialType, setMaterialType] = useState<'hasda' | 'asad'>('hasda')
   const [group, setGroup] = useState('Semua Peserta')
@@ -21,8 +21,14 @@ export function MaterialsPage() {
     (item) => item === 'Semua Peserta' || ['Menikah', 'Duda & Janda'].includes(item) || visibleClassNames.has(item),
   )
   const effectiveGroup = groups.includes(group) ? group : groups[0] ?? 'Semua Peserta'
+  const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
+  const snapshotJamaah = useMemo(
+    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(month))),
+    [classHistory, jamaah, month, statusHistory],
+  )
 
-  const participants = visibleJamaah.filter((person) => {
+  const participants = snapshotJamaah.filter((person) => {
+    if (!person.active || !person.classIds.some((id) => visibleClassIds.has(id))) return false
     if (!isEligibleForMaterial(materialType, person, classNameMap)) return false
     if (effectiveGroup === 'Semua Peserta') return true
     if (effectiveGroup === 'Menikah' || effectiveGroup === 'Duda & Janda') return person.censusCategory === effectiveGroup
@@ -110,7 +116,14 @@ export function MaterialsPage() {
             return (
               <div className="completion-row" key={person.id}>
                 <div><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} /><div className="badge-list completion-meta"><span className={`badge ${completion ? 'success' : 'warning'}`}>{completion ? 'Sudah tuntas' : 'Belum tuntas'}</span>{completion ? <><span className="badge muted">{completion.source === 'main_session' ? 'Jadwal utama' : 'Penyusulan mandiri'}</span><span className="badge muted">{formatDate(completion.completedOn)}</span></> : null}</div></div>
-                <button className={`button small ${completion ? 'outline' : 'primary'}`} disabled={workingId === person.id || periodClosed} onClick={() => void toggle(person.id)}>{completion ? 'Batalkan' : 'Tandai penyusulan selesai'}</button>
+                <button
+                  className={`button small ${completion ? 'outline' : 'primary'}`}
+                  disabled={workingId === person.id || periodClosed || completion?.source === 'main_session'}
+                  title={completion?.source === 'main_session' ? 'Ketuntasan ini mengikuti status hadir pada absensi sesi utama.' : undefined}
+                  onClick={() => void toggle(person.id)}
+                >
+                  {completion?.source === 'main_session' ? 'Mengikuti absensi' : completion ? 'Batalkan' : 'Tandai penyusulan selesai'}
+                </button>
               </div>
             )
           })}

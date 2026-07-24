@@ -4,7 +4,7 @@ const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 
 export const isSupabaseConfigured = Boolean(url && publishableKey)
-export const isDemoMode = import.meta.env.VITE_DEMO_MODE !== 'false' || !isSupabaseConfigured
+export const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
 export const supabase = isSupabaseConfigured
   ? createClient(url as string, publishableKey as string, {

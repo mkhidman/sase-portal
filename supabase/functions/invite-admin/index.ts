@@ -7,6 +7,9 @@ const corsHeaders = {
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Metode tidak diizinkan.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 })
+  }
 
   try {
     const authorization = request.headers.get('Authorization')
@@ -25,19 +28,27 @@ Deno.serve(async (request) => {
 
     const body = await request.json() as { email: string; fullName: string; password: string; classIds: string[] }
     if (!body.email || !body.fullName || !body.password || body.password.length < 8 || !Array.isArray(body.classIds) || !body.classIds.length) throw new Error('Data Admin belum lengkap.')
+    const classIds = [...new Set(body.classIds)]
+    const { count: activeClassCount, error: classError } = await adminClient
+      .from('study_classes')
+      .select('id', { count: 'exact', head: true })
+      .in('id', classIds)
+      .eq('active', true)
+    if (classError || activeClassCount !== classIds.length) throw new Error('Salah satu kelas tidak ditemukan atau sudah nonaktif.')
 
     const { data: created, error: createError } = await adminClient.auth.admin.createUser({
-      email: body.email,
+      email: body.email.trim().toLowerCase(),
       password: body.password,
       email_confirm: true,
-      user_metadata: { full_name: body.fullName, role: 'admin', must_change_password: true },
+      user_metadata: { full_name: body.fullName.trim(), role: 'admin', must_change_password: true },
     })
     if (createError || !created.user) throw createError ?? new Error('Gagal membuat user.')
 
     try {
-      const { error: assignmentError } = await adminClient.from('admin_class_assignments').insert(body.classIds.map((classId) => ({ admin_id: created.user.id, class_id: classId })))
+      const { error: assignmentError } = await adminClient.from('admin_class_assignments').insert(classIds.map((classId) => ({ admin_id: created.user.id, class_id: classId })))
       if (assignmentError) throw assignmentError
-      await adminClient.from('profiles').update({ active: true, must_change_password: true }).eq('id', created.user.id)
+      const { error: profileError } = await adminClient.from('profiles').update({ active: true, must_change_password: true }).eq('id', created.user.id)
+      if (profileError) throw profileError
     } catch (cause) {
       await adminClient.auth.admin.deleteUser(created.user.id)
       throw cause

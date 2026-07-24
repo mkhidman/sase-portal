@@ -218,7 +218,7 @@ export function ClassProgressionPage() {
             </select>
           </label>
           <label>Tanggal efektif
-            <input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
+            <input type="date" max={localIsoDate()} value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
           </label>
         </div>
 

@@ -12,6 +12,8 @@ import {
   downloadCsv,
   formatDate,
   isEligibleForMaterial,
+  jamaahSnapshotAsOfDate,
+  monthEndDate,
   monthValue,
   percentage,
   materialDisplayName,
@@ -23,7 +25,9 @@ export function RecapPage() {
   const {
     classes,
     visibleClasses,
-    visibleJamaah,
+    jamaah,
+    classHistory,
+    statusHistory,
     attendanceSessions,
     materialCompletions,
     deleteAttendance,
@@ -41,6 +45,10 @@ export function RecapPage() {
     .sort((a, b) => b.date.localeCompare(a.date) || b.savedAt.localeCompare(a.savedAt))
 
   const sessionPagination = usePagination(sessions, `${month}|${classId}`)
+  const snapshotJamaah = useMemo(
+    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(month))),
+    [classHistory, jamaah, month, statusHistory],
+  )
 
   const averageAttendance = sessions.length
     ? Math.round(
@@ -52,7 +60,9 @@ export function RecapPage() {
     : 0
 
   function progressFor(materialType: 'hasda' | 'asad') {
-    const participants = visibleJamaah.filter((person) => isEligibleForMaterial(materialType, person, classNameMap))
+    const participants = snapshotJamaah.filter(
+      (person) => person.active && person.classIds.some((id) => allowedIds.has(id)) && isEligibleForMaterial(materialType, person, classNameMap),
+    )
     const done = participants.filter((person) => materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)).length
     return { done, total: participants.length, percent: percentage(done, participants.length) }
   }
@@ -85,7 +95,7 @@ export function RecapPage() {
   }
 
   const detailMembers = detail
-    ? Object.entries(detail.statuses).map(([jamaahId, status]) => ({ person: visibleJamaah.find((item) => item.id === jamaahId), status })).filter((item) => item.person)
+    ? Object.entries(detail.statuses).map(([jamaahId, status]) => ({ person: jamaah.find((item) => item.id === jamaahId), status })).filter((item) => item.person)
     : []
   const detailCounts = detail ? attendanceCounts(detail.statuses) : null
   const detailTotal = detail ? Object.keys(detail.statuses).length : 0

@@ -50,7 +50,7 @@ import {
 import { resetDemoBootstrap } from '../data/demo'
 import { useAuth } from './AuthContext'
 import { isDemoMode, supabase } from '../lib/supabase'
-import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, localIsoDate } from '../lib/utils'
+import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotAsOfDate, localIsoDate } from '../lib/utils'
 import { loadBootstrapCache, saveBootstrapCache } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
 
@@ -240,6 +240,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       reload,
       async saveJamaah(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah sensus.')
+        if (input.birthDate && input.birthDate > localIsoDate()) throw new Error('Tanggal lahir tidak boleh berada di masa depan.')
+        const activeClassIds = new Set(data.classes.filter((item) => item.active).map((item) => item.id))
+        if (input.classIds.some((classId) => !activeClassIds.has(classId))) {
+          throw new Error('Salah satu kelas sudah nonaktif. Muat ulang data lalu pilih kelas aktif.')
+        }
         const saved = await upsertJamaah(input)
         await updateData((current) => ({
           ...current,
@@ -291,6 +296,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }))
       },
       async saveAttendance(input) {
+        if (input.date > localIsoDate()) throw new Error('Absensi tidak dapat disimpan untuk tanggal yang belum berlangsung.')
         if (isPeriodClosed(input.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Absensi tidak dapat diubah.')
         const existing = data.attendanceSessions.find(
           (item) =>
@@ -309,32 +315,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
           revision: existing?.revision ?? 0,
         }
 
-        const linked = data.materialCompletions.filter(
-          (completion) => completion.sourceSessionId === existing?.id && completion.source === 'main_session',
-        )
-        const saved = await upsertAttendanceSession(session, input.expectedRevision ?? existing?.revision ?? 0)
-        await Promise.all(linked.map((completion) => removeMaterialCompletion(completion.id)))
-
         const classNameMap = new Map(data.classes.map((item) => [item.id, item.name]))
-        const addedCompletions: MaterialCompletion[] = []
-        if (isMandatoryMaterial(saved.materialType)) {
-          const month = saved.date.slice(0, 7)
-          for (const [jamaahId, status] of Object.entries(saved.statuses)) {
+        const completionJamaahIds: string[] = []
+        if (isMandatoryMaterial(session.materialType)) {
+          for (const [jamaahId, status] of Object.entries(session.statuses)) {
             const person = data.jamaah.find((item) => item.id === jamaahId)
-            if (status !== 'present' || !person || !isEligibleForMaterial(saved.materialType, person, classNameMap)) continue
-            const completion = await upsertMaterialCompletion({
-              id: crypto.randomUUID(),
-              month,
-              materialType: saved.materialType,
-              jamaahId,
-              classId: saved.classId,
-              source: 'main_session',
-              completedOn: saved.date,
-              sourceSessionId: saved.id,
-            })
-            addedCompletions.push(completion)
+            if (status !== 'present' || !person) continue
+            const historicalPerson = jamaahSnapshotAsOfDate(person, data.classHistory, data.statusHistory, session.date)
+            if (historicalPerson.active && isEligibleForMaterial(session.materialType, historicalPerson, classNameMap)) {
+              completionJamaahIds.push(jamaahId)
+            }
           }
         }
+        const saveResult = await upsertAttendanceSession(
+          session,
+          input.expectedRevision ?? existing?.revision ?? 0,
+          completionJamaahIds,
+        )
+        const saved = saveResult.session
+        const addedCompletions = saveResult.materialCompletions
+        const addedCompletionKeys = new Set(
+          addedCompletions.map((item) => `${item.month}|${item.materialType}|${item.jamaahId}`),
+        )
 
         await updateData((current) => ({
           ...current,
@@ -342,7 +344,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
             ? current.attendanceSessions.map((item) => (item.id === saved.id ? saved : item))
             : [saved, ...current.attendanceSessions],
           materialCompletions: [
-            ...current.materialCompletions.filter((item) => item.sourceSessionId !== existing?.id),
+            ...current.materialCompletions.filter(
+              (item) =>
+                item.sourceSessionId !== saved.id
+                && item.sourceSessionId !== existing?.id
+                && !addedCompletionKeys.has(`${item.month}|${item.materialType}|${item.jamaahId}`),
+            ),
             ...addedCompletions,
           ],
         }))
@@ -364,6 +371,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           (item) => item.month === month && item.materialType === materialType && item.jamaahId === jamaahId,
         )
         if (existing) {
+          if (existing.source === 'main_session') {
+            throw new Error('Ketuntasan dari sesi utama mengikuti absensi dan tidak dapat dibatalkan manual. Ubah absensi sesi terkait bila diperlukan.')
+          }
           await removeMaterialCompletion(existing.id)
           await updateData((current) => ({
             ...current,
@@ -487,6 +497,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat melakukan kenaikan atau mutasi kelas.')
         if (!input.jamaahIds.length) throw new Error('Pilih minimal satu warga.')
         if (input.fromClassId === input.toClassId) throw new Error('Kelas asal dan kelas tujuan harus berbeda.')
+        if (input.effectiveDate > localIsoDate()) throw new Error('Tanggal efektif tidak boleh berada di masa depan.')
         if (isPeriodClosed(input.effectiveDate.slice(0, 7))) throw new Error('Periode tanggal efektif sudah ditutup.')
 
         if (!isDemoMode) {
@@ -535,6 +546,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       async setJamaahActiveStatus(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah status warga.')
+        if (input.effectiveDate > localIsoDate()) throw new Error('Tanggal efektif tidak boleh berada di masa depan.')
         if (isPeriodClosed(input.effectiveDate.slice(0, 7))) throw new Error('Periode tanggal efektif sudah ditutup.')
         const person = data.jamaah.find((item) => item.id === input.jamaahId)
         if (!person) throw new Error('Data warga tidak ditemukan.')

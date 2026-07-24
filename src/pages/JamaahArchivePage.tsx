@@ -266,7 +266,7 @@ export function JamaahArchivePage() {
               <div><strong>{selectedPerson.fullName}</strong><p>{changeMode === 'reactivate' ? 'Warga akan kembali muncul pada kelas dan absensi baru.' : 'Data lama tidak dihapus dan tetap tersedia pada laporan historis.'}</p></div>
             </div>
             <div className="form-grid archive-form-grid">
-              <label>Tanggal efektif *<input type="date" value={form.effectiveDate} onChange={(event) => setForm({ ...form, effectiveDate: event.target.value })} /></label>
+              <label>Tanggal efektif *<input type="date" max={localIsoDate()} value={form.effectiveDate} onChange={(event) => setForm({ ...form, effectiveDate: event.target.value })} /></label>
               {changeMode === 'deactivate' ? (
                 <label>Alasan *<select value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value as JamaahStatusReason })}>{JAMAAH_DEACTIVATION_REASONS.map((reason) => <option key={reason} value={reason}>{JAMAAH_STATUS_REASON_LABELS[reason]}</option>)}</select></label>
               ) : (

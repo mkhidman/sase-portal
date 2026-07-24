@@ -13,6 +13,9 @@ type RequestBody =
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Metode tidak diizinkan.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 })
+  }
 
   try {
     const authorization = request.headers.get('Authorization')
@@ -75,13 +78,17 @@ Deno.serve(async (request) => {
 
     if (body.action === 'reset_password') {
       if (!body.adminId || !body.temporaryPassword || body.temporaryPassword.length < 8) throw new Error('Password sementara minimal 8 karakter.')
-      const { error: passwordError } = await adminClient.auth.admin.updateUserById(body.adminId, { password: body.temporaryPassword })
-      if (passwordError) throw passwordError
       const { error } = await adminClient.rpc('mark_admin_password_reset', {
         requesting_user_id: authData.user.id,
         target_admin_id: body.adminId,
       })
       if (error) throw error
+      const { error: passwordError } = await adminClient.auth.admin.updateUserById(body.adminId, { password: body.temporaryPassword })
+      if (passwordError) throw passwordError
+    }
+
+    if (!['replace_assignments', 'transfer_assignments', 'set_active', 'reset_password'].includes(body.action)) {
+      throw new Error('Tindakan tidak dikenali.')
     }
 
     return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
