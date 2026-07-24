@@ -240,7 +240,7 @@ export function MonthlyReportPage() {
         <div className="card-heading">
           <div>
             <h2>Komposisi Sensus Per Jenis Kelamin</h2>
-            <p>Posisi warga aktif pada akhir {monthLabel(month)} sesuai filter kelas.</p>
+            <p>Posisi warga aktif pada akhir {monthLabel(month)} sesuai filter kelas. {user?.role === 'admin' ? 'Angka hanya mencakup kelas yang Anda ampu dan dapat berbeda dari laporan global Superadmin.' : 'Angka Semua kelas mencakup seluruh data warga.'}</p>
           </div>
         </div>
         <div className="census-gender-grid">

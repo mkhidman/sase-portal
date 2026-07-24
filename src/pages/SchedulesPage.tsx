@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import { PageHeader } from '../components/UI'
-import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
 import { formatDate, isMandatoryMaterial, localIsoDate, materialDisplayName } from '../lib/utils'
@@ -24,7 +23,6 @@ function attendanceUrl(schedule: Schedule): string {
 
 export function SchedulesPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const { schedules, visibleClasses, saveSchedule, isPeriodClosed } = useData()
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -83,7 +81,7 @@ export function SchedulesPage() {
 
   return (
     <>
-      <PageHeader title="Jadwal Pengajian" description="Hanya jadwal hari ini dan setelahnya yang ditampilkan." actions={user?.role === 'superadmin' ? <button className="button primary" onClick={openCreate}><CalendarPlus size={16} /> Tambah Jadwal</button> : undefined} />
+      <PageHeader title="Jadwal Pengajian" description="Admin dapat menambahkan jadwal hanya untuk kelas yang diampunya. Hanya jadwal hari ini dan setelahnya yang ditampilkan." actions={<button className="button primary" disabled={!visibleClasses.length} onClick={openCreate}><CalendarPlus size={16} /> Tambah Jadwal</button>} />
       <div className="notice">Tanggal yang sudah lewat tetap tersimpan dan dapat dilihat melalui halaman Rekap Keseluruhan.</div>
       <article className="card">
         <div className="schedule-list">

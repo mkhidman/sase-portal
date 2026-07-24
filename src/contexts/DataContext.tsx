@@ -281,7 +281,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       async saveSchedule(input) {
         if (isPeriodClosed(input.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Buka kembali periode dari Laporan Bulanan untuk melakukan perubahan.')
-        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat membuat jadwal.')
+        if (!visibleClasses.some((item) => item.id === input.classId)) throw new Error('Anda hanya dapat membuat jadwal untuk kelas yang diampu.')
         const saved = await upsertSchedule(input)
         await updateData((current) => ({
           ...current,

@@ -18,6 +18,7 @@ import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { preferredContactForJamaah } from '../lib/contacts'
 import { normalizeWhatsappNumber } from '../lib/followUps'
+import { ageFromBirthDate, formatDate } from '../lib/utils'
 import type {
   Family,
   FamilyMember,
@@ -60,6 +61,7 @@ const EMPTY_GUARDIAN: GuardianContact = {
 export function FamilyContactsPage() {
   const { user } = useAuth()
   const {
+    classes,
     jamaah,
     visibleJamaah,
     families,
@@ -224,7 +226,7 @@ export function FamilyContactsPage() {
     <>
       <PageHeader
         title="Keluarga & Kontak Wali"
-        description="Kelompokkan warga dalam satu keluarga dan simpan nomor wali yang dapat dihubungi saat tindak lanjut absensi."
+        description={canManage ? 'Kelompokkan warga dalam satu keluarga dan simpan nomor wali yang dapat dihubungi saat tindak lanjut absensi.' : 'Daftar lengkap warga aktif, keluarga, dan wali dari kelas yang Anda ampu.'}
         actions={canManage ? <><button className="button outline" onClick={() => openCreateGuardian()}><UserRound size={16} /> Tambah Kontak Wali</button><button className="button primary" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button></> : undefined}
       />
 
@@ -267,10 +269,10 @@ export function FamilyContactsPage() {
       </article>
 
       <article className="card family-section">
-        <div className="card-heading"><div><h2>Kontak Warga dan Wali</h2><p>Nomor warga diprioritaskan. Jika kosong, sistem menggunakan kontak wali utama untuk tombol WhatsApp pada tindak lanjut.</p></div></div>
+        <div className="card-heading"><div><h2>Data Warga dan Wali</h2><p>Profil dan kelas warga ditampilkan bersama kontaknya. Nomor warga diprioritaskan; jika kosong, sistem menggunakan kontak wali utama.</p></div></div>
         <div className="table-wrap guardian-table">
           <table>
-            <thead><tr><th>Warga</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Warga</th><th>Profil & Kelas</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
             <tbody>
               {contactPagination.pageItems.map((person) => {
                 const membership = membershipByJamaah.get(person.id)
@@ -278,9 +280,12 @@ export function FamilyContactsPage() {
                 const contacts = guardianContacts.filter((item) => item.jamaahId === person.id).sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
                 const preferred = preferredContactForJamaah(person, guardianContacts)
                 const waNumber = preferred ? normalizeWhatsappNumber(preferred.phone) : ''
+                const age = ageFromBirthDate(person.birthDate)
+                const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
                   <tr key={person.id}>
-                    <td><Person name={person.fullName} meta={`${person.censusCategory} · ${person.phone || 'Nomor pribadi kosong'}`} /></td>
+                    <td><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
+                    <td><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
                     <td>{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
                     <td>{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
                     <td><div className="guardian-contact-list">{contacts.map((contact) => <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{contact.fullName}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}</small></button>)}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
@@ -288,7 +293,7 @@ export function FamilyContactsPage() {
                   </tr>
                 )
               })}
-              {!contactRows.length ? <tr><td colSpan={5}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
+              {!contactRows.length ? <tr><td colSpan={6}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
             </tbody>
           </table>
         </div>

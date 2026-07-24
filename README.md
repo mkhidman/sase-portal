@@ -85,6 +85,8 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Sidebar dikelompokkan menjadi subnavigasi agar lebih ringkas.
 - Pagination 10/15 baris pada tabel data utama.
 - Materi jadwal dapat ditambah secara dinamis beserta keterangan.
+- Form absensi memiliki filter Laki-laki/Perempuan dan kolom materi sambung/keterangan.
+- Admin dapat menambahkan jadwal hanya untuk kelas yang diampunya.
 - Ambang Tindak Lanjut menggunakan minimal 4 kali Alpa.
 - Laporan Bulanan dapat diunduh sebagai PDF rapi.
 - Ringkasan kategori sensus per jenis kelamin tersedia pada Data Sensus dan PDF bulanan.
@@ -159,10 +161,12 @@ Jalankan migration secara berurutan:
 11. `supabase/migrations/011_navigation_pagination_material_pdf.sql`
 12. `supabase/migrations/012_pilot_hardening.sql`
 13. `supabase/migrations/013_duplicate_merge.sql`
+14. `supabase/migrations/014_admin_account_management.sql`
+15. `supabase/migrations/015_admin_schedule_creation.sql`
 
-Untuk project yang sudah menjalankan migration 001–012, cukup jalankan migration 013.
+Untuk project yang sudah menjalankan migration 001–014, cukup jalankan migration 015.
 
-Migration 013 wajib untuk menjalankan penggabungan data duplikat dan menyimpan riwayat merge. Migration 012 tetap diperlukan untuk perlindungan konflik edit absensi.
+Migration 015 wajib agar Admin dapat membuat jadwal kelasnya sendiri. Migration 013 tetap diperlukan untuk penggabungan data duplikat dan migration 012 untuk perlindungan konflik edit absensi.
 
 ## Edge Function pembuatan Admin
 
@@ -236,3 +240,11 @@ Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset passw
 - Pada konteks absensi dan laporan sesi digunakan istilah **Peserta**.
 - Nama tabel, tipe TypeScript, route, dan migration yang masih memakai `jamaah` tidak diubah agar kompatibilitas Supabase tetap terjaga.
 - Metadata Open Graph untuk WhatsApp/media sosial berada di `index.html`, sedangkan gambar preview berada di `public/og-image.png`.
+
+## Penyesuaian operasional Admin
+
+- Filter absensi dapat dibatasi ke Laki-laki atau Perempuan tanpa menyembunyikan data gender lain dari sesi yang sama.
+- Materi sambung/keterangan dapat dicatat saat mengisi absensi dan ikut tersimpan pada rekap historis.
+- Admin dapat membuat jadwal hanya untuk kelas aktif yang ditugaskan kepadanya.
+- Halaman **Keluarga & Wali** menjadi daftar lengkap warga aktif pada kelas Admin, termasuk profil, kelas, keluarga, dan kontak.
+- Komposisi sensus pada Laporan Bulanan Admin mengikuti cakupan kelas yang diampu; laporan global tetap hanya tersedia bagi Superadmin.

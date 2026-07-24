@@ -194,7 +194,9 @@ tr:last-child td { border-bottom: 0; }
 .class-summary strong { font-size: 17px; }
 
 /* Attendance */
-.attendance-filters, .material-filters { display: grid; grid-template-columns: 1.1fr .8fr 1fr; gap: 11px; margin-bottom: 14px; }
+.attendance-filters, .material-filters { display: grid; grid-template-columns: 1.1fr .8fr 1fr 1fr; gap: 11px; margin-bottom: 14px; }
+.attendance-notes-field { grid-column: 1 / -1; }
+.attendance-notes-field textarea { width: 100%; resize: vertical; }
 .attendance-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .attendance-summary { display: flex; gap: 6px; flex-wrap: wrap; }
 .attendance-summary span { padding: 7px 9px; border-radius: 9px; background: #f1f4f2; font-size: 10px; font-weight: 800; }
@@ -838,7 +840,7 @@ textarea { width: 100%; resize: vertical; }
 .family-members .person { min-width: 0; }
 .family-notes { padding: 0 13px 13px; color: var(--muted); font-size: 10px !important; line-height: 1.5; }
 .family-empty { grid-column: 1 / -1; }
-.guardian-table table { min-width: 980px; }
+.guardian-table table { min-width: 1180px; }
 .table-subtle { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .muted-copy { color: var(--muted); font-size: 11px; }
 .guardian-contact-list { display: flex; flex-wrap: wrap; gap: 5px; }

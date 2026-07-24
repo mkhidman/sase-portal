@@ -1,3 +1,12 @@
+## Belum dirilis
+
+- Menambahkan filter Laki-laki/Perempuan pada pengisian absensi dan membuat aksi massal mengikuti gender yang dipilih.
+- Menambahkan kolom materi sambung/keterangan langsung pada formulir absensi.
+- Mengizinkan Admin membuat jadwal hanya untuk kelas yang diampunya melalui validasi frontend dan RLS.
+- Melengkapi daftar warga pada halaman Keluarga & Wali dengan gender, kategori sensus, kelas, tanggal lahir, usia, dan nomor pribadi.
+- Memperjelas bahwa komposisi sensus pada Laporan Bulanan Admin hanya mencakup kelas yang diampu.
+- Menambahkan migration `015_admin_schedule_creation.sql`.
+
 ## 0.13.2
 
 - Mengganti istilah antarmuka utama dari “Jamaah” menjadi “Warga”, “Anggota Kelas”, atau “Peserta” sesuai konteks.

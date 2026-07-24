@@ -6,7 +6,7 @@ import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
 import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS, CENSUS_CATEGORIES, MATERIAL_LABELS } from '../lib/constants'
 import { ageFromBirthDate, attendanceCounts, formatDateTime, isMandatoryMaterial, localIsoDate, materialDisplayName } from '../lib/utils'
-import type { AttendanceSession, AttendanceStatus, MaterialType } from '../types/domain'
+import type { AttendanceSession, AttendanceStatus, Gender, MaterialType } from '../types/domain'
 import { loadAttendanceDraft, removeAttendanceDraft, saveAttendanceDraft } from '../lib/offline'
 
 export function AttendancePage() {
@@ -25,6 +25,7 @@ export function AttendancePage() {
   const [materialType, setMaterialType] = useState<MaterialType>(initialMaterial)
   const [materialName, setMaterialName] = useState(initialMaterialName)
   const [notes, setNotes] = useState(initialNotes)
+  const [genderFilter, setGenderFilter] = useState<'all' | Gender>('all')
   const [search, setSearch] = useState('')
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({})
   const [saving, setSaving] = useState(false)
@@ -160,10 +161,12 @@ export function AttendancePage() {
     return () => window.removeEventListener('beforeunload', warn)
   }, [])
 
-  const filteredMembers = members.filter((person) =>
-    [person.fullName, person.censusCategory].join(' ').toLowerCase().includes(search.trim().toLowerCase()),
+  const genderMembers = members.filter((person) => genderFilter === 'all' || person.gender === genderFilter)
+  const filteredMembers = genderMembers.filter((person) =>
+    [person.fullName, person.censusCategory, person.gender].join(' ').toLowerCase().includes(search.trim().toLowerCase()),
   )
   const counts = attendanceCounts(statuses)
+  const filteredCounts = attendanceCounts(Object.fromEntries(genderMembers.map((person) => [person.id, statuses[person.id] ?? 'absent'])))
   const serverCounts = attendanceCounts(existing?.statuses ?? {})
 
   function changeStatuses(next: Record<string, AttendanceStatus>) {
@@ -173,7 +176,11 @@ export function AttendancePage() {
   }
 
   function setAll(status: AttendanceStatus) {
-    changeStatuses(Object.fromEntries(members.map((person) => [person.id, status])))
+    const next = { ...statuses }
+    genderMembers.forEach((person) => {
+      next[person.id] = status
+    })
+    changeStatuses(next)
   }
 
   function loadServerVersion() {
@@ -262,6 +269,8 @@ export function AttendancePage() {
           <label>Kelas pengajian<select value={classId} onChange={(event) => { persistDraftNow(); setClassId(event.target.value) }}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
           <label>Tanggal<input type="date" value={date} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
           <label>Materi<select value={materialType} onChange={(event) => { persistDraftNow(); setMaterialType(event.target.value as MaterialType); setMaterialName('') }}>{Object.entries(MATERIAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label>Jenis kelamin<select value={genderFilter} onChange={(event) => setGenderFilter(event.target.value as 'all' | Gender)}><option value="all">Semua warga</option><option value="Laki-laki">Laki-laki saja</option><option value="Perempuan">Perempuan saja</option></select></label>
+          <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>
         </div>
 
         {materialName ? <div className="attendance-material-info"><strong>{materialName}</strong>{notes ? <span>{notes}</span> : null}</div> : notes ? <div className="attendance-material-info"><strong>{materialDisplayName(materialType, materialName)}</strong><span>{notes}</span></div> : null}
@@ -285,8 +294,8 @@ export function AttendancePage() {
         </div>
 
         <div className="attendance-toolbar">
-          <div className="button-row"><button className="button soft small" disabled={periodClosed} onClick={() => setAll('present')}>Semua Hadir</button><button className="button outline small" disabled={periodClosed} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
-          <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {counts[status]}</span>)}</div>
+          <div className="button-row"><button className="button soft small" disabled={periodClosed || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
+          <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {filteredCounts[status]}</span>)}</div>
         </div>
 
         <label className="search-field attendance-search"><Search size={16} /><input placeholder="Cari nama peserta…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
@@ -300,7 +309,7 @@ export function AttendancePage() {
             })}
           </div>
         ) : (
-          <div className="attendance-list">{filteredMembers.length ? filteredMembers.map((person) => attendanceItem(person.id)) : <div className="empty-state">Belum ada peserta pada kelas ini.</div>}</div>
+          <div className="attendance-list">{filteredMembers.length ? filteredMembers.map((person) => attendanceItem(person.id)) : <div className="empty-state">Tidak ada peserta yang sesuai filter.</div>}</div>
         )}
 
         <div className="draft-note">
