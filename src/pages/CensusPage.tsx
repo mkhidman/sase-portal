@@ -1,4 +1,4 @@
-import { Archive, Download, FileDown, FileSpreadsheet, Plus, Search, Upload } from 'lucide-react'
+import { Archive, Download, Eye, FileDown, FileSpreadsheet, Plus, Search, Upload } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Modal } from '../components/Modal'
@@ -6,9 +6,9 @@ import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
-import { CENSUS_CATEGORIES } from '../lib/constants'
+import { ATTENDANCE_LABELS, CENSUS_CATEGORIES } from '../lib/constants'
 import { buildJamaahImportPreview, type JamaahImportPreview } from '../lib/csvImport'
-import { ageFromBirthDate, downloadCsv, localIsoDate } from '../lib/utils'
+import { ageFromBirthDate, attendanceCounts, downloadCsv, formatDate, localIsoDate, materialDisplayName, percentage } from '../lib/utils'
 import type { CensusCategory, Gender, Jamaah } from '../types/domain'
 
 const EMPTY_FORM: Jamaah = {
@@ -23,7 +23,7 @@ const EMPTY_FORM: Jamaah = {
 }
 
 export function CensusPage() {
-  const { jamaah, classes, saveJamaah, importJamaah } = useData()
+  const { jamaah, classes, attendanceSessions, saveJamaah, importJamaah } = useData()
   const [params] = useSearchParams()
   const handledEditId = useRef('')
   const [search, setSearch] = useState('')
@@ -34,6 +34,7 @@ export function CensusPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
+  const [attendancePerson, setAttendancePerson] = useState<Jamaah | null>(null)
 
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<JamaahImportPreview[]>([])
@@ -65,6 +66,23 @@ export function CensusPage() {
     invalid: importRows.filter((row) => row.status === 'invalid').length,
     duplicate: importRows.filter((row) => row.status === 'duplicate').length,
   }), [importRows])
+
+  const personAttendance = useMemo(() => {
+    if (!attendancePerson) return []
+    return attendanceSessions
+      .flatMap((session) => {
+        const status = session.statuses[attendancePerson.id]
+        return status ? [{ session, status }] : []
+      })
+      .sort((first, second) => (
+        second.session.date.localeCompare(first.session.date)
+        || second.session.savedAt.localeCompare(first.session.savedAt)
+      ))
+  }, [attendancePerson, attendanceSessions])
+  const personAttendanceCounts = attendanceCounts(Object.fromEntries(
+    personAttendance.map((item, index) => [String(index), item.status]),
+  ))
+  const personAttendanceRate = percentage(personAttendanceCounts.present, personAttendance.length)
 
   useEffect(() => {
     const editId = params.get('edit') ?? ''
@@ -237,12 +255,16 @@ export function CensusPage() {
             <tbody>
               {pagination.pageItems.map((item) => (
                 <tr key={item.id}>
-                  <td><Person name={item.fullName} meta={`${item.gender} · ${item.phone || 'Nomor belum diisi'}`} /></td>
+                  <td>
+                    <button className="person-detail-button" type="button" onClick={() => setAttendancePerson(item)} title={`Lihat rekap absensi ${item.fullName}`}>
+                      <Person name={item.fullName} meta={`${item.gender} · ${item.phone || 'Nomor belum diisi'}`} />
+                    </button>
+                  </td>
                   <td>{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
                   <td><span className="badge info">{item.censusCategory}</span></td>
                   <td><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
                   <td><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                  <td><button className="text-button" onClick={() => openEdit(item)}>Edit</button></td>
+                  <td><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -268,6 +290,54 @@ export function CensusPage() {
           <fieldset className="form-span-two"><legend>Kelas pengajian yang diikuti</legend><div className="checkbox-grid">{classes.filter((studyClass) => studyClass.active).map((studyClass) => <label className="checkbox-card" key={studyClass.id}><input type="checkbox" checked={form.classIds.includes(studyClass.id)} onChange={(event) => setForm({ ...form, classIds: event.target.checked ? [...form.classIds, studyClass.id] : form.classIds.filter((id) => id !== studyClass.id) })} /><span>{studyClass.name}</span></label>)}</div></fieldset>
         </div>
         {message ? <p className="form-error">{message}</p> : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(attendancePerson)}
+        title="Rekap Absensi Warga"
+        onClose={() => setAttendancePerson(null)}
+        wide
+      >
+        {attendancePerson ? (
+          <>
+            <div className="person-attendance-header">
+              <Person
+                name={attendancePerson.fullName}
+                meta={`${attendancePerson.censusCategory} · ${attendancePerson.gender}`}
+              />
+              <div className="detail-attendance-rate">
+                <small>Persentase Kehadiran</small>
+                <strong>{personAttendanceRate}%</strong>
+                <span>{personAttendanceCounts.present} hadir dari {personAttendance.length} pencatatan</span>
+              </div>
+            </div>
+            <div className="detail-counts">
+              <span className="badge success">Hadir {personAttendanceCounts.present}</span>
+              <span className="badge info">Izin {personAttendanceCounts.excused}</span>
+              <span className="badge warning">Sakit {personAttendanceCounts.sick}</span>
+              <span className="badge danger">Alpa {personAttendanceCounts.absent}</span>
+            </div>
+            <div className="table-wrap person-attendance-table">
+              <table>
+                <thead><tr><th>Tanggal</th><th>Kelas</th><th>Materi</th><th>Status</th></tr></thead>
+                <tbody>
+                  {personAttendance.map(({ session, status }) => (
+                    <tr key={session.id}>
+                      <td>{formatDate(session.date)}</td>
+                      <td>
+                        <strong>{classes.find((item) => item.id === session.classId)?.name ?? 'Kelas'}</strong>
+                        {session.generatedFromSessionId ? <small className="generated-session-note">Otomatis dari Pengajian Umum</small> : null}
+                      </td>
+                      <td>{materialDisplayName(session.materialType, session.materialName)}</td>
+                      <td><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
+                    </tr>
+                  ))}
+                  {!personAttendance.length ? <tr><td colSpan={4}><div className="empty-state">Belum ada absensi yang tercatat untuk warga ini.</div></td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
       </Modal>
 
       <Modal

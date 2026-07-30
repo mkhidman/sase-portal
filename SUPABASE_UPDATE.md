@@ -1,11 +1,14 @@
-# Update Supabase untuk Relasi Wali
+# Update Supabase Terbaru
 
-Jalankan migration berikut melalui Supabase SQL Editor:
+Untuk project yang sebelumnya sudah menjalankan migration 001–017, jalankan kedua migration berikut secara berurutan melalui Supabase SQL Editor:
 
 ```text
-supabase/migrations/017_link_guardians_to_jamaah.sql
+supabase/migrations/018_general_attendance_breakdown.sql
+supabase/migrations/019_general_attendance_weekday_statuses.sql
 ```
 
-Migration ini menambahkan tautan dari wali ke data warga, pencarian wali berdasarkan Data Sensus, hubungan `Diri Sendiri`, sinkronisasi otomatis nama/nomor, dan perlindungan tautan saat data duplikat digabung.
+Jika migration 018 sudah pernah dijalankan, cukup jalankan migration 019.
 
-Migration 001–016 tidak perlu dijalankan kembali. Edge Function tidak perlu di-deploy ulang. Frontend baru harus dipublikasikan setelah migration 017 aktif karena repository menggunakan RPC `save_linked_guardian_contact`. Setelah deployment, lakukan refresh penuh untuk mengganti cache service worker.
+Migration 018 menambahkan relasi sesi otomatis. Migration 019 membatasi sinkronisasi pada Pengajian Umum hari Senin dan Rabu serta menyalin seluruh status Hadir, Izin, Sakit, dan Alpa ke rekap Pra Remaja, Remaja, serta Pra Nikah. Data otomatis yang sudah ada ikut disinkronkan ulang; rekap pada hari selain Senin/Rabu akan dibersihkan.
+
+Migration 001–017 tidak perlu dijalankan kembali. Edge Function tidak perlu di-deploy ulang. Jalankan migration yang diperlukan sebelum memublikasikan frontend baru karena repository membaca kolom `generated_from_session_id`. Setelah deployment, lakukan refresh penuh untuk mengganti cache service worker.

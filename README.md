@@ -167,10 +167,12 @@ Jalankan migration secara berurutan:
 15. `supabase/migrations/015_admin_schedule_creation.sql`
 16. `supabase/migrations/016_integrity_hardening.sql`
 17. `supabase/migrations/017_link_guardians_to_jamaah.sql`
+18. `supabase/migrations/018_general_attendance_breakdown.sql`
+19. `supabase/migrations/019_general_attendance_weekday_statuses.sql`
 
-Untuk project yang sudah menjalankan migration 001–016, cukup jalankan migration 017.
+Untuk project yang sudah menjalankan migration 001–017, jalankan migration 018 lalu 019. Jika migration 018 sudah aktif, cukup jalankan migration 019.
 
-Migration 017 wajib digunakan bersama versi frontend ini karena penyimpanan wali memakai RPC relasi antarwarga. Migration 016 tetap diperlukan karena penyimpanan warga dan absensi memakai RPC transaksional, migration 015 agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
+Migration 018 menambahkan relasi sesi otomatis, sedangkan migration 019 membatasi pembuatannya pada Pengajian Umum hari Senin/Rabu dan menyalin status lengkap Hadir, Izin, Sakit, serta Alpa ke rekap Pra Remaja, Remaja, dan Pra Nikah. Migration 017 tetap diperlukan untuk relasi wali antarwarga, migration 016 untuk penyimpanan warga dan absensi transaksional, migration 015 agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
 
 ## Edge Function pembuatan Admin
 

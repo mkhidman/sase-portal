@@ -8,6 +8,7 @@ import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS, CENSUS_CATEGORIES, MATERIAL_LABE
 import { ageFromBirthDate, attendanceCounts, formatDateTime, isMandatoryMaterial, localIsoDate, materialDisplayName } from '../lib/utils'
 import type { AttendanceSession, AttendanceStatus, Gender, MaterialType } from '../types/domain'
 import { loadAttendanceDraft, removeAttendanceDraft, saveAttendanceDraft } from '../lib/offline'
+import { isGeneralAttendanceBreakdownDay } from '../lib/generalAttendance'
 
 export function AttendancePage() {
   const [params] = useSearchParams()
@@ -53,6 +54,7 @@ export function AttendancePage() {
     : attendanceSessions.find(
       (session) => session.classId === classId && session.date === date && session.materialType === materialType && session.materialName === materialName,
     )
+  const generatedReadOnly = Boolean(existing?.generatedFromSessionId)
   const members = useMemo(() => {
     const byId = new Map(visibleJamaah.filter((person) => person.classIds.includes(classId)).map((person) => [person.id, person]))
     const historicalIds = new Set(Object.keys(existing?.statuses ?? {}))
@@ -192,6 +194,10 @@ export function AttendancePage() {
 
   async function submit() {
     if (!classId || !date) return
+    if (generatedReadOnly) {
+      setMessage('Rekap otomatis hanya dapat diubah melalui absensi Pengajian Umum.')
+      return
+    }
     if (conflictDetected) {
       setMessage('Muat versi terbaru terlebih dahulu agar perubahan pengguna lain tidak tertimpa.')
       return
@@ -219,7 +225,27 @@ export function AttendancePage() {
       setDraftSavedAt(null)
       setDirty(false)
       setConflictDetected(false)
-      setMessage(`Absensi berhasil disimpan sebagai versi ${saved.revision}.`)
+      if (isGeneral) {
+        if (isGeneralAttendanceBreakdownDay(date)) {
+          const generatedGroups = [
+            ['Pra Remaja', 'Pra Remaja'],
+            ['Remaja', 'Remaja'],
+            ['Usia Nikah', 'Pra Nikah'],
+          ]
+            .map(([category, label]) => ({
+              label,
+              count: members.filter((person) => person.censusCategory === category && statuses[person.id]).length,
+            }))
+            .filter((item) => item.count > 0)
+            .map((item) => `${item.label} ${item.count} peserta`)
+            .join(', ')
+          setMessage(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}.${generatedGroups ? ` Rekap status lengkap otomatis: ${generatedGroups}.` : ' Tidak ada peserta Pra Remaja, Remaja, atau Pra Nikah untuk dibuatkan rekap.'}`)
+        } else {
+          setMessage(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}. Rekap kelompok otomatis tidak dibuat karena tanggal ini bukan hari Senin atau Rabu.`)
+        }
+      } else {
+        setMessage(`Absensi berhasil disimpan sebagai versi ${saved.revision}.`)
+      }
     } catch (cause) {
       const text = cause instanceof Error ? cause.message : 'Gagal menyimpan absensi.'
       if (text.includes('sudah diperbarui oleh pengguna lain')) setConflictDetected(true)
@@ -241,7 +267,7 @@ export function AttendancePage() {
               type="button"
               key={status}
               className={`status-button ${status} ${statuses[person.id] === status ? 'active' : ''}`}
-              disabled={periodClosed || futureDate}
+              disabled={periodClosed || futureDate || generatedReadOnly}
               onClick={() => changeStatuses({ ...statuses, [person.id]: status })}
               title={ATTENDANCE_LABELS[status]}
             >
@@ -262,22 +288,23 @@ export function AttendancePage() {
       <PageHeader
         title="Absensi Kelas"
         description="Status awal seluruh peserta adalah Alpa. Ubah hanya yang Hadir, Izin, atau Sakit."
-        actions={<button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
+        actions={<button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected || generatedReadOnly} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
       />
 
       <article className="card attendance-card">
         <div className="attendance-filters">
-          <label>Kelas pengajian<select value={classId} onChange={(event) => { persistDraftNow(); setClassId(event.target.value) }}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-          <label>Tanggal<input type="date" max={localIsoDate()} value={date} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
-          <label>Materi<select value={materialType} onChange={(event) => { persistDraftNow(); setMaterialType(event.target.value as MaterialType); setMaterialName('') }}>{Object.entries(MATERIAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label>Kelas pengajian<select value={classId} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setClassId(event.target.value) }}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+          <label>Tanggal<input type="date" max={localIsoDate()} value={date} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
+          <label>Materi<select value={materialType} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setMaterialType(event.target.value as MaterialType); setMaterialName('') }}>{Object.entries(MATERIAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Jenis kelamin<select value={genderFilter} onChange={(event) => setGenderFilter(event.target.value as 'all' | Gender)}><option value="all">Semua warga</option><option value="Laki-laki">Laki-laki saja</option><option value="Perempuan">Perempuan saja</option></select></label>
-          <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed || futureDate} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>
+          <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed || futureDate || generatedReadOnly} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>
         </div>
 
         {materialName ? <div className="attendance-material-info"><strong>{materialName}</strong>{notes ? <span>{notes}</span> : null}</div> : notes ? <div className="attendance-material-info"><strong>{materialDisplayName(materialType, materialName)}</strong><span>{notes}</span></div> : null}
 
         {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Absensi hanya dapat dilihat dan tidak dapat diubah.</div> : null}
         {futureDate ? <div className="notice danger-notice">Jadwal ini belum berlangsung. Absensi dapat diisi mulai pada tanggal pelaksanaan.</div> : null}
+        {generatedReadOnly ? <div className="notice info-notice">Ini adalah rekap otomatis peserta yang hadir di Pengajian Umum. Untuk mengoreksi data, edit sesi Pengajian Umum pada tanggal yang sama.</div> : null}
 
         {conflictDetected ? (
           <div className="notice attendance-conflict-notice">
@@ -295,8 +322,10 @@ export function AttendancePage() {
             : 'Materi reguler hanya dicatat pada rekap sesi dan tidak masuk target Hasda/ASAD.'}
         </div>
 
+        {isGeneral ? <div className="notice info-notice">Khusus Pengajian Umum hari Senin dan Rabu, seluruh status Hadir, Izin, Sakit, dan Alpa dari kategori Pra Remaja, Remaja, dan Usia Nikah otomatis disalin ke rekap kelas Pra Remaja, Remaja, dan Pra Nikah. Hari lain hanya tersimpan sebagai Pengajian Umum.</div> : null}
+
         <div className="attendance-toolbar">
-          <div className="button-row"><button className="button soft small" disabled={periodClosed || futureDate || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || futureDate || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
+          <div className="button-row"><button className="button soft small" disabled={periodClosed || futureDate || generatedReadOnly || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || futureDate || generatedReadOnly || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
           <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {filteredCounts[status]}</span>)}</div>
         </div>
 
@@ -323,7 +352,7 @@ export function AttendancePage() {
 
       <div className="attendance-mobile-save">
         <span><strong>{counts.present} hadir</strong><small>{dirty ? 'Draft tersimpan lokal' : `Versi ${existing?.revision ?? 0}`}</small></span>
-        <button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
+        <button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected || generatedReadOnly} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
       </div>
     </>
   )

@@ -52,7 +52,7 @@ export function loadBootstrapCache(userId: string): { data: BootstrapData; cache
     ...cached,
     data: {
       ...cached.data,
-      attendanceSessions: (cached.data.attendanceSessions ?? []).map((session) => ({ ...session, revision: session.revision ?? 1 })),
+      attendanceSessions: (cached.data.attendanceSessions ?? []).map((session) => ({ ...session, revision: session.revision ?? 1, generatedFromSessionId: session.generatedFromSessionId ?? null })),
     },
   }
 }

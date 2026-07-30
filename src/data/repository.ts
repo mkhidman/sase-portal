@@ -59,7 +59,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
     fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
     fetchAllRows(() => client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date').order('id')),
-    fetchAllRows(() => client.from('attendance_sessions').select('id,date,class_id,material_type,material_name,notes,saved_at,revision,attendance_records(jamaah_id,status)').order('date', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('attendance_sessions').select('id,date,class_id,material_type,material_name,notes,saved_at,revision,generated_from_session_id,attendance_records(jamaah_id,status)').order('date', { ascending: false }).order('id')),
     fetchAllRows(() => client.from('material_completions').select('id,month,material_type,jamaah_id,class_id,source,completed_on,source_session_id').order('id')),
     fetchAllRows(() => client.from('jamaah_follow_ups').select('id,jamaah_id,class_id,period_month,status,trigger_type,attendance_rate,absence_count,consecutive_absence,notes,next_follow_up_date,recorded_by,created_at,updated_at').order('id')),
     fetchAllRows(() => client.from('reporting_periods').select('id,month,status,closed_at,closed_by,notes,created_at,updated_at').order('month', { ascending: false }).order('id')),
@@ -158,6 +158,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     notes: row.notes ?? '',
     savedAt: row.saved_at,
     revision: row.revision ?? 1,
+    generatedFromSessionId: row.generated_from_session_id ?? null,
     statuses: Object.fromEntries(
       (row.attendance_records ?? []).map((item: { jamaah_id: string; status: AttendanceSession['statuses'][string] }) => [
         item.jamaah_id,
@@ -345,7 +346,7 @@ export async function upsertAttendanceSession(
 ): Promise<{ session: AttendanceSession; materialCompletions: MaterialCompletion[] }> {
   if (isDemoMode) {
     return {
-      session: { ...session, revision: Math.max(expectedRevision, 0) + 1 },
+      session: { ...session, revision: Math.max(expectedRevision, 0) + 1, generatedFromSessionId: session.generatedFromSessionId ?? null },
       materialCompletions: completionJamaahIds.map((jamaahId) => ({
         id: crypto.randomUUID(),
         month: session.date.slice(0, 7),

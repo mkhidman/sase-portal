@@ -1,5 +1,10 @@
 ## Belum dirilis
 
+- Menambahkan rekap detail absensi per warga yang dapat dibuka langsung dari Data Sensus.
+- Membuat rekap status lengkap Pra Remaja, Remaja, dan Pra Nikah secara otomatis khusus dari absensi Pengajian Umum hari Senin dan Rabu.
+- Menjaga sesi otomatis tetap hanya-baca dan tersinkron dengan sesi sumber Pengajian Umum.
+- Menambahkan migration `018_general_attendance_breakdown.sql`.
+- Menambahkan migration `019_general_attendance_weekday_statuses.sql`.
 - Menautkan wali ke data warga agar nama dan nomor WhatsApp tidak perlu diketik ulang.
 - Menambahkan pencarian warga pada formulir wali dan mendukung hubungan `Diri Sendiri`.
 - Menjaga tautan wali ketika profil warga diperbarui atau data duplikat digabung.

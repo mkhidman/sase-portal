@@ -51,6 +51,7 @@ import { resetDemoBootstrap } from '../data/demo'
 import { useAuth } from './AuthContext'
 import { isDemoMode, supabase } from '../lib/supabase'
 import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotAsOfDate, localIsoDate } from '../lib/utils'
+import { buildGeneralAttendanceBreakdown, GENERAL_ATTENDANCE_CLASS_NAME } from '../lib/generalAttendance'
 import { loadBootstrapCache, saveBootstrapCache } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
 
@@ -313,9 +314,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           statuses: input.statuses,
           savedAt: new Date().toISOString(),
           revision: existing?.revision ?? 0,
+          generatedFromSessionId: null,
         }
 
         const classNameMap = new Map(data.classes.map((item) => [item.id, item.name]))
+        const isGeneralSession = classNameMap.get(session.classId) === GENERAL_ATTENDANCE_CLASS_NAME
         const completionJamaahIds: string[] = []
         if (isMandatoryMaterial(session.materialType)) {
           for (const [jamaahId, status] of Object.entries(session.statuses)) {
@@ -338,11 +341,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           addedCompletions.map((item) => `${item.month}|${item.materialType}|${item.jamaahId}`),
         )
 
+        if (isGeneralSession && !isDemoMode) {
+          await reload()
+          return saved
+        }
+
         await updateData((current) => ({
           ...current,
-          attendanceSessions: current.attendanceSessions.some((item) => item.id === saved.id)
-            ? current.attendanceSessions.map((item) => (item.id === saved.id ? saved : item))
-            : [saved, ...current.attendanceSessions],
+          attendanceSessions: isGeneralSession
+            ? [
+                saved,
+                ...buildGeneralAttendanceBreakdown(saved, current.classes, current.jamaah, current.attendanceSessions),
+                ...current.attendanceSessions.filter(
+                  (item) => item.id !== saved.id && item.generatedFromSessionId !== saved.id,
+                ),
+              ]
+            : current.attendanceSessions.some((item) => item.id === saved.id)
+              ? current.attendanceSessions.map((item) => (item.id === saved.id ? saved : item))
+              : [saved, ...current.attendanceSessions],
           materialCompletions: [
             ...current.materialCompletions.filter(
               (item) =>
@@ -359,11 +375,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const targetSession = data.attendanceSessions.find((item) => item.id === sessionId)
         if (targetSession && isPeriodClosed(targetSession.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Absensi tidak dapat dihapus.')
         await removeAttendanceSession(sessionId)
-        await updateData((current) => ({
-          ...current,
-          attendanceSessions: current.attendanceSessions.filter((item) => item.id !== sessionId),
-          materialCompletions: current.materialCompletions.filter((item) => item.sourceSessionId !== sessionId),
-        }))
+        await updateData((current) => {
+          const generatedIds = new Set(
+            current.attendanceSessions
+              .filter((session) => session.generatedFromSessionId === sessionId)
+              .map((session) => session.id),
+          )
+          return {
+            ...current,
+            attendanceSessions: current.attendanceSessions.filter(
+              (item) => item.id !== sessionId && item.generatedFromSessionId !== sessionId,
+            ),
+            materialCompletions: current.materialCompletions.filter(
+              (item) => item.sourceSessionId !== sessionId && !generatedIds.has(item.sourceSessionId ?? ''),
+            ),
+          }
+        })
       },
       async toggleFollowUp(month, materialType, jamaahId, classId) {
         if (isPeriodClosed(month)) throw new Error('Periode bulan ini sudah ditutup. Ketuntasan materi tidak dapat diubah.')

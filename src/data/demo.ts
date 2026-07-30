@@ -114,6 +114,7 @@ export function createDemoBootstrap(): BootstrapData {
         statuses: { 'j-03': 'present', 'j-04': 'sick' },
         savedAt: new Date().toISOString(),
         revision: 1,
+        generatedFromSessionId: null,
       },
       {
         id: session2Id,
@@ -125,6 +126,7 @@ export function createDemoBootstrap(): BootstrapData {
         statuses: { 'j-09': 'present', 'j-10': 'absent' },
         savedAt: new Date().toISOString(),
         revision: 1,
+        generatedFromSessionId: null,
       },
     ],
     materialCompletions: [
@@ -176,7 +178,7 @@ export function loadDemoBootstrap(): BootstrapData {
   }
   try {
     const parsed = JSON.parse(stored) as BootstrapData
-    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1 })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [] }
+    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [] }
   } catch {
     const initial = createDemoBootstrap()
     saveDemoBootstrap(initial)

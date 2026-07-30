@@ -123,14 +123,19 @@ export function RecapPage() {
               <article className="session-card" key={session.id}>
                 <span className="date-tile"><strong>{session.date.slice(8, 10)}</strong><small>{session.date.slice(5, 7)}</small></span>
                 <div className="session-copy">
-                  <strong>{classNameMap.get(session.classId) ?? 'Kelas'}</strong>
+                  <strong>{classNameMap.get(session.classId) ?? 'Kelas'} {session.generatedFromSessionId ? <span className="badge info">Otomatis</span> : null}</strong>
                   <small>{formatDate(session.date)} · {materialDisplayName(session.materialType, session.materialName)}</small>
+                  {session.generatedFromSessionId ? <small className="generated-session-note">Status lengkap peserta disalin dari absensi Pengajian Umum hari Senin/Rabu.</small> : null}
                   <div className="badge-list"><span className="badge success">Hadir {counts.present}</span><span className="badge info">Izin {counts.excused}</span><span className="badge warning">Sakit {counts.sick}</span><span className="badge danger">Alpa {counts.absent}</span></div>
                 </div>
                 <div className="session-actions">
                   <button className="button outline small" onClick={() => setDetail(session)}><Eye size={14} /> Detail</button>
-                  <button className="button soft small" disabled={isPeriodClosed(session.date.slice(0, 7))} onClick={() => { const params = new URLSearchParams({ session: session.id, class: session.classId, date: session.date, material: session.materialType }); if (session.materialName) params.set('materialName', session.materialName); if (session.notes) params.set('notes', session.notes); navigate(`/absensi?${params.toString()}`) }}><Pencil size={14} /> Edit</button>
-                  <button className="button danger small" disabled={isPeriodClosed(session.date.slice(0, 7))} onClick={() => void remove(session)}><Trash2 size={14} /> Hapus</button>
+                  {!session.generatedFromSessionId ? (
+                    <>
+                      <button className="button soft small" disabled={isPeriodClosed(session.date.slice(0, 7))} onClick={() => { const params = new URLSearchParams({ session: session.id, class: session.classId, date: session.date, material: session.materialType }); if (session.materialName) params.set('materialName', session.materialName); if (session.notes) params.set('notes', session.notes); navigate(`/absensi?${params.toString()}`) }}><Pencil size={14} /> Edit</button>
+                      <button className="button danger small" disabled={isPeriodClosed(session.date.slice(0, 7))} onClick={() => void remove(session)}><Trash2 size={14} /> Hapus</button>
+                    </>
+                  ) : null}
                 </div>
               </article>
             )
@@ -152,7 +157,9 @@ export function RecapPage() {
             <div className="detail-summary">
               <div>
                 <strong>{classNameMap.get(detail.classId)}</strong>
-                <span>{formatDate(detail.date)} · {materialDisplayName(detail.materialType, detail.materialName)}</span>{detail.notes ? <small className="detail-material-note">{detail.notes}</small> : null}
+                <span>{formatDate(detail.date)} · {materialDisplayName(detail.materialType, detail.materialName)}</span>
+                {detail.generatedFromSessionId ? <small className="generated-session-note">Rekap otomatis status lengkap peserta dari Pengajian Umum hari Senin/Rabu. Perubahan dilakukan melalui sesi Pengajian Umum.</small> : null}
+                {detail.notes ? <small className="detail-material-note">{detail.notes}</small> : null}
               </div>
               <div className="detail-attendance-rate">
                 <small>Persentase Kehadiran</small>

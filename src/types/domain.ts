@@ -68,6 +68,7 @@ export interface AttendanceSession {
   statuses: Record<string, AttendanceStatus>
   savedAt: string
   revision: number
+  generatedFromSessionId: string | null
 }
 
 export interface MaterialCompletion {
