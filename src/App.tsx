@@ -17,6 +17,8 @@ import { FollowUpsPage } from './pages/FollowUpsPage'
 import { FamilyContactsPage } from './pages/FamilyContactsPage'
 import { MaterialsPage } from './pages/MaterialsPage'
 import { MonthlyReportPage } from './pages/MonthlyReportPage'
+import { MeetingFollowUpsPage } from './pages/MeetingFollowUpsPage'
+import { MeetingNotesPage } from './pages/MeetingNotesPage'
 import { RecapPage } from './pages/RecapPage'
 import { SchedulesPage } from './pages/SchedulesPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -43,6 +45,8 @@ export default function App() {
                 <Route path="keluarga-wali" element={<FamilyContactsPage />} />
                 <Route path="rekap" element={<RecapPage />} />
                 <Route path="laporan-bulanan" element={<MonthlyReportPage />} />
+                <Route path="notulensi" element={<MeetingNotesPage />} />
+                <Route path="notulensi/tindak-lanjut" element={<MeetingFollowUpsPage />} />
                 <Route element={<SuperadminRoute />}>
                   <Route path="sensus" element={<CensusPage />} />
                   <Route path="kualitas-data" element={<DataQualityPage />} />

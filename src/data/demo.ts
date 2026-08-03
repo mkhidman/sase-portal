@@ -161,6 +161,41 @@ export function createDemoBootstrap(): BootstrapData {
       { id: 'guardian-demo-4', jamaahId: 'j-16', guardianJamaahId: 'j-16', fullName: 'Bapak Hendra', relationship: 'Diri Sendiri', phone: '081234567806', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     ],
     mergeHistory: [],
+    meetingNotes: [
+      {
+        id: 'meeting-demo-1',
+        title: 'Evaluasi Kegiatan Pengajian Bulan Juli',
+        meetingDate: '2026-07-30',
+        agenda: '1. Evaluasi kehadiran jamaah bulan Juli\n2. Persiapan kegiatan bulan Agustus\n3. Pembagian tugas tindak lanjut',
+        discussionSummary: 'Kehadiran kelas remaja meningkat dibandingkan bulan sebelumnya. Beberapa warga masih perlu dihubungi secara personal karena tidak hadir lebih dari dua kali berturut-turut.',
+        decisions: '• Membuat daftar warga yang perlu ditindaklanjuti setiap akhir bulan.\n• Menetapkan kegiatan Mabit Remaja pada 16 Agustus 2026.\n• Menggunakan format laporan yang sama untuk seluruh kelas.',
+        additionalNotes: '',
+        status: 'final',
+        participantIds: ['j-11', 'j-12', 'j-15', 'j-16'],
+        createdBy: DEMO_SUPERADMIN.id,
+        createdAt: '2026-07-30T14:00:00.000Z',
+        updatedAt: '2026-07-30T14:00:00.000Z',
+      },
+      {
+        id: 'meeting-demo-2',
+        title: 'Pembagian Tugas Pendataan Jamaah',
+        meetingDate: '2026-07-12',
+        agenda: 'Pembagian wilayah dan penyeragaman format sensus warga.',
+        discussionSummary: 'Masih menunggu konfirmasi dua orang relawan untuk wilayah utara.',
+        decisions: '',
+        additionalNotes: '',
+        status: 'draft',
+        participantIds: ['j-13', 'j-14', 'j-16'],
+        createdBy: DEMO_SUPERADMIN.id,
+        createdAt: '2026-07-12T12:30:00.000Z',
+        updatedAt: '2026-07-12T12:30:00.000Z',
+      },
+    ],
+    meetingActions: [
+      { id: 'meeting-action-demo-1', meetingNoteId: 'meeting-demo-1', task: 'Hubungi warga dengan absensi rendah', assigneeJamaahId: 'j-15', dueDate: '2026-08-05', status: 'in_progress', notes: '', createdBy: DEMO_SUPERADMIN.id, createdAt: '2026-07-30T14:00:00.000Z', updatedAt: '2026-07-30T14:00:00.000Z' },
+      { id: 'meeting-action-demo-2', meetingNoteId: 'meeting-demo-1', task: 'Susun rundown Mabit Remaja', assigneeJamaahId: 'j-11', dueDate: '2026-08-08', status: 'pending', notes: '', createdBy: DEMO_SUPERADMIN.id, createdAt: '2026-07-30T14:00:00.000Z', updatedAt: '2026-07-30T14:00:00.000Z' },
+      { id: 'meeting-action-demo-3', meetingNoteId: 'meeting-demo-2', task: 'Konfirmasi relawan wilayah utara', assigneeJamaahId: 'j-16', dueDate: '2026-08-03', status: 'in_progress', notes: '', createdBy: DEMO_SUPERADMIN.id, createdAt: '2026-07-12T12:30:00.000Z', updatedAt: '2026-07-12T12:30:00.000Z' },
+    ],
     auditLogs: [
       { id: 'audit-demo-1', actorId: DEMO_SUPERADMIN.id, actorName: DEMO_SUPERADMIN.name, actorEmail: DEMO_SUPERADMIN.email, action: 'insert', entityType: 'attendance_sessions', entityId: session2Id, summary: 'Menyimpan absensi Pra Remaja', metadata: {}, createdAt: new Date().toISOString() },
     ],
@@ -178,7 +213,8 @@ export function loadDemoBootstrap(): BootstrapData {
   }
   try {
     const parsed = JSON.parse(stored) as BootstrapData
-    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [] }
+    const defaults = createDemoBootstrap()
+    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [], meetingNotes: parsed.meetingNotes ?? defaults.meetingNotes, meetingActions: parsed.meetingActions ?? defaults.meetingActions }
   } catch {
     const initial = createDemoBootstrap()
     saveDemoBootstrap(initial)

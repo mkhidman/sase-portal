@@ -12,6 +12,7 @@ import type {
   JamaahStatusHistory,
   MaterialCompletion,
   MaterialType,
+  MeetingNote,
   ReportingPeriodStatus,
   Schedule,
   StudyClass,
@@ -46,6 +47,8 @@ import {
   type CreateAdminInput,
   type MergeJamaahInput,
   mergeJamaahDuplicates,
+  upsertMeetingNote,
+  type SaveMeetingNoteInput,
 } from '../data/repository'
 import { resetDemoBootstrap } from '../data/demo'
 import { useAuth } from './AuthContext'
@@ -89,6 +92,7 @@ interface DataContextValue extends BootstrapData {
   setReportingPeriodStatus: (month: string, status: ReportingPeriodStatus, notes?: string) => Promise<void>
   isPeriodClosed: (month: string) => boolean
   deleteJamaahFollowUp: (followUpId: string) => Promise<void>
+  saveMeetingNote: (input: SaveMeetingNoteInput) => Promise<MeetingNote>
   applyClassTransition: (input: ClassTransitionInput) => Promise<number>
   setJamaahActiveStatus: (input: JamaahStatusChangeInput) => Promise<void>
   saveFamily: (input: SaveFamilyInput) => Promise<void>
@@ -115,6 +119,8 @@ const EMPTY: BootstrapData = {
   familyMembers: [],
   guardianContacts: [],
   mergeHistory: [],
+  meetingNotes: [],
+  meetingActions: [],
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -145,7 +151,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [] })
+        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetingNotes: cached.data.meetingNotes ?? [], meetingActions: cached.data.meetingActions ?? [] })
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')
@@ -195,6 +201,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'family_members' }, scheduleReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'guardian_contacts' }, scheduleReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'jamaah_merge_history' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_notes' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_note_participants' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_note_actions' }, scheduleReload)
       .subscribe()
     return () => {
       window.clearTimeout(timer)
@@ -509,6 +518,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!existing || !visibleClasses.some((item) => item.id === existing.classId)) throw new Error('Data tindak lanjut tidak ditemukan atau tidak dapat diakses.')
         await removeJamaahFollowUp(followUpId)
         await updateData((current) => ({ ...current, followUps: current.followUps.filter((item) => item.id !== followUpId) }))
+      },
+      async saveMeetingNote(input) {
+        if (!input.note.title.trim()) throw new Error('Judul musyawarah wajib diisi.')
+        if (!input.note.meetingDate) throw new Error('Tanggal musyawarah wajib diisi.')
+        if (!input.note.participantIds.length) throw new Error('Pilih minimal satu peserta dari data warga.')
+        const visibleIds = new Set(visibleJamaah.filter((item) => item.active).map((item) => item.id))
+        const existing = data.meetingNotes.find((item) => item.id === input.note.id)
+        const allowedParticipantIds = new Set([...(existing?.participantIds ?? []), ...visibleIds])
+        if (input.note.participantIds.some((id) => !allowedParticipantIds.has(id))) throw new Error('Peserta harus dipilih dari data warga yang dapat Anda akses.')
+        const participantIds = new Set(input.note.participantIds)
+        if (input.actions.some((item) => item.assigneeJamaahId && !participantIds.has(item.assigneeJamaahId))) {
+          throw new Error('Penanggung jawab tindak lanjut harus merupakan peserta musyawarah.')
+        }
+        const saved = await upsertMeetingNote(input)
+        await updateData((current) => ({
+          ...current,
+          meetingNotes: current.meetingNotes.some((item) => item.id === saved.note.id)
+            ? current.meetingNotes.map((item) => item.id === saved.note.id ? saved.note : item)
+            : [saved.note, ...current.meetingNotes],
+          meetingActions: [...current.meetingActions.filter((item) => item.meetingNoteId !== saved.note.id), ...saved.actions],
+        }))
+        return saved.note
       },
       async setReportingPeriodStatus(month, status, notes) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menutup atau membuka periode.')

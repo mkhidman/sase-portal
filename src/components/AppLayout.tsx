@@ -4,6 +4,7 @@ import {
   BookOpenCheck,
   CalendarDays,
   ChartNoAxesColumn,
+  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   ContactRound,
@@ -13,6 +14,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  FileText,
   Menu,
   Settings,
   ShieldCheck,
@@ -54,13 +56,17 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
           { to: '/kelas', label: 'Kelas Pengajian', icon: GraduationCap },
           { to: '/jadwal', label: 'Jadwal Pengajian', icon: CalendarDays },
           { to: '/absensi', label: 'Absensi Kelas', icon: ClipboardCheck },
+          { to: '/tindak-lanjut', label: 'Tindak Lanjut Absensi', icon: UserRoundCheck },
           { to: '/materi', label: 'Hasda & ASAD', icon: BookOpenCheck },
           { to: '/kenaikan-kelas', label: 'Kenaikan & Mutasi', icon: Shuffle },
         ],
       },
       {
-        id: 'pemantauan', label: 'Pemantauan', icon: UserRoundCheck,
-        items: [{ to: '/tindak-lanjut', label: 'Tindak Lanjut', icon: UserRoundCheck }],
+        id: 'musyawarah', label: 'Musyawarah', icon: FileText,
+        items: [
+          { to: '/notulensi', label: 'Notulensi', icon: FileText },
+          { to: '/notulensi/tindak-lanjut', label: 'Tindak Lanjut Keputusan', icon: CheckCircle2 },
+        ],
       },
       {
         id: 'laporan', label: 'Laporan', icon: FileChartColumn,
@@ -85,16 +91,23 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
       items: [
         { to: '/jadwal', label: 'Jadwal Pengajian', icon: CalendarDays },
         { to: '/absensi', label: 'Absensi Kelas', icon: ClipboardCheck },
+        { to: '/tindak-lanjut', label: 'Tindak Lanjut Absensi', icon: UserRoundCheck },
         { to: '/materi', label: 'Hasda & ASAD', icon: BookOpenCheck },
       ],
     },
-    {
-      id: 'jamaah', label: 'Warga', icon: Users,
-      items: [
-        { to: '/tindak-lanjut', label: 'Tindak Lanjut', icon: UserRoundCheck },
-        { to: '/keluarga-wali', label: 'Keluarga & Wali', icon: ContactRound },
-      ],
-    },
+      {
+        id: 'jamaah', label: 'Warga', icon: Users,
+        items: [
+          { to: '/keluarga-wali', label: 'Keluarga & Wali', icon: ContactRound },
+        ],
+      },
+      {
+        id: 'musyawarah', label: 'Musyawarah', icon: FileText,
+        items: [
+          { to: '/notulensi', label: 'Notulensi', icon: FileText },
+          { to: '/notulensi/tindak-lanjut', label: 'Tindak Lanjut Keputusan', icon: CheckCircle2 },
+        ],
+      },
     {
       id: 'laporan', label: 'Laporan', icon: FileChartColumn,
       items: [

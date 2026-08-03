@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototype Notulensi Musyawarah</title>
+  <style>
+    :root {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #172019;
+      background: #f5f7f5;
+      --bg: #f5f7f5;
+      --surface: #fff;
+      --soft: #eef4ef;
+      --text: #172019;
+      --muted: #66736a;
+      --line: #dce5de;
+      --primary: #1f6f4a;
+      --primary-dark: #15553a;
+      --success-bg: #e2f4e8;
+      --success: #17623b;
+      --warning-bg: #fff4d6;
+      --warning: #865f00;
+      --info-bg: #e9f2ff;
+      --info: #2c61a4;
+      --shadow: 0 10px 30px rgba(25, 55, 37, .08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--bg); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+    .sidebar { min-height: 100vh; padding: 22px 16px; background: #123c2a; color: #eef7f1; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 27px; }
+    .brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 15px; background: #e8f5ed; color: #174c34; font-weight: 900; font-size: 20px; }
+    .brand strong, .brand small { display: block; }
+    .brand small { margin-top: 3px; color: #b9d0c3; font-size: 11px; }
+    .nav-label { margin: 0 12px 8px; color: #8fb4a0; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    nav { display: grid; gap: 6px; }
+    nav a { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: 12px; color: #c7ddd0; text-decoration: none; font-size: 13px; }
+    nav a:hover, nav a.active { color: #fff; background: rgba(255,255,255,.12); }
+    nav a.active { font-weight: 800; }
+    nav .icon { width: 19px; text-align: center; font-size: 16px; }
+    .sidebar-bottom { margin-top: auto; padding-top: 17px; border-top: 1px solid rgba(255,255,255,.13); color: #b9d0c3; font-size: 11px; line-height: 1.5; }
+    .main { min-width: 0; padding: 29px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+    h1 { margin: 0 0 6px; font-size: 27px; letter-spacing: -.025em; }
+    h2 { margin: 0 0 5px; font-size: 17px; }
+    h3 { margin: 0; font-size: 14px; }
+    p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .actions, .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
+    .button { min-height: 40px; padding: 9px 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 11px; font-size: 13px; font-weight: 800; }
+    .button.primary { color: white; background: var(--primary); }
+    .button.primary:hover { background: var(--primary-dark); }
+    .button.outline { color: var(--text); background: #fff; border: 1px solid var(--line); }
+    .button.soft { color: var(--primary); background: var(--soft); }
+    .button.small { min-height: 33px; padding: 7px 10px; font-size: 11px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 15px; }
+    .card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 4px 18px rgba(25,55,37,.04); }
+    .stat { display: flex; justify-content: space-between; gap: 12px; }
+    .stat small { color: var(--muted); font-size: 11px; }
+    .stat strong { display: block; margin: 6px 0 3px; font-size: 26px; }
+    .stat-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--primary); background: var(--soft); font-size: 19px; }
+    .workspace { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(0, 1.18fr); gap: 15px; }
+    .card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .search { width: 100%; min-height: 40px; margin-bottom: 12px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; outline: 0; }
+    .meeting-list { display: grid; gap: 8px; }
+    .meeting-item { width: 100%; padding: 13px; border: 1px solid var(--line); border-radius: 14px; color: var(--text); background: #fcfdfc; text-align: left; }
+    .meeting-item:hover, .meeting-item.selected { border-color: #8abd9e; background: #f3faf5; }
+    .meeting-item h3 { margin-bottom: 7px; line-height: 1.35; }
+    .meeting-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; color: var(--muted); font-size: 11px; }
+    .meeting-meta .dot { color: #a4b4aa; }
+    .badge { display: inline-flex; width: max-content; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+    .badge.success { color: var(--success); background: var(--success-bg); }
+    .badge.warning { color: var(--warning); background: var(--warning-bg); }
+    .badge.info { color: var(--info); background: var(--info-bg); }
+    .badge.muted { color: #637067; background: #f0f3f1; }
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .detail-header h2 { font-size: 21px; line-height: 1.3; }
+    .detail-label { margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .detail-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 11px; }
+    .detail-section { padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .detail-section:last-child { padding-bottom: 0; border-bottom: 0; }
+    .detail-section h3 { margin-bottom: 9px; }
+    .detail-text { white-space: pre-line; color: #36453b; font-size: 12px; line-height: 1.65; }
+    .people { display: flex; gap: 7px; flex-wrap: wrap; }
+    .person { padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdfb; font-size: 11px; }
+    .action-list { display: grid; gap: 8px; }
+    .action-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 12px; background: #fcfdfc; }
+    .action-row strong { display: block; margin-bottom: 3px; font-size: 12px; }
+    .action-row small { color: var(--muted); font-size: 10px; }
+    .form-card { max-width: 980px; }
+    .form-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; padding-bottom: 17px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    label, legend { color: #4d5b52; font-size: 12px; font-weight: 800; }
+    input, select, textarea { width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; outline: 0; color: var(--text); background: #fff; }
+    input, select { min-height: 42px; }
+    textarea { min-height: 105px; resize: vertical; line-height: 1.5; }
+    input:focus, select:focus, textarea:focus, .search:focus { border-color: #78ad8d; box-shadow: 0 0 0 3px rgba(31,111,74,.1); }
+    fieldset { min-width: 0; padding: 0; border: 0; }
+    legend { margin-bottom: 8px; }
+    .check-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .check { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 11px; color: #45534a; background: #fbfdfb; font-size: 11px; font-weight: 600; }
+    .check input { width: auto; min-height: auto; accent-color: var(--primary); }
+    .section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 20px; margin-top: 20px; margin-bottom: 13px; border-top: 1px solid var(--line); }
+    .action-form-list { display: grid; gap: 9px; }
+    .action-form-row { display: grid; grid-template-columns: 1.5fr 1fr .75fr auto; gap: 8px; align-items: center; }
+    .action-form-row button { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; color: #a92b22; background: #fff; }
+    .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .helper { color: var(--muted); font-size: 11px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 10; display: none; padding: 12px 15px; border-radius: 12px; color: var(--success); background: var(--success-bg); border: 1px solid #9ed1ad; box-shadow: var(--shadow); font-size: 12px; font-weight: 800; }
+    .toast.show { display: block; }
+    @media (max-width: 1000px) { .app-shell { grid-template-columns: 210px minmax(0, 1fr); } .main { padding: 22px; } .workspace { grid-template-columns: 1fr; } .detail-card { min-height: auto; } }
+    @media (max-width: 680px) { .app-shell { display: block; } .sidebar { min-height: auto; padding: 15px; } nav { grid-template-columns: repeat(3, 1fr); } nav a { justify-content: center; padding: 9px 5px; font-size: 10px; } nav a .icon { display: none; } .sidebar-bottom { display: none; } .brand { margin-bottom: 15px; } .main { padding: 17px; } .page-header, .form-top, .form-footer { display: grid; } .page-header .button, .page-actions { width: 100%; } .page-actions .button { flex: 1; } .stats { grid-template-columns: 1fr; } .form-grid, .check-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .action-form-row { grid-template-columns: 1fr 1fr; } .action-form-row input:first-child { grid-column: 1 / -1; } .action-row { grid-template-columns: 1fr; gap: 5px; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">S</div><div><strong>Sensus Jamaah</strong><small>Portal pengelolaan jamaah</small></div></div>
+      <div class="nav-label">Menu utama</div>
+      <nav>
+        <a href="#"><span class="icon">⌂</span>Dashboard</a>
+        <a href="#"><span class="icon">◫</span>Jadwal &amp; Absensi</a>
+        <a href="#"><span class="icon">◎</span>Data Jamaah</a>
+        <a href="#" class="active"><span class="icon">✎</span>Musyawarah</a>
+        <a href="#"><span class="icon">↗</span>Tindak Lanjut</a>
+        <a href="#"><span class="icon">▤</span>Laporan</a>
+      </nav>
+      <div class="sidebar-bottom">Prototype fitur baru<br><strong>Notulensi Musyawarah</strong></div>
+    </aside>
+
+    <main class="main">
+      <section id="listView" class="view active">
+        <header class="page-header">
+          <div><h1>Notulensi Musyawarah</h1><p>Catat pembahasan, keputusan, dan pekerjaan yang perlu ditindaklanjuti.</p></div>
+          <div class="actions"><button class="button primary" onclick="showForm()">＋ Buat Notulensi</button></div>
+        </header>
+
+        <div class="stats">
+          <article class="card stat"><div><small>Total musyawarah</small><strong>12</strong><small>Dalam 12 bulan terakhir</small></div><span class="stat-icon">▤</span></article>
+          <article class="card stat"><div><small>Keputusan tercatat</small><strong>38</strong><small>Dari seluruh notulensi</small></div><span class="stat-icon">✓</span></article>
+          <article class="card stat"><div><small>Tindak lanjut terbuka</small><strong>7</strong><small>Perlu perhatian</small></div><span class="stat-icon">!</span></article>
+        </div>
+
+        <div class="workspace">
+          <article class="card">
+            <div class="card-heading"><div><h2>Riwayat musyawarah</h2><p>Pilih notulensi untuk melihat detail.</p></div><span class="badge muted">12 catatan</span></div>
+            <input id="search" class="search" placeholder="Cari judul atau topik..." oninput="filterMeetings()">
+            <div id="meetingList" class="meeting-list">
+              <button class="meeting-item selected" data-search="evaluasi kegiatan pengajian bulan juli evaluasi" onclick="selectMeeting(this, 'evaluasi')"><h3>Evaluasi Kegiatan Pengajian Bulan Juli</h3><div class="meeting-meta"><span>30 Juli 2026</span><span class="dot">•</span><span>Pengurus</span><span class="badge success">Final</span></div></button>
+              <button class="meeting-item" data-search="persiapan mabit remaja perencanaan" onclick="selectMeeting(this, 'mabit')"><h3>Persiapan Mabit Remaja</h3><div class="meeting-meta"><span>22 Juli 2026</span><span class="dot">•</span><span>Remaja</span><span class="badge success">Final</span></div></button>
+              <button class="meeting-item" data-search="pembagian tugas pendataan jamaah rutin" onclick="selectMeeting(this, 'pendataan')"><h3>Pembagian Tugas Pendataan Jamaah</h3><div class="meeting-meta"><span>12 Juli 2026</span><span class="dot">•</span><span>Pengurus</span><span class="badge warning">Draft</span></div></button>
+            </div>
+          </article>
+
+          <article class="card detail-card">
+            <div id="detail-evaluasi" class="detail-panel">
+              <div class="detail-header"><div><div class="detail-label">Notulensi musyawarah</div><h2>Evaluasi Kegiatan Pengajian Bulan Juli</h2><p>Dibuat oleh Ahmad Fauzi · 30 Juli 2026</p><div class="detail-meta"><span>🕘 19.30–21.00 WIB</span><span>📍 Ruang sekretariat</span><span class="badge success">Final</span></div></div><button class="button outline small">⋮</button></div>
+              <div class="detail-section"><h3>Agenda</h3><div class="detail-text">1. Evaluasi kehadiran jamaah bulan Juli
+2. Persiapan kegiatan bulan Agustus
+3. Pembagian tugas tindak lanjut</div></div>
+              <div class="detail-section"><h3>Peserta <span class="badge muted">8 orang</span></h3><div class="people"><span class="person">Ahmad Fauzi</span><span class="person">Siti Aminah</span><span class="person">Rizal Maulana</span><span class="person">+ 5 lainnya</span></div></div>
+              <div class="detail-section"><h3>Ringkasan pembahasan</h3><div class="detail-text">Kehadiran kelas remaja meningkat dibandingkan bulan sebelumnya. Beberapa jamaah masih perlu dihubungi secara personal karena tidak hadir lebih dari dua kali berturut-turut. Tim menyepakati evaluasi singkat setiap akhir bulan.</div></div>
+              <div class="detail-section"><h3>Keputusan</h3><div class="detail-text">• Membuat daftar jamaah yang perlu ditindaklanjuti setiap akhir bulan.
+• Menetapkan kegiatan Mabit Remaja pada 16 Agustus 2026.
+• Menggunakan format laporan yang sama untuk seluruh kelas.</div></div>
+              <div class="detail-section"><div class="card-heading"><h3>Tindak lanjut <span class="badge warning">2 terbuka</span></h3><button class="button soft small" onclick="showForm()">＋ Tambah</button></div><div class="action-list"><div class="action-row"><div><strong>Hubungi jamaah dengan absensi rendah</strong><small>Penanggung jawab: Siti Aminah · Tenggat: 05 Agu 2026</small></div><span class="badge warning">Berjalan</span><span>›</span></div><div class="action-row"><div><strong>Susun rundown Mabit Remaja</strong><small>Penanggung jawab: Rizal Maulana · Tenggat: 08 Agu 2026</small></div><span class="badge muted">Belum mulai</span><span>›</span></div></div></div>
+            </div>
+            <div id="detail-mabit" class="detail-panel" hidden><div class="detail-header"><div><div class="detail-label">Notulensi musyawarah</div><h2>Persiapan Mabit Remaja</h2><p>Dibuat oleh Siti Aminah · 22 Juli 2026</p><div class="detail-meta"><span>🕘 20.00–21.15 WIB</span><span>📍 Masjid Al-Ikhlas</span><span class="badge success">Final</span></div></div><button class="button outline small">⋮</button></div><div class="detail-section"><h3>Agenda</h3><div class="detail-text">Persiapan teknis, materi, konsumsi, dan pendamping kegiatan Mabit Remaja.</div></div><div class="detail-section"><h3>Keputusan</h3><div class="detail-text">Kegiatan dilaksanakan pada 16 Agustus 2026 dengan tema “Menguatkan Ukhuwah”.</div></div><div class="detail-section"><h3>Tindak lanjut <span class="badge success">Selesai</span></h3><div class="action-list"><div class="action-row"><div><strong>Konfirmasi tempat dan konsumsi</strong><small>Penanggung jawab: Ahmad Fauzi · Selesai 28 Juli 2026</small></div><span class="badge success">Selesai</span><span>✓</span></div></div></div></div>
+            <div id="detail-pendataan" class="detail-panel" hidden><div class="detail-header"><div><div class="detail-label">Notulensi musyawarah</div><h2>Pembagian Tugas Pendataan Jamaah</h2><p>Draft oleh Ahmad Fauzi · 12 Juli 2026</p><div class="detail-meta"><span>🕘 19.30–20.30 WIB</span><span>📍 Ruang sekretariat</span><span class="badge warning">Draft</span></div></div><button class="button outline small">⋮</button></div><div class="detail-section"><h3>Agenda</h3><div class="detail-text">Pembagian wilayah dan penyeragaman format sensus jamaah.</div></div><div class="detail-section"><h3>Catatan pembahasan</h3><div class="detail-text">Masih menunggu konfirmasi dua orang relawan untuk wilayah utara.</div></div><div class="detail-section"><h3>Tindak lanjut <span class="badge warning">1 terbuka</span></h3><div class="action-list"><div class="action-row"><div><strong>Konfirmasi relawan wilayah utara</strong><small>Penanggung jawab: Ahmad Fauzi · Tenggat: 03 Agu 2026</small></div><span class="badge warning">Berjalan</span><span>›</span></div></div></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="formView" class="view">
+        <header class="page-header"><div><h1>Buat Notulensi</h1><p>Isi informasi penting terlebih dahulu; bagian tambahan dapat dilengkapi nanti.</p></div><div class="actions"><button class="button outline" onclick="showList()">← Kembali</button></div></header>
+        <article class="card form-card">
+          <div class="form-top"><div><h2>Informasi musyawarah</h2><p>Informasi dasar untuk memudahkan pencarian dan pelacakan.</p></div><span class="badge warning">Draft baru</span></div>
+          <div class="form-grid">
+            <div class="field full"><label for="title">Judul musyawarah</label><input id="title" placeholder="Contoh: Evaluasi kegiatan bulan Agustus"></div>
+            <div class="field"><label for="type">Jenis musyawarah</label><select id="type"><option>Rutin</option><option>Evaluasi</option><option>Perencanaan kegiatan</option><option>Pengambilan keputusan</option><option>Lainnya</option></select></div>
+            <div class="field"><label for="scope">Lingkup</label><select id="scope"><option>Umum / Pengurus</option><option>Kelas tertentu</option><option>Remaja</option><option>Bidang tertentu</option></select></div>
+            <div class="field"><label for="date">Tanggal</label><input id="date" type="date" value="2026-08-03"></div>
+            <div class="field"><label for="location">Tempat</label><input id="location" placeholder="Contoh: Ruang sekretariat"></div>
+            <div class="field"><label for="start">Waktu mulai</label><input id="start" type="time" value="19:30"></div>
+            <div class="field"><label for="end">Waktu selesai</label><input id="end" type="time" value="21:00"></div>
+            <div class="field"><label for="leader">Pimpinan musyawarah</label><select id="leader"><option>Ahmad Fauzi</option><option>Siti Aminah</option><option>Rizal Maulana</option></select></div>
+            <div class="field"><label for="noteTaker">Notulis</label><select id="noteTaker"><option>Siti Aminah</option><option>Ahmad Fauzi</option><option>Rizal Maulana</option></select></div>
+            <fieldset class="field full"><legend>Peserta</legend><div class="check-grid"><label class="check"><input type="checkbox" checked> Ahmad Fauzi</label><label class="check"><input type="checkbox" checked> Siti Aminah</label><label class="check"><input type="checkbox"> Rizal Maulana</label><label class="check"><input type="checkbox"> Fajar Hidayat</label><label class="check"><input type="checkbox"> Nur Aisyah</label><label class="check"><input type="checkbox"> Tambah nama lain</label></div></fieldset>
+          </div>
+          <div class="section-title"><div><h2>Isi notulensi</h2><p>Fokuskan isi pada pembahasan dan hasil yang disepakati.</p></div></div>
+          <div class="form-grid"><div class="field full"><label for="agenda">Agenda / pokok pembahasan</label><textarea id="agenda" placeholder="Tuliskan poin agenda, satu poin per baris..."></textarea></div><div class="field full"><label for="summary">Ringkasan pembahasan</label><textarea id="summary" placeholder="Apa saja hal penting yang dibahas?"></textarea></div><div class="field full"><label for="decisions">Keputusan / kesimpulan</label><textarea id="decisions" placeholder="Tuliskan keputusan yang benar-benar disepakati..."></textarea></div><div class="field full"><label for="notes">Catatan tambahan <span class="helper">(opsional)</span></label><textarea id="notes" placeholder="Catatan lain, kendala, atau informasi pendukung..."></textarea></div></div>
+          <div class="section-title"><div><h2>Tindak lanjut</h2><p>Tambahkan tugas yang memiliki penanggung jawab dan tenggat.</p></div><button class="button soft small" onclick="addAction()">＋ Tambah tugas</button></div>
+          <div id="actionFormList" class="action-form-list"><div class="action-form-row"><input placeholder="Tugas atau keputusan yang perlu dikerjakan"><input placeholder="Penanggung jawab"><input type="date" value="2026-08-10"><button title="Hapus" onclick="removeAction(this)">×</button></div></div>
+          <div class="form-footer"><span class="helper">Disimpan oleh Ahmad Fauzi · 03 Agustus 2026</span><div class="button-row"><button class="button outline" onclick="saveNote('draft')">Simpan sebagai draft</button><button class="button primary" onclick="saveNote('final')">Simpan &amp; tandai final</button></div></div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script>
+    function showForm() { document.getElementById('listView').classList.remove('active'); document.getElementById('formView').classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function showList() { document.getElementById('formView').classList.remove('active'); document.getElementById('listView').classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function selectMeeting(button, id) { document.querySelectorAll('.meeting-item').forEach(item => item.classList.remove('selected')); button.classList.add('selected'); document.querySelectorAll('.detail-panel').forEach(panel => panel.hidden = true); document.getElementById('detail-' + id).hidden = false; }
+    function filterMeetings() { const query = document.getElementById('search').value.toLowerCase(); document.querySelectorAll('.meeting-item').forEach(item => item.hidden = !item.dataset.search.includes(query)); }
+    function addAction() { const row = document.createElement('div'); row.className = 'action-form-row'; row.innerHTML = '<input placeholder="Tugas atau keputusan yang perlu dikerjakan"><input placeholder="Penanggung jawab"><input type="date"><button title="Hapus" onclick="removeAction(this)">×</button>'; document.getElementById('actionFormList').appendChild(row); }
+    function removeAction(button) { const rows = document.querySelectorAll('.action-form-row'); if (rows.length > 1) button.parentElement.remove(); }
+    function saveNote(status) { const title = document.getElementById('title').value.trim(); if (!title) { document.getElementById('title').focus(); showToast('Judul musyawarah perlu diisi.'); return; } showToast(status === 'final' ? 'Notulensi disimpan sebagai final.' : 'Notulensi disimpan sebagai draft.'); setTimeout(showList, 900); }
+    function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2600); }
+  </script>
+</body>
+</html>

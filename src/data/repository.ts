@@ -15,6 +15,8 @@ import type {
   JamaahStatusReason,
   JamaahMergeHistory,
   MaterialCompletion,
+  MeetingAction,
+  MeetingNote,
   ReportingPeriod,
   ReportingPeriodStatus,
   Schedule,
@@ -55,7 +57,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (isDemoMode) return loadDemoBootstrap()
 
   const client = requireSupabase()
-  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult] = await Promise.all([
+  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult, meetingNotesResult, meetingParticipantsResult, meetingActionsResult] = await Promise.all([
     fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
     fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
     fetchAllRows(() => client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date').order('id')),
@@ -69,6 +71,9 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('family_members').select('family_id,jamaah_id,relationship,is_primary_contact').order('family_id').order('jamaah_id')),
     fetchAllRows(() => client.from('guardian_contacts').select('id,jamaah_id,guardian_jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name').order('id')),
     fetchAllRows(() => client.from('jamaah_merge_history').select('id,primary_jamaah_id,duplicate_jamaah_id,primary_name,duplicate_name,merged_profile,duplicate_snapshot,moved_counts,family_conflict,merged_by,merged_at').order('merged_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('meeting_notes').select('id,title,meeting_date,agenda,discussion_summary,decisions,additional_notes,status,created_by,created_at,updated_at').order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('meeting_note_participants').select('meeting_note_id,jamaah_id').order('meeting_note_id').order('jamaah_id')),
+    fetchAllRows(() => client.from('meeting_note_actions').select('id,meeting_note_id,task,assignee_jamaah_id,due_date,status,notes,created_by,created_at,updated_at').order('due_date').order('created_at').order('id')),
   ])
 
   const coreResults = [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult]
@@ -82,6 +87,9 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (familyMembersResult.error && !['42P01', 'PGRST205'].includes(familyMembersResult.error.code)) throw familyMembersResult.error
   if (guardianContactsResult.error && !['42P01', 'PGRST205'].includes(guardianContactsResult.error.code)) throw guardianContactsResult.error
   if (mergeHistoryResult.error && !['42P01', 'PGRST205'].includes(mergeHistoryResult.error.code)) throw mergeHistoryResult.error
+  if (meetingNotesResult.error && !['42P01', 'PGRST205'].includes(meetingNotesResult.error.code)) throw meetingNotesResult.error
+  if (meetingParticipantsResult.error && !['42P01', 'PGRST205'].includes(meetingParticipantsResult.error.code)) throw meetingParticipantsResult.error
+  if (meetingActionsResult.error && !['42P01', 'PGRST205'].includes(meetingActionsResult.error.code)) throw meetingActionsResult.error
 
   let admins: AppUser[] = []
   let auditLogs: AuditLog[] = []
@@ -277,11 +285,120 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     mergedAt: row.merged_at,
   }))
 
-  return { classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory }
+  const participantIdsByNote = new Map<string, string[]>()
+  ;(meetingParticipantsResult.data ?? []).forEach((row: any) => {
+    const current = participantIdsByNote.get(row.meeting_note_id) ?? []
+    current.push(row.jamaah_id)
+    participantIdsByNote.set(row.meeting_note_id, current)
+  })
+
+  const meetingNotes: MeetingNote[] = (meetingNotesResult.data ?? []).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    meetingDate: row.meeting_date,
+    agenda: row.agenda ?? '',
+    discussionSummary: row.discussion_summary ?? '',
+    decisions: row.decisions ?? '',
+    additionalNotes: row.additional_notes ?? '',
+    status: row.status,
+    participantIds: participantIdsByNote.get(row.id) ?? [],
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }))
+
+  const meetingActions: MeetingAction[] = (meetingActionsResult.data ?? []).map((row: any) => ({
+    id: row.id,
+    meetingNoteId: row.meeting_note_id,
+    task: row.task,
+    assigneeJamaahId: row.assignee_jamaah_id,
+    dueDate: row.due_date ?? '',
+    status: row.status,
+    notes: row.notes ?? '',
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }))
+
+  return { classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory, meetingNotes, meetingActions }
 }
 
 export async function persistDemo(data: BootstrapData): Promise<void> {
   if (isDemoMode) saveDemoBootstrap(data)
+}
+
+export interface SaveMeetingNoteInput {
+  note: MeetingNote
+  actions: MeetingAction[]
+}
+
+export async function upsertMeetingNote(input: SaveMeetingNoteInput): Promise<SaveMeetingNoteInput> {
+  if (isDemoMode) {
+    const now = new Date().toISOString()
+    return {
+      note: { ...input.note, createdAt: input.note.createdAt || now, updatedAt: now },
+      actions: input.actions.map((item) => ({ ...item, updatedAt: now, createdAt: item.createdAt || now })),
+    }
+  }
+  const client = requireSupabase()
+  const { data: id, error } = await client.rpc('save_meeting_note_record', {
+    target_note_id: input.note.id.startsWith('new-') ? null : input.note.id,
+    meeting_title: input.note.title,
+    meeting_date_value: input.note.meetingDate,
+    meeting_agenda: input.note.agenda,
+    meeting_discussion_summary: input.note.discussionSummary,
+    meeting_decisions: input.note.decisions,
+    meeting_additional_notes: input.note.additionalNotes,
+    meeting_status_value: input.note.status,
+    participant_ids: input.note.participantIds,
+    action_items: input.actions.map((item) => ({
+      task: item.task,
+      assigneeJamaahId: item.assigneeJamaahId,
+      dueDate: item.dueDate || null,
+      status: item.status,
+      notes: item.notes,
+    })),
+  })
+  if (error) throw error
+  if (typeof id !== 'string') throw new Error('Notulensi tersimpan, tetapi ID tidak diterima.')
+
+  const [noteResult, participantsResult, actionsResult] = await Promise.all([
+    client.from('meeting_notes').select('id,title,meeting_date,agenda,discussion_summary,decisions,additional_notes,status,created_by,created_at,updated_at').eq('id', id).single(),
+    client.from('meeting_note_participants').select('jamaah_id').eq('meeting_note_id', id).order('jamaah_id'),
+    client.from('meeting_note_actions').select('id,meeting_note_id,task,assignee_jamaah_id,due_date,status,notes,created_by,created_at,updated_at').eq('meeting_note_id', id).order('due_date').order('created_at').order('id'),
+  ])
+  if (noteResult.error) throw noteResult.error
+  if (participantsResult.error) throw participantsResult.error
+  if (actionsResult.error) throw actionsResult.error
+  const row: any = noteResult.data
+  return {
+    note: {
+      id: row.id,
+      title: row.title,
+      meetingDate: row.meeting_date,
+      agenda: row.agenda ?? '',
+      discussionSummary: row.discussion_summary ?? '',
+      decisions: row.decisions ?? '',
+      additionalNotes: row.additional_notes ?? '',
+      status: row.status,
+      participantIds: (participantsResult.data ?? []).map((item: any) => item.jamaah_id),
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    },
+    actions: (actionsResult.data ?? []).map((item: any) => ({
+      id: item.id,
+      meetingNoteId: item.meeting_note_id,
+      task: item.task,
+      assigneeJamaahId: item.assignee_jamaah_id,
+      dueDate: item.due_date ?? '',
+      status: item.status,
+      notes: item.notes ?? '',
+      createdBy: item.created_by,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+    })),
+  }
 }
 
 export async function upsertJamaah(jamaah: Jamaah): Promise<Jamaah> {
