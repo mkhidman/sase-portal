@@ -1,5 +1,6 @@
 ## Belum dirilis
 
+- Menambahkan pengurutan daftar peserta Hasda & ASAD dengan warga yang belum tuntas berada di atas secara bawaan, beserta jumlah belum/sudah tuntas pada judul daftar.
 - Menambahkan rekap detail absensi per warga yang dapat dibuka langsung dari Data Sensus.
 - Membuat rekap status lengkap Pra Remaja, Remaja, dan Pra Nikah secara otomatis khusus dari absensi Pengajian Umum hari Senin dan Rabu.
 - Menjaga sesi otomatis tetap hanya-baca dan tersinkron dengan sesi sumber Pengajian Umum.

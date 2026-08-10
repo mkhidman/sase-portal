@@ -6,12 +6,20 @@ import { formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, monthEndDate
 
 const HASDA_GROUPS = ['Semua Peserta', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
 const ASAD_GROUPS = ['Semua Peserta', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
+const SORT_OPTIONS = [
+  { value: 'pending-first', label: 'Belum tuntas di atas' },
+  { value: 'completed-first', label: 'Sudah tuntas di atas' },
+  { value: 'name', label: 'Nama A–Z' },
+] as const
+
+type SortMode = (typeof SORT_OPTIONS)[number]['value']
 
 export function MaterialsPage() {
   const { classes, visibleClasses, jamaah, classHistory, statusHistory, materialCompletions, toggleFollowUp, isPeriodClosed } = useData()
   const [month, setMonth] = useState(monthValue())
   const [materialType, setMaterialType] = useState<'hasda' | 'asad'>('hasda')
   const [group, setGroup] = useState('Semua Peserta')
+  const [sortMode, setSortMode] = useState<SortMode>('pending-first')
   const [workingId, setWorkingId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -42,7 +50,17 @@ export function MaterialsPage() {
     (item) => item.month === month && item.materialType === materialType && item.jamaahId === personId,
   )
 
+  const sortedParticipants = [...participants].sort((left, right) => {
+    if (sortMode !== 'name') {
+      const rank = (personId: string) => (isCompleted(personId) ? 1 : 0)
+      const difference = rank(left.id) - rank(right.id)
+      if (difference !== 0) return sortMode === 'pending-first' ? difference : -difference
+    }
+    return left.fullName.localeCompare(right.fullName, 'id')
+  })
+
   const completed = participants.filter((person) => isCompleted(person.id)).length
+  const pending = participants.length - completed
   const genderProgress = (gender: 'Laki-laki' | 'Perempuan') => {
     const genderParticipants = participants.filter((person) => person.gender === gender)
     const done = genderParticipants.filter((person) => isCompleted(person.id)).length
@@ -76,6 +94,7 @@ export function MaterialsPage() {
           <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
           <label>Materi<select value={materialType} onChange={(event) => { setMaterialType(event.target.value as 'hasda' | 'asad'); setGroup('Semua Peserta') }}><option value="hasda">Hasda</option><option value="asad">ASAD</option></select></label>
           <label>Kelompok peserta<select value={effectiveGroup} onChange={(event) => setGroup(event.target.value)}>{groups.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Urutkan daftar<select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>{SORT_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
         </div>
 
         <ProgressBlock title={MATERIAL_LABELS[materialType]} percent={percentage(completed, participants.length)} done={completed} total={participants.length} />
@@ -109,9 +128,18 @@ export function MaterialsPage() {
           </div>
         </section>
 
-        <div className="section-heading"><div><h2>{effectiveGroup} · {MATERIAL_LABELS[materialType]}</h2><p>Penyusulan mandiri tidak mengubah absensi sesi sebelumnya.</p></div></div>
+        <div className="section-heading">
+          <div>
+            <h2>{effectiveGroup} · {MATERIAL_LABELS[materialType]}</h2>
+            <p>Penyusulan mandiri tidak mengubah absensi sesi sebelumnya.</p>
+          </div>
+          <div className="badge-list">
+            <span className={`badge ${pending ? 'warning' : 'success'}`}>{pending} belum tuntas</span>
+            <span className="badge muted">{completed} sudah tuntas</span>
+          </div>
+        </div>
         <div className="completion-list">
-          {participants.map((person) => {
+          {sortedParticipants.map((person) => {
             const completion = materialCompletions.find((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)
             return (
               <div className="completion-row" key={person.id}>
