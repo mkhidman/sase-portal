@@ -293,17 +293,17 @@ export function MonthlyReportPage() {
             <tbody>
               {classPagination.pageItems.map((report) => (
                 <tr key={report.classId}>
-                  <td><strong>{report.className}</strong></td>
-                  <td>{report.sessions.length}</td>
-                  <td>{report.members.length}</td>
-                  <td>{report.totals.present}</td>
-                  <td>{report.totals.excused}</td>
-                  <td>{report.totals.sick}</td>
-                  <td>{report.totals.absent}</td>
-                  <td><span className={`badge ${report.attendanceRate >= 70 ? 'success' : 'warning'}`}>{report.attendanceRate}%</span></td>
-                  <td>{report.hasda.percent === null ? '—' : `${report.hasda.percent}%`}</td>
-                  <td>{report.asad.percent === null ? '—' : `${report.asad.percent}%`}</td>
-                  <td>{report.openFollowUps}</td>
+                  <td data-cell="primary"><strong>{report.className}</strong></td>
+                  <td data-label="Sesi">{report.sessions.length}</td>
+                  <td data-label="Anggota">{report.members.length}</td>
+                  <td data-label="Hadir">{report.totals.present}</td>
+                  <td data-label="Izin">{report.totals.excused}</td>
+                  <td data-label="Sakit">{report.totals.sick}</td>
+                  <td data-label="Alpa">{report.totals.absent}</td>
+                  <td data-label="Kehadiran"><span className={`badge ${report.attendanceRate >= 70 ? 'success' : 'warning'}`}>{report.attendanceRate}%</span></td>
+                  <td data-label="Hasda">{report.hasda.percent === null ? '—' : `${report.hasda.percent}%`}</td>
+                  <td data-label="ASAD">{report.asad.percent === null ? '—' : `${report.asad.percent}%`}</td>
+                  <td data-label="Tindak lanjut">{report.openFollowUps}</td>
                 </tr>
               ))}
               {!classReports.length ? <tr><td colSpan={11}><div className="empty-state">Tidak ada kelas yang dapat ditampilkan.</div></td></tr> : null}

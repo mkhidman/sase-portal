@@ -255,16 +255,16 @@ export function CensusPage() {
             <tbody>
               {pagination.pageItems.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <td data-cell="primary">
                     <button className="person-detail-button" type="button" onClick={() => setAttendancePerson(item)} title={`Lihat rekap absensi ${item.fullName}`}>
                       <Person name={item.fullName} meta={`${item.gender} · ${item.phone || 'Nomor belum diisi'}`} />
                     </button>
                   </td>
-                  <td>{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
-                  <td><span className="badge info">{item.censusCategory}</span></td>
-                  <td><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
-                  <td><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                  <td><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
+                  <td data-label="Usia">{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
+                  <td data-label="Kategori sensus"><span className="badge info">{item.censusCategory}</span></td>
+                  <td data-label="Kelas pengajian"><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
+                  <td data-label="Status"><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                  <td data-label="Aksi" data-cell="full"><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -323,13 +323,13 @@ export function CensusPage() {
                 <tbody>
                   {personAttendance.map(({ session, status }) => (
                     <tr key={session.id}>
-                      <td>{formatDate(session.date)}</td>
-                      <td>
+                      <td data-label="Tanggal">{formatDate(session.date)}</td>
+                      <td data-label="Kelas">
                         <strong>{classes.find((item) => item.id === session.classId)?.name ?? 'Kelas'}</strong>
                         {session.generatedFromSessionId ? <small className="generated-session-note">Otomatis dari Pengajian Umum</small> : null}
                       </td>
-                      <td>{materialDisplayName(session.materialType, session.materialName)}</td>
-                      <td><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
+                      <td data-label="Materi">{materialDisplayName(session.materialType, session.materialName)}</td>
+                      <td data-label="Status"><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
                     </tr>
                   ))}
                   {!personAttendance.length ? <tr><td colSpan={4}><div className="empty-state">Belum ada absensi yang tercatat untuk warga ini.</div></td></tr> : null}
@@ -381,10 +381,10 @@ export function CensusPage() {
                 <tbody>
                   {importRows.slice(0, 100).map((row) => (
                     <tr key={row.rowNumber}>
-                      <td>{row.rowNumber}</td>
-                      <td><strong>{row.rawName || 'Tanpa nama'}</strong></td>
-                      <td><span className={`badge ${row.status === 'valid' ? 'success' : row.status === 'duplicate' ? 'warning' : 'danger'}`}>{row.status === 'valid' ? 'Valid' : row.status === 'duplicate' ? 'Duplikat' : 'Perlu diperbaiki'}</span></td>
-                      <td>{row.messages.join(' ') || `${row.jamaah?.censusCategory ?? ''} · ${row.jamaah?.classIds.length ?? 0} kelas`}</td>
+                      <td data-label="Baris">{row.rowNumber}</td>
+                      <td data-label="Nama"><strong>{row.rawName || 'Tanpa nama'}</strong></td>
+                      <td data-label="Status"><span className={`badge ${row.status === 'valid' ? 'success' : row.status === 'duplicate' ? 'warning' : 'danger'}`}>{row.status === 'valid' ? 'Valid' : row.status === 'duplicate' ? 'Duplikat' : 'Perlu diperbaiki'}</span></td>
+                      <td data-label="Keterangan" data-cell="full">{row.messages.join(' ') || `${row.jamaah?.censusCategory ?? ''} · ${row.jamaah?.classIds.length ?? 0} kelas`}</td>
                     </tr>
                   ))}
                 </tbody>

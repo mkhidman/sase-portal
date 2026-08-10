@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { ShieldCheck, UserRoundCheck } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, UserRoundCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -8,6 +8,7 @@ export function LoginPage() {
   const { user, signIn, signInDemo, isDemo } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -52,14 +53,30 @@ export function LoginPage() {
         ) : (
           <form className="login-form" onSubmit={submit}>
             {!isSupabaseConfigured ? <div className="notice danger-notice">Konfigurasi Supabase belum tersedia. Hubungi pengelola deployment.</div> : null}
-            <label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-            <label>Password<input type="password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <label>Email<input type="email" required autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+            <label>Password
+              <div className="password-input">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  title={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
             {error ? <p className="form-error">{error}</p> : null}
             <button className="button primary full" disabled={submitting || !isSupabaseConfigured}>{submitting ? 'Memproses…' : 'Masuk'}</button>
           </form>
         )}
-
-        <p className="login-note">Development build ini sudah memakai struktur data Supabase. Mode demo hanya menjadi fallback agar UI dapat langsung diuji.</p>
       </section>
     </main>
   )

@@ -253,11 +253,11 @@ export function ClassProgressionPage() {
                 const nextCategory = targetClass ? censusCategoryForClassName(targetClass.name, person.censusCategory) : person.censusCategory
                 return (
                   <tr className={selectedIds.includes(person.id) ? 'selected-row' : ''} key={person.id}>
-                    <td><input className="row-checkbox" type="checkbox" checked={selectedIds.includes(person.id)} onChange={() => toggleMember(person.id)} aria-label={`Pilih ${person.fullName}`} /></td>
-                    <td><Person name={person.fullName} meta={person.phone || 'Nomor belum diisi'} /></td>
-                    <td><span className="badge info">{person.censusCategory}</span></td>
-                    <td><div className="badge-list">{otherClasses.length ? otherClasses.map((name) => <span className="badge muted" key={name}>{name}</span>) : <span className="muted-copy">Tidak ada</span>}</div></td>
-                    <td><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
+                    <td data-label="Pilih"><input className="row-checkbox" type="checkbox" checked={selectedIds.includes(person.id)} onChange={() => toggleMember(person.id)} aria-label={`Pilih ${person.fullName}`} /></td>
+                    <td data-cell="primary"><Person name={person.fullName} meta={person.phone || 'Nomor belum diisi'} /></td>
+                    <td data-label="Kategori saat ini"><span className="badge info">{person.censusCategory}</span></td>
+                    <td data-label="Kelas lain tetap dipertahankan"><div className="badge-list">{otherClasses.length ? otherClasses.map((name) => <span className="badge muted" key={name}>{name}</span>) : <span className="muted-copy">Tidak ada</span>}</div></td>
+                    <td data-label="Rencana" data-cell="full"><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
                   </tr>
                 )
               }) : <tr><td colSpan={5}><div className="empty-state">Belum ada warga aktif pada kelas asal ini.</div></td></tr>}
@@ -292,12 +292,12 @@ export function ClassProgressionPage() {
             <tbody>
               {filteredHistory.length ? historyPagination.pageItems.map((item) => (
                 <tr key={item.id}>
-                  <td><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
-                  <td><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
-                  <td><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
-                  <td>{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
-                  <td><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
-                  <td>{item.notes || <span className="muted-copy">—</span>}</td>
+                  <td data-label="Tanggal efektif"><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
+                  <td data-cell="primary"><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
+                  <td data-label="Perubahan kelas"><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
+                  <td data-label="Perubahan kategori">{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
+                  <td data-label="Jenis"><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
+                  <td data-label="Catatan">{item.notes || <span className="muted-copy">—</span>}</td>
                 </tr>
               )) : <tr><td colSpan={6}><div className="empty-state">Belum ada riwayat kenaikan atau mutasi kelas.</div></td></tr>}
             </tbody>

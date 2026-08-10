@@ -215,11 +215,11 @@ export function JamaahArchivePage() {
                 const classIds = lastKnownClasses(person)
                 return (
                   <tr key={person.id}>
-                    <td><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
-                    <td><span className="badge info">{person.censusCategory}</span></td>
-                    <td><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
-                    <td><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                    <td>
+                    <td data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
+                    <td data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
+                    <td data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
+                    <td data-label="Status"><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Perubahan terakhir">
                       {latest ? (
                         <span className="archive-last-change">
                           <strong>{JAMAAH_STATUS_REASON_LABELS[latest.reason]}</strong>
@@ -227,7 +227,7 @@ export function JamaahArchivePage() {
                         </span>
                       ) : <span className="muted-copy">Belum ada riwayat</span>}
                     </td>
-                    <td>
+                    <td data-label="Aksi" data-cell="full">
                       <div className="table-actions">
                         <button className="text-button" type="button" onClick={() => setHistoryPerson(person)}><History size={14} /> Riwayat</button>
                         {person.active

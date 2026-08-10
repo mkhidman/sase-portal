@@ -348,15 +348,15 @@ export function FamilyContactsPage() {
                 const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
                   <tr key={person.id}>
-                    <td><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
-                    <td><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
-                    <td>{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
-                    <td>{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
-                    <td><div className="guardian-contact-list">{contacts.map((contact) => {
+                    <td data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
+                    <td data-label="Profil & kelas"><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
+                    <td data-label="Keluarga">{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
+                    <td data-label="Kontak utama">{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
+                    <td data-label="Kontak lain" data-cell="full"><div className="guardian-contact-list">{contacts.map((contact) => {
                       const resolved = resolvedGuardian(contact)
                       return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
                     })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
+                    <td data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
                   </tr>
                 )
               })}

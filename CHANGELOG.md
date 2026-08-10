@@ -1,5 +1,8 @@
 ## Belum dirilis
 
+- Mengubah seluruh tabel menjadi tampilan kartu pada layar mobile (lebar 820px ke bawah) agar tidak perlu digeser ke samping.
+- Menyeragamkan tampilan seluruh textarea agar mengikuti gaya isian lain, termasuk kolom Materi sambung / keterangan pada Absensi Kelas dan Catatan periode pada Laporan Bulanan.
+- Menambahkan tombol lihat/sembunyikan password pada halaman login dan menghapus catatan development build.
 - Menambahkan pengurutan daftar peserta Hasda & ASAD dengan warga yang belum tuntas berada di atas secara bawaan, beserta jumlah belum/sudah tuntas pada judul daftar.
 - Menambahkan rekap detail absensi per warga yang dapat dibuka langsung dari Data Sensus.
 - Membuat rekap status lengkap Pra Remaja, Remaja, dan Pra Nikah secara otomatis khusus dari absensi Pengajian Umum hari Senin dan Rabu.
