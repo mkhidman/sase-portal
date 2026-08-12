@@ -25,16 +25,20 @@ import {
   WifiOff,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { usePwaInstall } from '../hooks/usePwaInstall'
 import { formatDateTime } from '../lib/utils'
+import { BottomNav } from './BottomNav'
+import { MobileMoreMenu } from './MobileMoreMenu'
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ size?: number }> }
 type NavGroup = { id: string; label: string; icon: ComponentType<{ size?: number }>; items: NavItem[] }
+
+const BOTTOM_NAV_ROUTES = new Set(['/', '/jadwal', '/absensi', '/rekap'])
 
 const dashboard: NavItem = { to: '/', label: 'Dashboard', icon: LayoutDashboard }
 
@@ -118,16 +122,33 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
   ]
 }
 
+function overflowGroups(groups: NavGroup[]): NavGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !BOTTOM_NAV_ROUTES.has(item.to)),
+    }))
+    .filter((group) => group.items.length > 0)
+}
+
 export function AppLayout() {
   const { user, signOut, isDemo } = useAuth()
   const { usingCachedData, lastSyncedAt, reload } = useData()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const online = useNetworkStatus()
   const { canInstall, install } = usePwaInstall()
   const groups = useMemo(() => navigationFor(user?.role ?? 'admin'), [user?.role])
+  const moreGroups = useMemo(() => overflowGroups(groups), [groups])
   const activeGroup = groups.find((group) => group.items.some((item) => location.pathname === item.to))?.id ?? ''
   const [openGroup, setOpenGroup] = useState(activeGroup)
+
+  const isMoreActive = useMemo(() => {
+    return !BOTTOM_NAV_ROUTES.has(location.pathname) && !groups.some((g) => g.items.some((i) => location.pathname === i.to))
+  }, [location.pathname, groups])
+
+  const closeMore = useCallback(() => setMoreOpen(false), [])
 
   useEffect(() => {
     if (activeGroup) setOpenGroup(activeGroup)
@@ -175,6 +196,8 @@ export function AppLayout() {
         </div>
       </aside>
       <main className={`app-main ${!online ? 'with-offline-banner' : ''}`}><Outlet /></main>
+      <BottomNav onOpenMore={() => setMoreOpen(true)} isMoreActive={isMoreActive} />
+      <MobileMoreMenu open={moreOpen} onClose={closeMore} groups={moreGroups} />
     </div>
   )
 }
