@@ -245,22 +245,22 @@ export function ClassProgressionPage() {
         </div>
 
         <div className="table-wrap progression-member-table">
-          <table>
-            <thead><tr><th className="checkbox-column">Pilih</th><th>Warga</th><th>Kategori Saat Ini</th><th>Kelas Lain Tetap Dipertahankan</th><th>Rencana</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader" className="checkbox-column">Pilih</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori Saat Ini</th><th scope="col" role="columnheader">Kelas Lain Tetap Dipertahankan</th><th scope="col" role="columnheader">Rencana</th></tr></thead>
+            <tbody role="rowgroup">
               {filteredMembers.length ? memberPagination.pageItems.map((person) => {
                 const otherClasses = person.classIds.filter((id) => id !== sourceClassId).map((id) => classMap.get(id) ?? 'Kelas')
                 const nextCategory = targetClass ? censusCategoryForClassName(targetClass.name, person.censusCategory) : person.censusCategory
                 return (
-                  <tr className={selectedIds.includes(person.id) ? 'selected-row' : ''} key={person.id}>
-                    <td data-label="Pilih"><input className="row-checkbox" type="checkbox" checked={selectedIds.includes(person.id)} onChange={() => toggleMember(person.id)} aria-label={`Pilih ${person.fullName}`} /></td>
-                    <td data-cell="primary"><Person name={person.fullName} meta={person.phone || 'Nomor belum diisi'} /></td>
-                    <td data-label="Kategori saat ini"><span className="badge info">{person.censusCategory}</span></td>
-                    <td data-label="Kelas lain tetap dipertahankan"><div className="badge-list">{otherClasses.length ? otherClasses.map((name) => <span className="badge muted" key={name}>{name}</span>) : <span className="muted-copy">Tidak ada</span>}</div></td>
-                    <td data-label="Rencana" data-cell="full"><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
+                  <tr role="row" className={selectedIds.includes(person.id) ? 'selected-row' : ''} key={person.id}>
+                    <td role="cell" data-label="Pilih"><input className="row-checkbox" type="checkbox" checked={selectedIds.includes(person.id)} onChange={() => toggleMember(person.id)} aria-label={`Pilih ${person.fullName}`} /></td>
+                    <td role="cell" data-cell="primary"><Person name={person.fullName} meta={person.phone || 'Nomor belum diisi'} /></td>
+                    <td role="cell" data-label="Kategori saat ini"><span className="badge info">{person.censusCategory}</span></td>
+                    <td role="cell" data-label="Kelas lain tetap dipertahankan"><div className="badge-list">{otherClasses.length ? otherClasses.map((name) => <span className="badge muted" key={name}>{name}</span>) : <span className="muted-copy">Tidak ada</span>}</div></td>
+                    <td role="cell" data-label="Rencana" data-cell="full"><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
                   </tr>
                 )
-              }) : <tr><td colSpan={5}><div className="empty-state">Belum ada warga aktif pada kelas asal ini.</div></td></tr>}
+              }) : <tr role="row"><td role="cell" colSpan={5}><div className="empty-state">Belum ada warga aktif pada kelas asal ini.</div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -287,19 +287,19 @@ export function ClassProgressionPage() {
           </select>
         </div>
         <div className="table-wrap history-table">
-          <table>
-            <thead><tr><th>Tanggal Efektif</th><th>Warga</th><th>Perubahan Kelas</th><th>Perubahan Kategori</th><th>Jenis</th><th>Catatan</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tanggal Efektif</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Perubahan Kelas</th><th scope="col" role="columnheader">Perubahan Kategori</th><th scope="col" role="columnheader">Jenis</th><th scope="col" role="columnheader">Catatan</th></tr></thead>
+            <tbody role="rowgroup">
               {filteredHistory.length ? historyPagination.pageItems.map((item) => (
-                <tr key={item.id}>
-                  <td data-label="Tanggal efektif"><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
-                  <td data-cell="primary"><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
-                  <td data-label="Perubahan kelas"><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
-                  <td data-label="Perubahan kategori">{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
-                  <td data-label="Jenis"><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
-                  <td data-label="Catatan">{item.notes || <span className="muted-copy">—</span>}</td>
+                <tr role="row" key={item.id}>
+                  <td role="cell" data-label="Tanggal efektif"><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
+                  <td role="cell" data-cell="primary"><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
+                  <td role="cell" data-label="Perubahan kelas"><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
+                  <td role="cell" data-label="Perubahan kategori">{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
+                  <td role="cell" data-label="Jenis"><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
+                  <td role="cell" data-label="Catatan">{item.notes || <span className="muted-copy">—</span>}</td>
                 </tr>
-              )) : <tr><td colSpan={6}><div className="empty-state">Belum ada riwayat kenaikan atau mutasi kelas.</div></td></tr>}
+              )) : <tr role="row"><td role="cell" colSpan={6}><div className="empty-state">Belum ada riwayat kenaikan atau mutasi kelas.</div></td></tr>}
             </tbody>
           </table>
         </div>

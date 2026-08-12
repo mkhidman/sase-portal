@@ -1,5 +1,15 @@
 import type { ReactNode } from 'react'
 import { initials } from '../lib/utils'
+import type { Feedback } from '../lib/feedback'
+
+export function InlineMessage({ value, className = '' }: { value: Feedback | null; className?: string }) {
+  if (!value) return null
+  return (
+    <div className={`inline-message ${value.tone} ${className}`.trim()} role={value.tone === 'error' ? 'alert' : 'status'}>
+      {value.text}
+    </div>
+  )
+}
 
 export function StatCard({ label, value, note, icon }: { label: string; value: string | number; note: string; icon: ReactNode }) {
   return (
@@ -23,6 +33,28 @@ export function PageHeader({ title, description, actions }: { title: string; des
       </div>
       {actions ? <div className="page-actions">{actions}</div> : null}
     </header>
+  )
+}
+
+export function EmptyState({ icon, title, description, action }: { icon?: ReactNode; title: string; description?: string; action?: ReactNode }) {
+  return (
+    <div className="empty-state">
+      {icon ? <span className="empty-state-icon">{icon}</span> : null}
+      <strong>{title}</strong>
+      {description ? <p>{description}</p> : null}
+      {action ? <div className="empty-state-action">{action}</div> : null}
+    </div>
+  )
+}
+
+export function PageNotice({ icon, title, description, action }: { icon: ReactNode; title: string; description: string; action?: ReactNode }) {
+  return (
+    <article className="card page-notice">
+      <span className="page-notice-icon">{icon}</span>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {action ? <div className="page-notice-action">{action}</div> : null}
+    </article>
   )
 }
 

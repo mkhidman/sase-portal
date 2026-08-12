@@ -15,15 +15,15 @@ import {
   LayoutDashboard,
   LogOut,
   FileText,
-  Menu,
+  RefreshCw,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Shuffle,
   UserRoundCheck,
   Users,
   Wifi,
   WifiOff,
-  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -32,15 +32,11 @@ import { useData } from '../contexts/DataContext'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { usePwaInstall } from '../hooks/usePwaInstall'
 import { formatDateTime } from '../lib/utils'
-import { BottomNav } from './BottomNav'
+import { BOTTOM_NAV_ROUTES, BottomNav } from './BottomNav'
 import { MobileMoreMenu } from './MobileMoreMenu'
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ size?: number }> }
 type NavGroup = { id: string; label: string; icon: ComponentType<{ size?: number }>; items: NavItem[] }
-
-const BOTTOM_NAV_ROUTES = new Set(['/', '/jadwal', '/absensi', '/rekap'])
-
-const dashboard: NavItem = { to: '/', label: 'Dashboard', icon: LayoutDashboard }
 
 function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
   if (role === 'superadmin') {
@@ -133,9 +129,8 @@ function overflowGroups(groups: NavGroup[]): NavGroup[] {
 
 export function AppLayout() {
   const { user, signOut, isDemo } = useAuth()
-  const { usingCachedData, lastSyncedAt, reload } = useData()
+  const { usingCachedData, lastSyncedAt, reload, loading, error } = useData()
   const location = useLocation()
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const online = useNetworkStatus()
   const { canInstall, install } = usePwaInstall()
@@ -156,17 +151,14 @@ export function AppLayout() {
 
   return (
     <div className="app-shell">
-      <button className="mobile-menu-button" type="button" onClick={() => setMobileOpen(true)} aria-label="Buka menu"><Menu size={20} /></button>
       {!online ? <div className="offline-banner"><WifiOff size={15} /> Offline · data terakhir tetap dapat dibuka, absensi disimpan sebagai draft</div> : null}
-      {mobileOpen ? <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} /> : null}
-      <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
+      <aside className="sidebar">
         <div className="brand-row">
           <span className="brand-mark">SP</span>
           <span><strong>SASE Portal</strong><small>Administrasi warga pengajian</small></span>
-          <button className="sidebar-close" type="button" onClick={() => setMobileOpen(false)}><X size={18} /></button>
         </div>
         <nav className="sidebar-nav">
-          <NavLink to="/" end onClick={() => setMobileOpen(false)} className="sidebar-main-link"><LayoutDashboard size={18} /><span>Dashboard</span></NavLink>
+          <NavLink to="/" end className="sidebar-main-link"><LayoutDashboard size={18} /><span>Dashboard</span></NavLink>
           {groups.map((group) => {
             const GroupIcon = group.icon
             const expanded = openGroup === group.id
@@ -177,7 +169,7 @@ export function AppLayout() {
                   <GroupIcon size={18} /><span>{group.label}</span><ChevronDown className={expanded ? 'rotated' : ''} size={15} />
                 </button>
                 {expanded ? <div className="sidebar-subnav">{group.items.map(({ to, label, icon: Icon }) => (
-                  <NavLink key={to} to={to} onClick={() => setMobileOpen(false)}><Icon size={15} /><span>{label}</span></NavLink>
+                  <NavLink key={to} to={to}><Icon size={15} /><span>{label}</span></NavLink>
                 ))}</div> : null}
               </section>
             )
@@ -195,7 +187,22 @@ export function AppLayout() {
           <button type="button" onClick={() => void signOut()}><LogOut size={16} /> Keluar</button>
         </div>
       </aside>
-      <main className={`app-main ${!online ? 'with-offline-banner' : ''}`}><Outlet /></main>
+      <main className={`app-main ${!online ? 'with-offline-banner' : ''}`}>
+        {loading ? <div className="app-loading-bar" role="status" aria-label="Memuat data"><span /></div> : null}
+        {error ? (
+          <div className={`app-error-banner ${usingCachedData ? 'cache' : ''}`} role="alert">
+            {usingCachedData ? <Database size={19} /> : <ShieldAlert size={19} />}
+            <div>
+              <strong>{usingCachedData ? 'Menampilkan data tersimpan' : 'Data gagal dimuat'}</strong>
+              <span>{error}</span>
+            </div>
+            <button className="button small outline" type="button" disabled={loading} onClick={() => void reload()}>
+              <RefreshCw size={14} /> {loading ? 'Memuat…' : 'Coba lagi'}
+            </button>
+          </div>
+        ) : null}
+        <Outlet />
+      </main>
       <BottomNav onOpenMore={() => setMoreOpen(true)} isMoreActive={isMoreActive} />
       <MobileMoreMenu open={moreOpen} onClose={closeMore} groups={moreGroups} />
     </div>

@@ -7,13 +7,16 @@ import {
   Plus,
   Search,
   Trash2,
+  TriangleAlert,
   UserRound,
   UsersRound,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
+import { useConfirm } from '../components/useConfirm'
 import { Pagination } from '../components/Pagination'
-import { PageHeader, Person, StatCard } from '../components/UI'
+import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
+import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
@@ -84,8 +87,9 @@ export function FamilyContactsPage() {
   const [guardianForm, setGuardianForm] = useState<GuardianContact>(EMPTY_GUARDIAN)
   const [guardianSearch, setGuardianSearch] = useState('')
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Feedback | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const { confirm, dialog: confirmDialog } = useConfirm()
 
   const pageJamaah = useMemo(() => canManage ? jamaah : visibleJamaah, [canManage, jamaah, visibleJamaah])
   const visibleIds = useMemo(() => new Set(pageJamaah.map((item) => item.id)), [pageJamaah])
@@ -166,7 +170,7 @@ export function FamilyContactsPage() {
         members: memberDrafts.map<FamilyMember>((item) => ({ ...item, familyId: familyForm.id })),
       })
       setFamilyOpen(false)
-      setMessage('Data keluarga berhasil disimpan.')
+      setMessage(feedbackOk('Data keluarga berhasil disimpan.'))
     } catch (cause) {
       setModalError(cause instanceof Error ? cause.message : 'Gagal menyimpan data keluarga.')
     } finally {
@@ -175,12 +179,18 @@ export function FamilyContactsPage() {
   }
 
   async function removeSelectedFamily(family: Family) {
-    if (!window.confirm(`Hapus data ${family.name}? Keanggotaan keluarga akan dilepas, tetapi data warga tetap tersimpan.`)) return
+    const approved = await confirm({
+      title: `Hapus ${family.name}?`,
+      description: 'Keanggotaan keluarga akan dilepas, tetapi data warganya tetap tersimpan dan dapat dikelompokkan ulang kapan saja.',
+      confirmLabel: 'Hapus Keluarga',
+      tone: 'danger',
+    })
+    if (!approved) return
     try {
       await deleteFamily(family.id)
-      setMessage('Data keluarga berhasil dihapus.')
+      setMessage(feedbackOk('Data keluarga berhasil dihapus.'))
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menghapus data keluarga.')
+      setMessage(feedbackFrom(cause, 'Gagal menghapus data keluarga.'))
     }
   }
 
@@ -235,7 +245,7 @@ export function FamilyContactsPage() {
         updatedAt: new Date().toISOString(),
       })
       setGuardianOpen(false)
-      setMessage('Data wali berhasil ditautkan ke warga.')
+      setMessage(feedbackOk('Data wali berhasil ditautkan ke warga.'))
     } catch (cause) {
       setModalError(cause instanceof Error ? cause.message : 'Gagal menyimpan kontak wali.')
     } finally {
@@ -245,12 +255,18 @@ export function FamilyContactsPage() {
 
   async function removeSelectedGuardian(contact: GuardianContact) {
     const linked = contact.guardianJamaahId ? jamaahMap.get(contact.guardianJamaahId) : null
-    if (!window.confirm(`Hapus wali ${linked?.fullName ?? contact.fullName}?`)) return
+    const approved = await confirm({
+      title: `Hapus wali ${linked?.fullName ?? contact.fullName}?`,
+      description: 'Relasi wali ini akan dilepas dari warga terkait. Data warga yang menjadi wali tidak ikut terhapus.',
+      confirmLabel: 'Hapus Wali',
+      tone: 'danger',
+    })
+    if (!approved) return
     try {
       await deleteGuardianContact(contact.id)
-      setMessage('Kontak wali berhasil dihapus.')
+      setMessage(feedbackOk('Kontak wali berhasil dihapus.'))
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menghapus kontak wali.')
+      setMessage(feedbackFrom(cause, 'Gagal menghapus kontak wali.'))
     }
   }
 
@@ -298,10 +314,10 @@ export function FamilyContactsPage() {
         <StatCard label="Keluarga Tercatat" value={accessibleFamilies.length} note="Kelompok keluarga yang dapat dilihat" icon={<House size={20} />} />
         <StatCard label="Warga Terhubung" value={linkedJamaahCount} note="Memiliki data keluarga" icon={<UsersRound size={20} />} />
         <StatCard label="Wali Tertaut" value={visibleContacts.filter((item) => item.guardianJamaahId).length} note={`${visibleContacts.length} relasi wali tercatat`} icon={<UserRound size={20} />} />
-        <StatCard label="Tanpa Kontak" value={withoutContact} note="Tidak memiliki nomor sendiri/wali" icon={<span>!</span>} />
+        <StatCard label="Tanpa Kontak" value={withoutContact} note="Tidak memiliki nomor sendiri/wali" icon={<TriangleAlert size={20} />} />
       </section>
 
-      {message ? <div className={`inline-message page-message ${message.startsWith('Gagal') ? 'error' : ''}`}>{message}</div> : null}
+      <InlineMessage value={message} className="page-message" />
 
       <label className="search-field family-global-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari keluarga, warga, atau nomor kontak…" /></label>
 
@@ -328,16 +344,16 @@ export function FamilyContactsPage() {
               </section>
             )
           })}
-          {!visibleFamilies.length ? <div className="empty-state family-empty">Belum ada data keluarga yang sesuai pencarian.</div> : null}
+          {!visibleFamilies.length ? <div className="family-empty"><EmptyState icon={<House size={20} />} title="Belum ada data keluarga" description="Kelompokkan warga ke dalam keluarga agar kontak wali dan hubungan antaranggota mudah ditelusuri." action={canManage ? <button className="button primary" type="button" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button> : undefined} /></div> : null}
         </div>
       </article>
 
       <article className="card family-section">
         <div className="card-heading"><div><h2>Data Warga dan Wali</h2><p>Wali dipilih dari data warga. Nomor warga diprioritaskan; jika kosong, sistem menggunakan nomor wali utama yang tertaut.</p></div></div>
         <div className="table-wrap guardian-table">
-          <table>
-            <thead><tr><th>Warga</th><th>Profil & Kelas</th><th>Keluarga</th><th>Kontak Utama</th><th>Kontak Lain</th><th>Aksi</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Profil & Kelas</th><th scope="col" role="columnheader">Keluarga</th><th scope="col" role="columnheader">Kontak Utama</th><th scope="col" role="columnheader">Kontak Lain</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <tbody role="rowgroup">
               {contactPagination.pageItems.map((person) => {
                 const membership = membershipByJamaah.get(person.id)
                 const family = membership ? familyMap.get(membership.familyId) : null
@@ -347,20 +363,20 @@ export function FamilyContactsPage() {
                 const age = ageFromBirthDate(person.birthDate)
                 const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
-                  <tr key={person.id}>
-                    <td data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
-                    <td data-label="Profil & kelas"><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
-                    <td data-label="Keluarga">{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
-                    <td data-label="Kontak utama">{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
-                    <td data-label="Kontak lain" data-cell="full"><div className="guardian-contact-list">{contacts.map((contact) => {
+                  <tr role="row" key={person.id}>
+                    <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
+                    <td role="cell" data-label="Profil & kelas"><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
+                    <td role="cell" data-label="Keluarga">{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
+                    <td role="cell" data-label="Kontak utama">{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
+                    <td role="cell" data-label="Kontak lain" data-cell="full"><div className="guardian-contact-list">{contacts.map((contact) => {
                       const resolved = resolvedGuardian(contact)
                       return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
                     })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
+                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
                   </tr>
                 )
               })}
-              {!contactRows.length ? <tr><td colSpan={6}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
+              {!contactRows.length ? <tr role="row"><td role="cell" colSpan={6}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -432,6 +448,7 @@ export function FamilyContactsPage() {
         {guardianContacts.some((item) => item.id === guardianForm.id) ? <button className="button danger guardian-delete" disabled={saving} onClick={() => { const contact = guardianContacts.find((item) => item.id === guardianForm.id); if (contact) { setGuardianOpen(false); void removeSelectedGuardian(contact) } }}><Trash2 size={15} /> Hapus Wali</button> : null}
         {modalError ? <div className="form-error">{modalError}</div> : null}
       </Modal>
+      {confirmDialog}
     </>
   )
 }

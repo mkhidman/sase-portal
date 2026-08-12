@@ -1,4 +1,4 @@
-import { Download, FileCheck2, Lock, LockOpen } from 'lucide-react'
+import { ClipboardList, Download, FileCheck2, Lock, LockOpen, Percent, TriangleAlert, UsersRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
@@ -226,10 +226,10 @@ export function MonthlyReportPage() {
       </article>
 
       <section className="stats-grid four-columns report-stats">
-        <StatCard label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<span>S</span>} />
-        <StatCard label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<span>%</span>} />
-        <StatCard label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<span>P</span>} />
-        <StatCard label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<span>!</span>} />
+        <StatCard label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<ClipboardList size={20} />} />
+        <StatCard label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<Percent size={20} />} />
+        <StatCard label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<UsersRound size={20} />} />
+        <StatCard label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card monthly-census-composition">
@@ -288,25 +288,25 @@ export function MonthlyReportPage() {
         </div>
 
         <div className="table-wrap monthly-report-table">
-          <table>
-            <thead><tr><th>Kelas</th><th>Sesi</th><th>Anggota</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Kehadiran</th><th>Hasda</th><th>ASAD</th><th>Tindak Lanjut</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Kelas</th><th scope="col" role="columnheader">Sesi</th><th scope="col" role="columnheader">Anggota</th><th scope="col" role="columnheader">Hadir</th><th scope="col" role="columnheader">Izin</th><th scope="col" role="columnheader">Sakit</th><th scope="col" role="columnheader">Alpa</th><th scope="col" role="columnheader">Kehadiran</th><th scope="col" role="columnheader">Hasda</th><th scope="col" role="columnheader">ASAD</th><th scope="col" role="columnheader">Tindak Lanjut</th></tr></thead>
+            <tbody role="rowgroup">
               {classPagination.pageItems.map((report) => (
-                <tr key={report.classId}>
-                  <td data-cell="primary"><strong>{report.className}</strong></td>
-                  <td data-label="Sesi">{report.sessions.length}</td>
-                  <td data-label="Anggota">{report.members.length}</td>
-                  <td data-label="Hadir">{report.totals.present}</td>
-                  <td data-label="Izin">{report.totals.excused}</td>
-                  <td data-label="Sakit">{report.totals.sick}</td>
-                  <td data-label="Alpa">{report.totals.absent}</td>
-                  <td data-label="Kehadiran"><span className={`badge ${report.attendanceRate >= 70 ? 'success' : 'warning'}`}>{report.attendanceRate}%</span></td>
-                  <td data-label="Hasda">{report.hasda.percent === null ? '—' : `${report.hasda.percent}%`}</td>
-                  <td data-label="ASAD">{report.asad.percent === null ? '—' : `${report.asad.percent}%`}</td>
-                  <td data-label="Tindak lanjut">{report.openFollowUps}</td>
+                <tr role="row" key={report.classId}>
+                  <td role="cell" data-cell="primary"><strong>{report.className}</strong></td>
+                  <td role="cell" data-label="Sesi">{report.sessions.length}</td>
+                  <td role="cell" data-label="Anggota">{report.members.length}</td>
+                  <td role="cell" data-label="Hadir">{report.totals.present}</td>
+                  <td role="cell" data-label="Izin">{report.totals.excused}</td>
+                  <td role="cell" data-label="Sakit">{report.totals.sick}</td>
+                  <td role="cell" data-label="Alpa">{report.totals.absent}</td>
+                  <td role="cell" data-label="Kehadiran"><span className={`badge ${report.attendanceRate >= 70 ? 'success' : 'warning'}`}>{report.attendanceRate}%</span></td>
+                  <td role="cell" data-label="Hasda">{report.hasda.percent === null ? '—' : `${report.hasda.percent}%`}</td>
+                  <td role="cell" data-label="ASAD">{report.asad.percent === null ? '—' : `${report.asad.percent}%`}</td>
+                  <td role="cell" data-label="Tindak lanjut">{report.openFollowUps}</td>
                 </tr>
               ))}
-              {!classReports.length ? <tr><td colSpan={11}><div className="empty-state">Tidak ada kelas yang dapat ditampilkan.</div></td></tr> : null}
+              {!classReports.length ? <tr role="row"><td role="cell" colSpan={11}><div className="empty-state">Tidak ada kelas yang dapat ditampilkan.</div></td></tr> : null}
             </tbody>
           </table>
         </div>

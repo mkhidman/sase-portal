@@ -1,4 +1,4 @@
-import { BookOpenCheck, CalendarCheck2, GraduationCap, ShieldCheck, UserRoundCheck, Users } from 'lucide-react'
+import { AlertTriangle, BookOpenCheck, CalendarCheck2, GraduationCap, ShieldCheck, UserRoundCheck, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { ATTENDANCE_LABELS } from '../lib/constants'
 import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
+import { buildMissedAttendance } from '../lib/missedAttendance'
 import { analyzeDataQuality } from '../lib/dataQuality'
 import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
 
@@ -70,6 +71,10 @@ export function DashboardPage() {
     .filter((risk) => (risk.followUp?.status ?? 'pending') !== 'resolved')
     .sort((a, b) => (a.level === b.level ? a.attendanceRate - b.attendanceRate : a.level === 'priority' ? -1 : 1))
   const topRisks = attendanceRisks.slice(0, 5)
+  const missedAttendance = useMemo(
+    () => buildMissedAttendance({ schedules, sessions: attendanceSessions, classIds: visibleClassIds }),
+    [attendanceSessions, schedules, visibleClassIds],
+  )
   const dataQuality = useMemo(
     () => analyzeDataQuality(visibleJamaah, classes, guardianContacts),
     [classes, guardianContacts, visibleJamaah],
@@ -85,6 +90,17 @@ export function DashboardPage() {
       />
 
       {loading ? <div className="notice">Memuat data…</div> : null}
+
+      {missedAttendance.length ? (
+        <article className="card dashboard-help dashboard-missed">
+          <AlertTriangle size={22} />
+          <div>
+            <strong>{missedAttendance.length} jadwal sudah lewat tetapi belum diabsen</strong>
+            <p>Terlama {formatDate(missedAttendance[missedAttendance.length - 1]!.schedule.date)} pada kelas {classMap.get(missedAttendance[missedAttendance.length - 1]!.schedule.classId)?.name ?? 'yang diampu'}. Rekap dan laporan bulanan akan bolong selama absensinya belum diisi.</p>
+          </div>
+          <button className="button primary small" type="button" onClick={() => navigate('/jadwal')}>Lihat &amp; isi</button>
+        </article>
+      ) : null}
 
       <section className="stats-grid three-columns">
         <StatCard label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />

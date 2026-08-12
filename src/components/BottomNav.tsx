@@ -1,5 +1,5 @@
 import { ClipboardCheck, CalendarDays, LayoutDashboard, MoreHorizontal, ChartNoAxesColumn } from 'lucide-react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import type { ComponentType } from 'react'
 
 type BottomTab = { to: string; label: string; icon: ComponentType<{ size?: number }>; end?: boolean }
@@ -11,14 +11,14 @@ const tabs: BottomTab[] = [
   { to: '/rekap', label: 'Rekap', icon: ChartNoAxesColumn },
 ]
 
+export const BOTTOM_NAV_ROUTES = new Set(tabs.map((tab) => tab.to))
+
 interface BottomNavProps {
   onOpenMore: () => void
   isMoreActive: boolean
 }
 
 export function BottomNav({ onOpenMore, isMoreActive }: BottomNavProps) {
-  const location = useLocation()
-
   return (
     <nav className="bottom-nav" role="navigation" aria-label="Navigasi utama">
       {tabs.map((tab) => (

@@ -1,29 +1,20 @@
-import { CalendarPlus, Plus } from 'lucide-react'
+import { AlertTriangle, CalendarPlus, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../components/Modal'
-import { PageHeader } from '../components/UI'
+import { EmptyState, PageHeader } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
+import { attendanceUrlForSchedule, buildMissedAttendance, MISSED_ATTENDANCE_MAX_AGE_DAYS } from '../lib/missedAttendance'
 import { formatDate, isMandatoryMaterial, localIsoDate, materialDisplayName } from '../lib/utils'
 import type { MaterialType, Schedule } from '../types/domain'
 
 const BUILTIN_MATERIALS: MaterialType[] = ['hasda', 'asad', 'general', 'evaluation']
-
-function attendanceUrl(schedule: Schedule): string {
-  const params = new URLSearchParams({
-    class: schedule.classId,
-    date: schedule.date,
-    material: schedule.materialType,
-  })
-  if (schedule.materialName) params.set('materialName', schedule.materialName)
-  if (schedule.notes) params.set('notes', schedule.notes)
-  return `/absensi?${params.toString()}`
-}
+const MISSED_VISIBLE_LIMIT = 10
 
 export function SchedulesPage() {
   const navigate = useNavigate()
-  const { schedules, visibleClasses, saveSchedule, isPeriodClosed } = useData()
+  const { schedules, visibleClasses, attendanceSessions, saveSchedule, isPeriodClosed } = useData()
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,6 +23,10 @@ export function SchedulesPage() {
   const allowedIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
   const formPeriodClosed = isPeriodClosed(form.date.slice(0, 7))
   const upcoming = schedules.filter((item) => allowedIds.has(item.classId) && item.date >= localIsoDate()).sort((a, b) => a.date.localeCompare(b.date))
+  const missed = useMemo(
+    () => buildMissedAttendance({ schedules, sessions: attendanceSessions, classIds: allowedIds }),
+    [allowedIds, attendanceSessions, schedules],
+  )
   const customMaterialNames = useMemo(
     () => [...new Set(schedules.map((item) => item.materialName.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id')),
     [schedules],
@@ -81,8 +76,42 @@ export function SchedulesPage() {
 
   return (
     <>
-      <PageHeader title="Jadwal Pengajian" description="Admin dapat menambahkan jadwal hanya untuk kelas yang diampunya. Hanya jadwal hari ini dan setelahnya yang ditampilkan." actions={<button className="button primary" disabled={!visibleClasses.length} onClick={openCreate}><CalendarPlus size={16} /> Tambah Jadwal</button>} />
-      <div className="notice">Tanggal yang sudah lewat tetap tersimpan dan dapat dilihat melalui halaman Rekap Keseluruhan.</div>
+      <PageHeader title="Jadwal Pengajian" description="Jadwal mendatang beserta jadwal lewat yang absensinya belum diisi. Admin hanya dapat menambahkan jadwal untuk kelas yang diampunya." actions={<button className="button primary" disabled={!visibleClasses.length} onClick={openCreate}><CalendarPlus size={16} /> Tambah Jadwal</button>} />
+      <div className="notice">Jadwal yang sudah diabsen dapat dilihat melalui halaman Rekap Keseluruhan.</div>
+
+      {missed.length ? (
+        <article className="card missed-attendance-card">
+          <div className="card-heading">
+            <div>
+              <h2><AlertTriangle size={17} /> Belum diabsen</h2>
+              <p>Jadwal ini sudah lewat tetapi absensinya belum pernah disimpan. Isi sekarang agar rekap dan laporan bulanan tidak bolong.</p>
+            </div>
+            <span className="badge danger">{missed.length} jadwal</span>
+          </div>
+          <div className="schedule-list">
+            {missed.slice(0, MISSED_VISIBLE_LIMIT).map(({ schedule, daysLate }) => {
+              const studyClass = visibleClasses.find((item) => item.id === schedule.classId)
+              const closed = isPeriodClosed(schedule.date.slice(0, 7))
+              return (
+                <div className="schedule-row missed" key={schedule.id}>
+                  <span className="date-tile late"><strong>{schedule.date.slice(8, 10)}</strong><small>{schedule.date.slice(5, 7)}</small></span>
+                  <span className="schedule-copy">
+                    <strong>{studyClass?.name ?? 'Kelas'}</strong>
+                    <small>{formatDate(schedule.date)} · {materialDisplayName(schedule.materialType, schedule.materialName)}</small>
+                    {schedule.notes ? <em>{schedule.notes}</em> : null}
+                  </span>
+                  <span className="badge danger">Terlambat {daysLate} hari</span>
+                  <button className="button small primary" disabled={closed} title={closed ? 'Periode bulan ini sudah ditutup.' : undefined} onClick={() => navigate(attendanceUrlForSchedule(schedule))}>Isi Absensi</button>
+                </div>
+              )
+            })}
+          </div>
+          {missed.length > MISSED_VISIBLE_LIMIT ? (
+            <p className="muted-copy missed-attendance-note">Menampilkan {MISSED_VISIBLE_LIMIT} jadwal terlewat terbaru dari {missed.length}. Daftar ini hanya mencakup {MISSED_ATTENDANCE_MAX_AGE_DAYS} hari terakhir.</p>
+          ) : null}
+        </article>
+      ) : null}
+
       <article className="card">
         <div className="schedule-list">
           {upcoming.length ? upcoming.map((schedule) => {
@@ -96,10 +125,10 @@ export function SchedulesPage() {
                   {schedule.notes ? <em>{schedule.notes}</em> : null}
                 </span>
                 <span className={`badge ${isMandatoryMaterial(schedule.materialType) ? 'warning' : 'muted'}`}>{isMandatoryMaterial(schedule.materialType) ? 'Dipantau 100%' : 'Reguler'}</span>
-                <button className="button small primary" disabled={isPeriodClosed(schedule.date.slice(0, 7))} onClick={() => navigate(attendanceUrl(schedule))}>Isi Absensi</button>
+                <button className="button small primary" disabled={isPeriodClosed(schedule.date.slice(0, 7))} onClick={() => navigate(attendanceUrlForSchedule(schedule))}>Isi Absensi</button>
               </div>
             )
-          }) : <div className="empty-state">Belum ada jadwal mendatang.</div>}
+          }) : <EmptyState icon={<CalendarPlus size={20} />} title="Belum ada jadwal mendatang" description={visibleClasses.length ? "Tambahkan jadwal agar absensi dapat diisi tepat pada hari pelaksanaan." : "Belum ada kelas yang dapat Anda kelola."} action={visibleClasses.length ? <button className="button primary" onClick={openCreate}><CalendarPlus size={16} /> Tambah Jadwal</button> : undefined} />}
         </div>
       </article>
 

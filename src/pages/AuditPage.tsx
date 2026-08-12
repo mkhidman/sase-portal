@@ -1,4 +1,4 @@
-import { Activity, Search } from 'lucide-react'
+import { Activity, CalendarDays, Search, UsersRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PageHeader, Person, StatCard } from '../components/UI'
 import { useData } from '../contexts/DataContext'
@@ -52,8 +52,8 @@ export function AuditPage() {
 
       <section className="stats-grid three-columns compact-stats">
         <StatCard label="Aktivitas Tersimpan" value={auditLogs.length} note="Maksimal 200 aktivitas terbaru" icon={<Activity size={20} />} />
-        <StatCard label="Aktivitas Hari Ini" value={todayCount} note="Berdasarkan waktu perangkat" icon={<span>H</span>} />
-        <StatCard label="Pengguna Terlibat" value={uniqueActors} note="Admin dan Superadmin" icon={<span>U</span>} />
+        <StatCard label="Aktivitas Hari Ini" value={todayCount} note="Berdasarkan waktu perangkat" icon={<CalendarDays size={20} />} />
+        <StatCard label="Pengguna Terlibat" value={uniqueActors} note="Admin dan Superadmin" icon={<UsersRound size={20} />} />
       </section>
 
       <article className="card">

@@ -1,7 +1,8 @@
 import { RefreshCw, Save, Search, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PageHeader, Person } from '../components/UI'
+import { InlineMessage, PageHeader, Person } from '../components/UI'
+import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
 import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS, CENSUS_CATEGORIES, MATERIAL_LABELS } from '../lib/constants'
@@ -30,7 +31,7 @@ export function AttendancePage() {
   const [search, setSearch] = useState('')
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({})
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Feedback | null>(null)
   const [draftRestored, setDraftRestored] = useState(false)
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
@@ -189,21 +190,21 @@ export function AttendancePage() {
     if (!existing) return
     if (user) removeAttendanceDraft(user.id, classId, date, materialType, materialName)
     hydrateFromLatest(existing, false)
-    setMessage('Versi terbaru dari server sudah dimuat. Silakan periksa sebelum mengubah kembali.')
+    setMessage(feedbackInfo('Versi terbaru dari server sudah dimuat. Silakan periksa sebelum mengubah kembali.'))
   }
 
   async function submit() {
     if (!classId || !date) return
     if (generatedReadOnly) {
-      setMessage('Rekap otomatis hanya dapat diubah melalui absensi Pengajian Umum.')
+      setMessage(feedbackError('Rekap otomatis hanya dapat diubah melalui absensi Pengajian Umum.'))
       return
     }
     if (conflictDetected) {
-      setMessage('Muat versi terbaru terlebih dahulu agar perubahan pengguna lain tidak tertimpa.')
+      setMessage(feedbackError('Muat versi terbaru terlebih dahulu agar perubahan pengguna lain tidak tertimpa.'))
       return
     }
     if (!navigator.onLine && !isDemo) {
-      setMessage('Perangkat sedang offline. Perubahan tetap tersimpan sebagai draft dan dapat dikirim setelah koneksi kembali.')
+      setMessage(feedbackInfo('Perangkat sedang offline. Perubahan tetap tersimpan sebagai draft dan dapat dikirim setelah koneksi kembali.'))
       return
     }
     setSaving(true)
@@ -239,17 +240,17 @@ export function AttendancePage() {
             .filter((item) => item.count > 0)
             .map((item) => `${item.label} ${item.count} peserta`)
             .join(', ')
-          setMessage(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}.${generatedGroups ? ` Rekap status lengkap otomatis: ${generatedGroups}.` : ' Tidak ada peserta Pra Remaja, Remaja, atau Pra Nikah untuk dibuatkan rekap.'}`)
+          setMessage(feedbackOk(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}.${generatedGroups ? ` Rekap status lengkap otomatis: ${generatedGroups}.` : ' Tidak ada peserta Pra Remaja, Remaja, atau Pra Nikah untuk dibuatkan rekap.'}`))
         } else {
-          setMessage(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}. Rekap kelompok otomatis tidak dibuat karena tanggal ini bukan hari Senin atau Rabu.`)
+          setMessage(feedbackOk(`Absensi Pengajian Umum berhasil disimpan sebagai versi ${saved.revision}. Rekap kelompok otomatis tidak dibuat karena tanggal ini bukan hari Senin atau Rabu.`))
         }
       } else {
-        setMessage(`Absensi berhasil disimpan sebagai versi ${saved.revision}.`)
+        setMessage(feedbackOk(`Absensi berhasil disimpan sebagai versi ${saved.revision}.`))
       }
     } catch (cause) {
-      const text = cause instanceof Error ? cause.message : 'Gagal menyimpan absensi.'
-      if (text.includes('sudah diperbarui oleh pengguna lain')) setConflictDetected(true)
-      setMessage(text)
+      const failure = feedbackFrom(cause, 'Gagal menyimpan absensi.')
+      if (failure.text.includes('sudah diperbarui oleh pengguna lain')) setConflictDetected(true)
+      setMessage(failure)
     } finally {
       setSaving(false)
     }
@@ -270,8 +271,10 @@ export function AttendancePage() {
               disabled={periodClosed || futureDate || generatedReadOnly}
               onClick={() => changeStatuses({ ...statuses, [person.id]: status })}
               title={ATTENDANCE_LABELS[status]}
+              aria-pressed={statuses[person.id] === status}
+              aria-label={`${ATTENDANCE_LABELS[status]} — ${person.fullName}`}
             >
-              {ATTENDANCE_LABELS[status][0]}
+              <span aria-hidden="true">{ATTENDANCE_LABELS[status][0]}</span>
             </button>
           ))}
         </div>
@@ -326,7 +329,14 @@ export function AttendancePage() {
 
         <div className="attendance-toolbar">
           <div className="button-row"><button className="button soft small" disabled={periodClosed || futureDate || generatedReadOnly || !genderMembers.length} onClick={() => setAll('present')}>Semua {genderFilter === 'all' ? '' : genderFilter} Hadir</button><button className="button outline small" disabled={periodClosed || futureDate || generatedReadOnly || !genderMembers.length} onClick={() => setAll('absent')}>Reset ke Alpa</button></div>
-          <div className="attendance-summary">{ATTENDANCE_OPTIONS.map((status) => <span key={status}>{ATTENDANCE_LABELS[status]}: {filteredCounts[status]}</span>)}</div>
+          <div className="attendance-summary" aria-label="Keterangan tombol status dan jumlah peserta">
+            {ATTENDANCE_OPTIONS.map((status) => (
+              <span className={`attendance-summary-item ${status}`} key={status}>
+                <b aria-hidden="true">{ATTENDANCE_LABELS[status][0]}</b>
+                {ATTENDANCE_LABELS[status]}: {filteredCounts[status]}
+              </span>
+            ))}
+          </div>
         </div>
 
         <label className="search-field attendance-search"><Search size={16} /><input placeholder="Cari nama peserta…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
@@ -347,7 +357,7 @@ export function AttendancePage() {
           <span>{dirty ? 'Perubahan belum dikirim, tetapi sudah diamankan sebagai draft lokal.' : `Versi server ${existing?.revision ?? 0} sudah tersinkron.`}</span>
           {draftSavedAt ? <small>Draft terakhir {formatDateTime(draftSavedAt)}</small> : null}
         </div>
-        {message ? <div className={`inline-message ${message.includes('Gagal') || message.includes('terlebih dahulu') || message.includes('sudah diperbarui') ? 'error' : ''}`}>{message}</div> : null}
+        <InlineMessage value={message} />
       </article>
 
       <div className="attendance-mobile-save">

@@ -1,9 +1,11 @@
-import { Download, Eye, Pencil, Trash2 } from 'lucide-react'
+import { ClipboardList, Download, Eye, Pencil, Percent, Trash2, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../components/Modal'
+import { useConfirm } from '../components/useConfirm'
 import { Pagination } from '../components/Pagination'
-import { PageHeader, Person, ProgressBlock, StatCard } from '../components/UI'
+import { EmptyState, InlineMessage, PageHeader, Person, ProgressBlock, StatCard } from '../components/UI'
+import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { ATTENDANCE_LABELS } from '../lib/constants'
@@ -36,7 +38,8 @@ export function RecapPage() {
   const [month, setMonth] = useState(monthValue())
   const [classId, setClassId] = useState('all')
   const [detail, setDetail] = useState<AttendanceSession | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Feedback | null>(null)
+  const { confirm, dialog: confirmDialog } = useConfirm()
 
   const allowedIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
   const classNameMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
@@ -73,13 +76,19 @@ export function RecapPage() {
 
   async function remove(session: AttendanceSession) {
     const className = classNameMap.get(session.classId) ?? 'kelas ini'
-    if (!window.confirm(`Hapus absensi ${className} tanggal ${formatDate(session.date)}?`)) return
+    const approved = await confirm({
+      title: 'Hapus sesi absensi?',
+      description: `Absensi ${className} tanggal ${formatDate(session.date)} akan dihapus beserta seluruh status pesertanya. Tindakan ini tidak dapat dibatalkan dari aplikasi.`,
+      confirmLabel: 'Hapus Sesi',
+      tone: 'danger',
+    })
+    if (!approved) return
     setMessage(null)
     try {
       await deleteAttendance(session.id)
-      setMessage('Sesi absensi berhasil dihapus.')
+      setMessage(feedbackOk('Sesi absensi berhasil dihapus.'))
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menghapus sesi.')
+      setMessage(feedbackFrom(cause, 'Gagal menghapus sesi.'))
     }
   }
 
@@ -106,9 +115,9 @@ export function RecapPage() {
       <PageHeader title="Rekap Keseluruhan Pengajian" description="Seluruh sesi kelas yang dapat diakses, termasuk Hasda dan ASAD." actions={<button className="button outline" onClick={exportSessions}><Download size={16} /> Ekspor Sesi CSV</button>} />
 
       <section className="stats-grid three-columns">
-        <StatCard label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<span>S</span>} />
-        <StatCard label="Rata-Rata Hadir" value={`${averageAttendance}%`} note="Gabungan seluruh sesi" icon={<span>%</span>} />
-        <StatCard label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<span>!</span>} />
+        <StatCard label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<ClipboardList size={20} />} />
+        <StatCard label="Rata-Rata Hadir" value={`${averageAttendance}%`} note="Gabungan seluruh sesi" icon={<Percent size={20} />} />
+        <StatCard label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card">
@@ -140,10 +149,10 @@ export function RecapPage() {
               </article>
             )
           })}
-          {!sessions.length ? <div className="empty-state">Belum ada sesi tersimpan pada filter ini.</div> : null}
+          {!sessions.length ? <EmptyState icon={<ClipboardList size={20} />} title="Belum ada sesi pada filter ini" description="Ubah bulan atau kelas di atas, atau isi absensi terlebih dahulu agar sesinya muncul di sini." action={<button className="button primary" type="button" onClick={() => navigate("/absensi")}>Isi Absensi</button>} /> : null}
         </div>
         <Pagination page={sessionPagination.page} pageSize={sessionPagination.pageSize} totalItems={sessions.length} onPageChange={sessionPagination.setPage} onPageSizeChange={sessionPagination.setPageSize} />
-        {message ? <div className="inline-message">{message}</div> : null}
+        <InlineMessage value={message} />
       </article>
 
       <article className="card">
@@ -184,6 +193,7 @@ export function RecapPage() {
           </>
         ) : null}
       </Modal>
+      {confirmDialog}
     </>
   )
 }

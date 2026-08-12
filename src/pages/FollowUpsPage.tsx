@@ -1,8 +1,10 @@
-import { ExternalLink, MessageCircle, Search, Trash2, UserRoundCheck } from 'lucide-react'
+import { CalendarClock, CircleCheck, ExternalLink, MessageCircle, Search, Trash2, TriangleAlert, UserRoundCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Modal } from '../components/Modal'
-import { PageHeader, Person, StatCard } from '../components/UI'
+import { useConfirm } from '../components/useConfirm'
+import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
+import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
 import { buildAttendanceRisks, normalizeWhatsappNumber, type AttendanceRisk } from '../lib/followUps'
@@ -40,8 +42,9 @@ export function FollowUpsPage() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<AttendanceRisk | null>(null)
   const [form, setForm] = useState({ status: 'pending' as FollowUpStatus, notes: '', nextFollowUpDate: '' })
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Feedback | null>(null)
   const [working, setWorking] = useState(false)
+  const { confirm, dialog: confirmDialog } = useConfirm()
 
   const effectiveClassId = visibleClasses.some((item) => item.id === classId) ? classId : visibleClasses[0]?.id ?? ''
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
@@ -104,9 +107,9 @@ export function FollowUpsPage() {
       }
       await saveJamaahFollowUp(followUp)
       setSelected(null)
-      setMessage('Tindak lanjut berhasil disimpan.')
+      setMessage(feedbackOk('Tindak lanjut berhasil disimpan.'))
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menyimpan tindak lanjut.')
+      setMessage(feedbackFrom(cause, 'Gagal menyimpan tindak lanjut.'))
     } finally {
       setWorking(false)
     }
@@ -114,14 +117,20 @@ export function FollowUpsPage() {
 
   async function remove() {
     if (!selected?.followUp) return
-    if (!window.confirm('Hapus catatan tindak lanjut ini?')) return
+    const approved = await confirm({
+      title: 'Hapus catatan tindak lanjut?',
+      description: `Catatan tindak lanjut untuk ${selected.jamaah.fullName} akan dihapus. Riwayat kehadirannya tidak ikut terhapus.`,
+      confirmLabel: 'Hapus Catatan',
+      tone: 'danger',
+    })
+    if (!approved) return
     setWorking(true)
     try {
       await deleteJamaahFollowUp(selected.followUp.id)
       setSelected(null)
-      setMessage('Catatan tindak lanjut berhasil dihapus.')
+      setMessage(feedbackOk('Catatan tindak lanjut berhasil dihapus.'))
     } catch (cause) {
-      setMessage(cause instanceof Error ? cause.message : 'Gagal menghapus tindak lanjut.')
+      setMessage(feedbackFrom(cause, 'Gagal menghapus tindak lanjut.'))
     } finally {
       setWorking(false)
     }
@@ -135,8 +144,8 @@ export function FollowUpsPage() {
 
       <section className="stats-grid three-columns">
         <StatCard label="Perlu Ditindaklanjuti" value={openCount} note="Belum berstatus selesai" icon={<UserRoundCheck size={20} />} />
-        <StatCard label="Prioritas" value={priorityCount} note="Alpa ≥6 kali atau 4 sesi beruntun" icon={<span>!</span>} />
-        <StatCard label="Jatuh Tempo" value={dueCount} note="Tanggal tindak lanjut hari ini/lewat" icon={<span>H</span>} />
+        <StatCard label="Prioritas" value={priorityCount} note="Alpa ≥6 kali atau 4 sesi beruntun" icon={<TriangleAlert size={20} />} />
+        <StatCard label="Jatuh Tempo" value={dueCount} note="Tanggal tindak lanjut hari ini/lewat" icon={<CalendarClock size={20} />} />
       </section>
 
       <article className="card">
@@ -175,9 +184,9 @@ export function FollowUpsPage() {
               </article>
             )
           })}
-          {!risks.length ? <div className="empty-state">Tidak ada warga yang memenuhi filter tindak lanjut.</div> : null}
+          {!risks.length ? <EmptyState icon={<CircleCheck size={20} />} title="Tidak ada yang perlu ditindaklanjuti" description="Pada bulan dan kelas ini belum ada warga yang memenuhi ambang tinjauan. Ubah filter di atas untuk memeriksa periode lain." /> : null}
         </div>
-        {message ? <div className="inline-message">{message}</div> : null}
+        <InlineMessage value={message} />
       </article>
 
       <Modal open={Boolean(selected)} title="Catatan Tindak Lanjut" onClose={() => setSelected(null)} wide>
@@ -199,6 +208,7 @@ export function FollowUpsPage() {
           </>
         ) : null}
       </Modal>
+      {confirmDialog}
     </>
   )
 }

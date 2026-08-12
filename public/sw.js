@@ -1,8 +1,9 @@
-const CACHE_NAME = 'sase-portal-shell-v13-2'
+const CACHE_NAME = 'sase-portal-shell-v14-0'
 const APP_SHELL = [
   '/',
   '/offline.html',
   '/manifest.webmanifest',
+  '/fonts/inter-latin-variable.woff2',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ]

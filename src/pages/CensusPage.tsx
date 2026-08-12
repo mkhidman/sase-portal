@@ -1,4 +1,4 @@
-import { Archive, Download, Eye, FileDown, FileSpreadsheet, Plus, Search, Upload } from 'lucide-react'
+import { Archive, Download, Eye, FileDown, FileSpreadsheet, Layers, Mars, Plus, Search, Upload, UsersRound, Venus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Modal } from '../components/Modal'
@@ -215,10 +215,10 @@ export function CensusPage() {
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard label="Total Aktif" value={active.length} note="Seluruh kategori" icon={<span>T</span>} />
-        <StatCard label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} note="Data sensus aktif" icon={<span>L</span>} />
-        <StatCard label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} note="Data sensus aktif" icon={<span>P</span>} />
-        <StatCard label="Kategori Sensus" value={CENSUS_CATEGORIES.length} note="Kategori utama" icon={<span>K</span>} />
+        <StatCard label="Total Aktif" value={active.length} note="Seluruh kategori" icon={<UsersRound size={20} />} />
+        <StatCard label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} note="Data sensus aktif" icon={<Mars size={20} />} />
+        <StatCard label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} note="Data sensus aktif" icon={<Venus size={20} />} />
+        <StatCard label="Kategori Sensus" value={CENSUS_CATEGORIES.length} note="Kategori utama" icon={<Layers size={20} />} />
       </section>
 
       <article className="card census-composition-card">
@@ -250,21 +250,21 @@ export function CensusPage() {
           <select value={gender} onChange={(event) => setGender(event.target.value as Gender | '')}><option value="">Semua gender</option><option>Laki-laki</option><option>Perempuan</option></select>
         </div>
         <div className="table-wrap">
-          <table>
-            <thead><tr><th>Warga</th><th>Usia</th><th>Kategori sensus</th><th>Kelas pengajian</th><th>Status</th><th>Aksi</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Usia</th><th scope="col" role="columnheader">Kategori sensus</th><th scope="col" role="columnheader">Kelas pengajian</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <tbody role="rowgroup">
               {pagination.pageItems.map((item) => (
-                <tr key={item.id}>
-                  <td data-cell="primary">
+                <tr role="row" key={item.id}>
+                  <td role="cell" data-cell="primary">
                     <button className="person-detail-button" type="button" onClick={() => setAttendancePerson(item)} title={`Lihat rekap absensi ${item.fullName}`}>
                       <Person name={item.fullName} meta={`${item.gender} · ${item.phone || 'Nomor belum diisi'}`} />
                     </button>
                   </td>
-                  <td data-label="Usia">{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
-                  <td data-label="Kategori sensus"><span className="badge info">{item.censusCategory}</span></td>
-                  <td data-label="Kelas pengajian"><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
-                  <td data-label="Status"><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                  <td data-label="Aksi" data-cell="full"><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
+                  <td role="cell" data-label="Usia">{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
+                  <td role="cell" data-label="Kategori sensus"><span className="badge info">{item.censusCategory}</span></td>
+                  <td role="cell" data-label="Kelas pengajian"><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
+                  <td role="cell" data-label="Status"><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                  <td role="cell" data-label="Aksi" data-cell="full"><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -318,21 +318,21 @@ export function CensusPage() {
               <span className="badge danger">Alpa {personAttendanceCounts.absent}</span>
             </div>
             <div className="table-wrap person-attendance-table">
-              <table>
-                <thead><tr><th>Tanggal</th><th>Kelas</th><th>Materi</th><th>Status</th></tr></thead>
-                <tbody>
+              <table role="table">
+                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tanggal</th><th scope="col" role="columnheader">Kelas</th><th scope="col" role="columnheader">Materi</th><th scope="col" role="columnheader">Status</th></tr></thead>
+                <tbody role="rowgroup">
                   {personAttendance.map(({ session, status }) => (
-                    <tr key={session.id}>
-                      <td data-label="Tanggal">{formatDate(session.date)}</td>
-                      <td data-label="Kelas">
+                    <tr role="row" key={session.id}>
+                      <td role="cell" data-label="Tanggal">{formatDate(session.date)}</td>
+                      <td role="cell" data-label="Kelas">
                         <strong>{classes.find((item) => item.id === session.classId)?.name ?? 'Kelas'}</strong>
                         {session.generatedFromSessionId ? <small className="generated-session-note">Otomatis dari Pengajian Umum</small> : null}
                       </td>
-                      <td data-label="Materi">{materialDisplayName(session.materialType, session.materialName)}</td>
-                      <td data-label="Status"><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
+                      <td role="cell" data-label="Materi">{materialDisplayName(session.materialType, session.materialName)}</td>
+                      <td role="cell" data-label="Status"><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
                     </tr>
                   ))}
-                  {!personAttendance.length ? <tr><td colSpan={4}><div className="empty-state">Belum ada absensi yang tercatat untuk warga ini.</div></td></tr> : null}
+                  {!personAttendance.length ? <tr role="row"><td role="cell" colSpan={4}><div className="empty-state">Belum ada absensi yang tercatat untuk warga ini.</div></td></tr> : null}
                 </tbody>
               </table>
             </div>
@@ -376,15 +376,15 @@ export function CensusPage() {
               <div><span>Bermasalah</span><strong>{importSummary.invalid}</strong></div>
             </div>
             <div className="import-preview table-wrap">
-              <table>
-                <thead><tr><th>Baris</th><th>Nama</th><th>Status</th><th>Keterangan</th></tr></thead>
-                <tbody>
+              <table role="table">
+                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Baris</th><th scope="col" role="columnheader">Nama</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Keterangan</th></tr></thead>
+                <tbody role="rowgroup">
                   {importRows.slice(0, 100).map((row) => (
-                    <tr key={row.rowNumber}>
-                      <td data-label="Baris">{row.rowNumber}</td>
-                      <td data-label="Nama"><strong>{row.rawName || 'Tanpa nama'}</strong></td>
-                      <td data-label="Status"><span className={`badge ${row.status === 'valid' ? 'success' : row.status === 'duplicate' ? 'warning' : 'danger'}`}>{row.status === 'valid' ? 'Valid' : row.status === 'duplicate' ? 'Duplikat' : 'Perlu diperbaiki'}</span></td>
-                      <td data-label="Keterangan" data-cell="full">{row.messages.join(' ') || `${row.jamaah?.censusCategory ?? ''} · ${row.jamaah?.classIds.length ?? 0} kelas`}</td>
+                    <tr role="row" key={row.rowNumber}>
+                      <td role="cell" data-label="Baris">{row.rowNumber}</td>
+                      <td role="cell" data-label="Nama"><strong>{row.rawName || 'Tanpa nama'}</strong></td>
+                      <td role="cell" data-label="Status"><span className={`badge ${row.status === 'valid' ? 'success' : row.status === 'duplicate' ? 'warning' : 'danger'}`}>{row.status === 'valid' ? 'Valid' : row.status === 'duplicate' ? 'Duplikat' : 'Perlu diperbaiki'}</span></td>
+                      <td role="cell" data-label="Keterangan" data-cell="full">{row.messages.join(' ') || `${row.jamaah?.censusCategory ?? ''} · ${row.jamaah?.classIds.length ?? 0} kelas`}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -207,19 +207,19 @@ export function JamaahArchivePage() {
         </div>
 
         <div className="table-wrap archive-table">
-          <table>
-            <thead><tr><th>Warga</th><th>Kategori</th><th>Kelas aktif/terakhir</th><th>Status</th><th>Perubahan terakhir</th><th>Aksi</th></tr></thead>
-            <tbody>
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori</th><th scope="col" role="columnheader">Kelas aktif/terakhir</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Perubahan terakhir</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <tbody role="rowgroup">
               {pagination.pageItems.map((person) => {
                 const latest = latestHistory(person.id)
                 const classIds = lastKnownClasses(person)
                 return (
-                  <tr key={person.id}>
-                    <td data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
-                    <td data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
-                    <td data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
-                    <td data-label="Status"><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                    <td data-label="Perubahan terakhir">
+                  <tr role="row" key={person.id}>
+                    <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
+                    <td role="cell" data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
+                    <td role="cell" data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
+                    <td role="cell" data-label="Status"><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td role="cell" data-label="Perubahan terakhir">
                       {latest ? (
                         <span className="archive-last-change">
                           <strong>{JAMAAH_STATUS_REASON_LABELS[latest.reason]}</strong>
@@ -227,7 +227,7 @@ export function JamaahArchivePage() {
                         </span>
                       ) : <span className="muted-copy">Belum ada riwayat</span>}
                     </td>
-                    <td data-label="Aksi" data-cell="full">
+                    <td role="cell" data-label="Aksi" data-cell="full">
                       <div className="table-actions">
                         <button className="text-button" type="button" onClick={() => setHistoryPerson(person)}><History size={14} /> Riwayat</button>
                         {person.active
@@ -238,7 +238,7 @@ export function JamaahArchivePage() {
                   </tr>
                 )
               })}
-              {!filtered.length ? <tr><td colSpan={6}><div className="empty-state">Data warga tidak ditemukan.</div></td></tr> : null}
+              {!filtered.length ? <tr role="row"><td role="cell" colSpan={6}><div className="empty-state">Data warga tidak ditemukan.</div></td></tr> : null}
             </tbody>
           </table>
         </div>
