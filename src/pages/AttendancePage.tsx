@@ -1,7 +1,8 @@
-import { RefreshCw, Save, Search, ShieldAlert } from 'lucide-react'
+import { CloudUpload, RefreshCw, Save, Search, ShieldAlert, WifiOff } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { InlineMessage, PageHeader, Person } from '../components/UI'
+import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -36,6 +37,10 @@ export function AttendancePage() {
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [conflictDetected, setConflictDetected] = useState(false)
+  const online = useNetworkStatus()
+  // Ditahan sampai pengguna menekan kirim: mengirim otomatis saat koneksi pulih membuat
+  // expectedRevision basi dan berisiko menimpa absensi yang sudah diubah pengguna lain.
+  const [pendingSinceOffline, setPendingSinceOffline] = useState(false)
   const hydratedKey = useRef('')
   const baseRevision = useRef(0)
   const dirtyRef = useRef(false)
@@ -98,6 +103,7 @@ export function AttendancePage() {
     baseRevision.current = 0
     setDirty(false)
     setConflictDetected(false)
+    setPendingSinceOffline(false)
     hydrateFromLatest(existing, true)
     // sessionKey dan daftar anggota adalah identitas draft. existing sengaja ditangani pada effect terpisah.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,6 +160,14 @@ export function AttendancePage() {
     }
   }, [classId, date, materialName, materialType, members.length, notes, statuses, user])
 
+  // Pesan sukses menutup sendiri: di HP kartu ini melayang di atas daftar nama, dan
+  // konfirmasi yang menetap akan berbohong tentang apa yang baru saja terjadi.
+  useEffect(() => {
+    if (message?.tone !== 'success') return
+    const timer = window.setTimeout(() => setMessage(null), 10000)
+    return () => window.clearTimeout(timer)
+  }, [message])
+
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (!dirtyRef.current) return
@@ -203,8 +217,10 @@ export function AttendancePage() {
       setMessage(feedbackError('Muat versi terbaru terlebih dahulu agar perubahan pengguna lain tidak tertimpa.'))
       return
     }
-    if (!navigator.onLine && !isDemo) {
-      setMessage(feedbackInfo('Perangkat sedang offline. Perubahan tetap tersimpan sebagai draft dan dapat dikirim setelah koneksi kembali.'))
+    if (!online && !isDemo) {
+      persistDraftNow()
+      setPendingSinceOffline(true)
+      setMessage(feedbackInfo('Belum masuk server. Perubahan diamankan sebagai draft di perangkat ini — tekan Kirim sekarang begitu koneksi kembali.'))
       return
     }
     setSaving(true)
@@ -226,6 +242,7 @@ export function AttendancePage() {
       setDraftSavedAt(null)
       setDirty(false)
       setConflictDetected(false)
+      setPendingSinceOffline(false)
       if (isGeneral) {
         if (isGeneralAttendanceBreakdownDay(date)) {
           const generatedGroups = [
@@ -285,13 +302,17 @@ export function AttendancePage() {
   const isGeneral = studyClass?.name === 'Pengajian Umum'
   const periodClosed = isPeriodClosed(date.slice(0, 7))
   const futureDate = date > localIsoDate()
+  const offlineHold = !online && !isDemo
+  const unsentAfterReconnect = online && pendingSinceOffline && dirty
+  const saveBlocked = saving || periodClosed || futureDate || conflictDetected || generatedReadOnly
+  const saveLabel = saving ? 'Menyimpan…' : offlineHold ? 'Simpan nanti · offline' : unsentAfterReconnect ? 'Kirim sekarang' : 'Simpan Absensi'
 
   return (
     <>
       <PageHeader
         title="Absensi Kelas"
         description="Status awal seluruh peserta adalah Alpa. Ubah hanya yang Hadir, Izin, atau Sakit."
-        actions={<button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected || generatedReadOnly} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan Absensi'}</button>}
+        actions={<button className={`button ${offlineHold ? 'outline' : 'primary'}`} disabled={saveBlocked} onClick={() => void submit()}>{offlineHold ? <WifiOff size={16} /> : unsentAfterReconnect ? <CloudUpload size={16} /> : <Save size={16} />} {saveLabel}</button>}
       />
 
       <article className="card attendance-card">
@@ -318,6 +339,14 @@ export function AttendancePage() {
         ) : null}
 
         {draftRestored ? <div className="notice info-notice">Draft absensi yang belum dikirim berhasil dipulihkan dari perangkat ini.</div> : null}
+
+        {unsentAfterReconnect ? (
+          <div className="notice attendance-unsent-notice">
+            <CloudUpload size={20} />
+            <div><strong>Koneksi sudah kembali</strong><span>Absensi ini masih tersimpan sebagai draft di perangkat dan belum masuk server.</span></div>
+            <button className="button primary small" type="button" disabled={saveBlocked} onClick={() => void submit()}>Kirim sekarang</button>
+          </div>
+        ) : null}
 
         <div className={`notice ${isMandatoryMaterial(materialType) ? 'warning-notice' : ''}`}>
           {isMandatoryMaterial(materialType)
@@ -357,12 +386,17 @@ export function AttendancePage() {
           <span>{dirty ? 'Perubahan belum dikirim, tetapi sudah diamankan sebagai draft lokal.' : `Versi server ${existing?.revision ?? 0} sudah tersinkron.`}</span>
           {draftSavedAt ? <small>Draft terakhir {formatDateTime(draftSavedAt)}</small> : null}
         </div>
-        <InlineMessage value={message} />
+        <InlineMessage value={message} className="attendance-desktop-message" />
       </article>
 
+      {/* Di HP hasil simpan dirender di sini, menempel pada tombolnya. Sebelumnya pesan
+          muncul di dasar kartu — di luar layar ketika daftar peserta panjang. */}
       <div className="attendance-mobile-save">
-        <span><strong>{counts.present} hadir</strong><small>{dirty ? 'Draft tersimpan lokal' : `Versi ${existing?.revision ?? 0}`}</small></span>
-        <button className="button primary" disabled={saving || periodClosed || futureDate || conflictDetected || generatedReadOnly} onClick={() => void submit()}><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
+        <InlineMessage value={message} className="attendance-mobile-message" />
+        <div className="attendance-mobile-save-row">
+          <span><strong>{counts.present} hadir</strong><small>{offlineHold ? 'Offline · draft lokal' : unsentAfterReconnect ? 'Belum masuk server' : dirty ? 'Draft tersimpan lokal' : `Versi ${existing?.revision ?? 0}`}</small></span>
+          <button className={`button ${offlineHold ? 'outline' : 'primary'}`} disabled={saveBlocked} onClick={() => void submit()}>{offlineHold ? <WifiOff size={16} /> : unsentAfterReconnect ? <CloudUpload size={16} /> : <Save size={16} />} {saving ? 'Menyimpan…' : offlineHold ? 'Simpan nanti' : unsentAfterReconnect ? 'Kirim' : 'Simpan'}</button>
+        </div>
       </div>
     </>
   )

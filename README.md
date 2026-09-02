@@ -89,6 +89,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Materi jadwal dapat ditambah secara dinamis beserta keterangan.
 - Form absensi memiliki filter Laki-laki/Perempuan dan kolom materi sambung/keterangan.
 - Admin dapat menambahkan jadwal hanya untuk kelas yang diampunya.
+- Jadwal dapat diubah dan dibatalkan, termasuk jadwal yang sudah lewat agar tidak terus muncul sebagai belum diabsen.
 - Ambang Tindak Lanjut menggunakan minimal 4 kali Alpa.
 - Laporan Bulanan dapat diunduh sebagai PDF rapi.
 - Ringkasan kategori sensus per jenis kelamin tersedia pada Data Sensus dan PDF bulanan.
@@ -172,7 +173,7 @@ Jalankan migration secara berurutan:
 
 Untuk project yang sudah menjalankan migration 001–017, jalankan migration 018 lalu 019. Jika migration 018 sudah aktif, cukup jalankan migration 019.
 
-Migration 018 menambahkan relasi sesi otomatis, sedangkan migration 019 membatasi pembuatannya pada Pengajian Umum hari Senin/Rabu dan menyalin status lengkap Hadir, Izin, Sakit, serta Alpa ke rekap Pra Remaja, Remaja, dan Pra Nikah. Migration 017 tetap diperlukan untuk relasi wali antarwarga, migration 016 untuk penyimpanan warga dan absensi transaksional, migration 015 agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
+Migration 021 memberi Admin izin mengubah dan membatalkan jadwal kelas yang diampunya, melengkapi migration 015 yang sebelumnya hanya mengizinkan pembuatan. Migration 018 menambahkan relasi sesi otomatis, sedangkan migration 019 membatasi pembuatannya pada Pengajian Umum hari Senin/Rabu dan menyalin status lengkap Hadir, Izin, Sakit, serta Alpa ke rekap Pra Remaja, Remaja, dan Pra Nikah. Migration 017 tetap diperlukan untuk relasi wali antarwarga, migration 016 untuk penyimpanan warga dan absensi transaksional, migration 015 agar Admin dapat membuat jadwal kelasnya sendiri, migration 013 untuk penggabungan data duplikat, dan migration 012 untuk perlindungan konflik edit absensi.
 
 ## Edge Function pembuatan Admin
 
@@ -223,6 +224,7 @@ supabase/
 ## Batas fase saat ini
 
 - Draft offline belum dikirim otomatis sebagai antrean background; pengguna menekan Simpan setelah koneksi kembali.
+- Keadaan itu dinyatakan langsung di layar: saat offline tombol berbunyi `Simpan nanti · offline`, dan setelah koneksi pulih muncul ajakan `Kirim sekarang`. Pengiriman sengaja tetap manual agar `expectedRevision` selalu segar dan absensi pengguna lain tidak tertimpa.
 - Backup JSON dapat diunduh, tetapi restore otomatis belum tersedia.
 - Perubahan kelas sebelum migration 008 dijalankan tidak memiliki histori otomatis dan tidak dapat direkonstruksi.
 - Status nonaktif yang dibuat sebelum migration 009 tidak memiliki alasan, tanggal efektif, atau kelas terakhir otomatis.
@@ -252,5 +254,6 @@ Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset passw
 - Filter absensi dapat dibatasi ke Laki-laki atau Perempuan tanpa menyembunyikan data gender lain dari sesi yang sama.
 - Materi sambung/keterangan dapat dicatat saat mengisi absensi dan ikut tersimpan pada rekap historis.
 - Admin dapat membuat jadwal hanya untuk kelas aktif yang ditugaskan kepadanya.
+- Admin juga dapat mengubah dan membatalkan jadwal kelas yang diampunya, selama bulan tersebut belum ditutup.
 - Halaman **Keluarga & Wali** menjadi daftar lengkap warga aktif pada kelas Admin, termasuk profil, kelas, keluarga, dan kontak.
 - Komposisi sensus pada Laporan Bulanan Admin mengikuti cakupan kelas yang diampu; laporan global tetap hanya tersedia bagi Superadmin.

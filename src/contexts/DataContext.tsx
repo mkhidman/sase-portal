@@ -22,6 +22,7 @@ import {
   persistDemo,
   removeAttendanceSession,
   removeMaterialCompletion,
+  removeSchedule,
   upsertAttendanceSession,
   upsertJamaah,
   importJamaahBatch,
@@ -80,6 +81,7 @@ interface DataContextValue extends BootstrapData {
   saveJamaah: (jamaah: Jamaah) => Promise<void>
   importJamaah: (jamaah: Jamaah[]) => Promise<number>
   saveSchedule: (schedule: Schedule) => Promise<void>
+  deleteSchedule: (scheduleId: string) => Promise<void>
   saveAttendance: (input: SaveAttendanceInput) => Promise<AttendanceSession>
   deleteAttendance: (sessionId: string) => Promise<void>
   toggleFollowUp: (month: string, materialType: 'hasda' | 'asad', jamaahId: string, classId: string | null) => Promise<void>
@@ -379,6 +381,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
           ],
         }))
         return saved
+      },
+      async deleteSchedule(scheduleId) {
+        const target = data.schedules.find((item) => item.id === scheduleId)
+        if (!target) throw new Error('Jadwal tidak ditemukan atau sudah dibatalkan.')
+        if (isPeriodClosed(target.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Jadwal tidak dapat dibatalkan.')
+        if (!visibleClasses.some((item) => item.id === target.classId)) throw new Error('Anda hanya dapat membatalkan jadwal untuk kelas yang diampu.')
+        await removeSchedule(scheduleId)
+        await updateData((current) => ({
+          ...current,
+          schedules: current.schedules.filter((item) => item.id !== scheduleId),
+        }))
       },
       async deleteAttendance(sessionId) {
         const targetSession = data.attendanceSessions.find((item) => item.id === sessionId)

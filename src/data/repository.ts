@@ -456,6 +456,13 @@ export async function upsertSchedule(schedule: Schedule): Promise<Schedule> {
   return { ...schedule, id: data.id as string }
 }
 
+export async function removeSchedule(id: string): Promise<void> {
+  if (isDemoMode) return
+  const client = requireSupabase()
+  const { error } = await client.from('schedules').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function upsertAttendanceSession(
   session: AttendanceSession,
   expectedRevision: number,
