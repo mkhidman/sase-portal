@@ -15,8 +15,6 @@ export type CompletionSource = 'main_session' | 'follow_up'
 export type AuditAction = 'insert' | 'update' | 'delete'
 export type FollowUpStatus = 'pending' | 'contacted' | 'visit_needed' | 'resolved'
 export type FollowUpTrigger = 'low_attendance' | 'consecutive_absence' | 'manual'
-export type MeetingNoteStatus = 'draft' | 'final'
-export type MeetingActionStatus = 'pending' | 'in_progress' | 'completed'
 export type ReportingPeriodStatus = 'open' | 'closed'
 export type ClassChangeType = 'promotion' | 'transfer' | 'manual'
 export type JamaahStatusReason = 'moved' | 'stopped' | 'graduated' | 'deceased' | 'duplicate' | 'other' | 'reactivated'
@@ -102,33 +100,7 @@ export interface JamaahFollowUp {
   updatedAt: string
 }
 
-export interface MeetingNote {
-  id: string
-  title: string
-  meetingDate: string
-  agenda: string
-  discussionSummary: string
-  decisions: string
-  additionalNotes: string
-  status: MeetingNoteStatus
-  participantIds: string[]
-  createdBy: string | null
-  createdAt: string
-  updatedAt: string
-}
 
-export interface MeetingAction {
-  id: string
-  meetingNoteId: string
-  task: string
-  assigneeJamaahId: string | null
-  dueDate: string
-  status: MeetingActionStatus
-  notes: string
-  createdBy: string | null
-  createdAt: string
-  updatedAt: string
-}
 
 export interface ReportingPeriod {
   id: string
@@ -244,6 +216,4 @@ export interface BootstrapData {
   familyMembers: FamilyMember[]
   guardianContacts: GuardianContact[]
   mergeHistory: JamaahMergeHistory[]
-  meetingNotes: MeetingNote[]
-  meetingActions: MeetingAction[]
 }

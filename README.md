@@ -92,7 +92,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Jadwal dapat diubah dan dibatalkan, termasuk jadwal yang sudah lewat agar tidak terus muncul sebagai belum diabsen.
 - Ambang Tindak Lanjut menggunakan minimal 4 kali Alpa.
 - Laporan Bulanan dapat diunduh sebagai PDF rapi.
-- Ringkasan kategori sensus per jenis kelamin tersedia pada Data Sensus dan PDF bulanan.
+- Ringkasan kategori sensus per jenis kelamin tampil sebagai infografis batang bertumpuk pada Data Sensus dan Laporan Bulanan; PDF bulanan tetap memakai tabel.
 
 
 ## Fase 12: penggabungan data duplikat

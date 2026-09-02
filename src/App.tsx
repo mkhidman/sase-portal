@@ -22,8 +22,6 @@ const loaders = {
   followUps: () => import('./pages/FollowUpsPage'),
   jamaahArchive: () => import('./pages/JamaahArchivePage'),
   materials: () => import('./pages/MaterialsPage'),
-  meetingFollowUps: () => import('./pages/MeetingFollowUpsPage'),
-  meetingNotes: () => import('./pages/MeetingNotesPage'),
   monthlyReport: () => import('./pages/MonthlyReportPage'),
   notFound: () => import('./pages/NotFoundPage'),
   recap: () => import('./pages/RecapPage'),
@@ -41,8 +39,6 @@ const FamilyContactsPage = lazy(() => loaders.familyContacts().then((m) => ({ de
 const FollowUpsPage = lazy(() => loaders.followUps().then((m) => ({ default: m.FollowUpsPage })))
 const JamaahArchivePage = lazy(() => loaders.jamaahArchive().then((m) => ({ default: m.JamaahArchivePage })))
 const MaterialsPage = lazy(() => loaders.materials().then((m) => ({ default: m.MaterialsPage })))
-const MeetingFollowUpsPage = lazy(() => loaders.meetingFollowUps().then((m) => ({ default: m.MeetingFollowUpsPage })))
-const MeetingNotesPage = lazy(() => loaders.meetingNotes().then((m) => ({ default: m.MeetingNotesPage })))
 const MonthlyReportPage = lazy(() => loaders.monthlyReport().then((m) => ({ default: m.MonthlyReportPage })))
 const NotFoundPage = lazy(() => loaders.notFound().then((m) => ({ default: m.NotFoundPage })))
 const RecapPage = lazy(() => loaders.recap().then((m) => ({ default: m.RecapPage })))
@@ -81,8 +77,6 @@ export default function App() {
                   <Route path="keluarga-wali" element={<FamilyContactsPage />} />
                   <Route path="rekap" element={<RecapPage />} />
                   <Route path="laporan-bulanan" element={<MonthlyReportPage />} />
-                  <Route path="notulensi" element={<MeetingNotesPage />} />
-                  <Route path="notulensi/tindak-lanjut" element={<MeetingFollowUpsPage />} />
                   <Route element={<SuperadminRoute />}>
                     <Route path="sensus" element={<CensusPage />} />
                     <Route path="kualitas-data" element={<DataQualityPage />} />

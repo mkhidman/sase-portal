@@ -1,5 +1,6 @@
 import { ClipboardList, Download, FileCheck2, Lock, LockOpen, Percent, TriangleAlert, UsersRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { GenderComposition } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, StatCard } from '../components/UI'
@@ -243,18 +244,7 @@ export function MonthlyReportPage() {
             <p>Posisi warga aktif pada akhir {monthLabel(month)} sesuai filter kelas. {user?.role === 'admin' ? 'Angka hanya mencakup kelas yang Anda ampu dan dapat berbeda dari laporan global Superadmin.' : 'Angka Semua kelas mencakup seluruh data warga.'}</p>
           </div>
         </div>
-        <div className="census-gender-grid">
-          {censusGenderSummary.map((item) => (
-            <div className="census-gender-card" key={item.categoryName}>
-              <strong>{item.categoryName}</strong>
-              <div className="census-gender-values">
-                <span><small>Laki-laki</small><b>{item.male}</b></span>
-                <span><small>Perempuan</small><b>{item.female}</b></span>
-                <span className="census-total"><small>Total</small><b>{item.total}</b></span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <GenderComposition rows={censusGenderSummary.map((item) => ({ key: item.categoryName, label: item.categoryName, male: item.male, female: item.female, total: item.total }))} />
       </article>
 
       <article className="card monthly-material-gender-summary">

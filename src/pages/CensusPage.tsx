@@ -1,6 +1,7 @@
 import { Archive, Download, Eye, FileDown, FileSpreadsheet, Layers, Mars, Plus, Search, Upload, UsersRound, Venus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { GenderComposition } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
@@ -229,18 +230,7 @@ export function CensusPage() {
           </div>
           <button className="button outline small" type="button" onClick={exportCensusSummary}><FileDown size={15} /> Ekspor Ringkasan</button>
         </div>
-        <div className="census-gender-grid">
-          {censusGenderSummary.map((item) => (
-            <div className="census-gender-card" key={item.categoryName}>
-              <strong>{item.categoryName}</strong>
-              <div className="census-gender-values">
-                <span><small>Laki-laki</small><b>{item.male}</b></span>
-                <span><small>Perempuan</small><b>{item.female}</b></span>
-                <span className="census-total"><small>Total</small><b>{item.total}</b></span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <GenderComposition rows={censusGenderSummary.map((item) => ({ key: item.categoryName, label: item.categoryName, male: item.male, female: item.female, total: item.total }))} />
       </article>
 
       <article className="card">

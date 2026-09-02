@@ -3,27 +3,11 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
-import { ATTENDANCE_LABELS } from '../lib/constants'
 import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
 import { buildMissedAttendance } from '../lib/missedAttendance'
 import { analyzeDataQuality } from '../lib/dataQuality'
-import { buildAttendanceTrend, buildCensusComposition, buildMaterialProgressByClass } from '../lib/dashboardStats'
 import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
-import { BarList, ChartCard, ChartLegend, ChartTable, GroupedBarList, SplitBar, StackedColumnChart } from '../components/Charts'
-import type { BarItem, ChartSeries, GroupedBarRow, StackedColumn } from '../components/Charts'
-
-const ATTENDANCE_SERIES: ChartSeries[] = [
-  { key: 'present', label: ATTENDANCE_LABELS.present, color: 'var(--chart-present)' },
-  { key: 'excused', label: ATTENDANCE_LABELS.excused, color: 'var(--chart-excused)' },
-  { key: 'sick', label: ATTENDANCE_LABELS.sick, color: 'var(--chart-sick)' },
-  { key: 'absent', label: ATTENDANCE_LABELS.absent, color: 'var(--chart-absent)' },
-]
-
-const MATERIAL_SERIES: ChartSeries[] = [
-  { key: 'hasda', label: 'Hasda', color: 'var(--chart-series-1)' },
-  { key: 'asad', label: 'ASAD', color: 'var(--chart-series-2)' },
-]
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -96,47 +80,6 @@ export function DashboardPage() {
   )
   const criticalDataIssues = dataQuality.issues.filter((issue) => issue.severity === 'critical').length
 
-  const attendanceTrend = useMemo(
-    () => buildAttendanceTrend(attendanceSessions, visibleClassIds, selectedMonth),
-    [attendanceSessions, selectedMonth, visibleClassIds],
-  )
-  const composition = useMemo(() => buildCensusComposition(visibleJamaah), [visibleJamaah])
-  const materialByClass = useMemo(
-    () => buildMaterialProgressByClass(materialSnapshot, visibleClasses, classNameMap, materialCompletions, selectedMonth),
-    [classNameMap, materialCompletions, materialSnapshot, selectedMonth, visibleClasses],
-  )
-
-  const trendColumns: StackedColumn[] = attendanceTrend.map((point) => ({
-    key: point.month,
-    label: point.shortLabel,
-    fullLabel: point.fullLabel,
-    total: point.participants,
-    values: point.counts,
-    capLabel: `${point.presentPercent}%`,
-  }))
-  const genderSlices: BarItem[] = composition.genders.map((slice, index) => ({
-    key: slice.key,
-    label: slice.label,
-    value: slice.count,
-    caption: `${slice.count} · ${slice.percent}%`,
-    color: index === 0 ? 'var(--chart-series-1)' : 'var(--chart-series-2)',
-  }))
-  const categoryBars: BarItem[] = composition.categories.map((slice) => ({
-    key: slice.key,
-    label: slice.label,
-    value: slice.count,
-    caption: `${slice.count} · ${slice.percent}%`,
-    color: 'var(--chart-series-1)',
-  }))
-  const materialRows: GroupedBarRow[] = materialByClass.map((item) => ({
-    key: item.classId,
-    label: item.className,
-    bars: [
-      { seriesKey: 'hasda', percent: item.hasda.percent, caption: item.hasda.total ? `${item.hasda.percent}% · ${item.hasda.done}/${item.hasda.total}` : 'Tanpa peserta', empty: !item.hasda.total },
-      { seriesKey: 'asad', percent: item.asad.percent, caption: item.asad.total ? `${item.asad.percent}% · ${item.asad.done}/${item.asad.total}` : 'Tanpa peserta', empty: !item.asad.total },
-    ],
-  }))
-
   return (
     <>
       <PageHeader
@@ -164,79 +107,14 @@ export function DashboardPage() {
         <StatCard label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
       </section>
 
-      <section className="dashboard-insights">
-        <div className="insights-header">
-          <div>
-            <h2>Infografis</h2>
-            <p>Tren kehadiran, komposisi warga, dan progres materi. Bulan yang dipilih juga dipakai blok Target Materi di bawah.</p>
-          </div>
-          <label className="insights-filter">
-            <span>Bulan</span>
-            <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
-          </label>
-        </div>
-
-        <div className="insights-grid">
-          <ChartCard
-            title="Tren Kehadiran 6 Bulan"
-            description="Porsi Hadir, Izin, Sakit, dan Alpa tiap bulan. Angka di atas kolom adalah persentase Hadir."
-          >
-            <ChartLegend series={ATTENDANCE_SERIES} />
-            <StackedColumnChart columns={trendColumns} series={ATTENDANCE_SERIES} />
-            <ChartTable
-              head={['Bulan', 'Sesi', 'Hadir', 'Izin', 'Sakit', 'Alpa', '% Hadir']}
-              rows={attendanceTrend.map((point) => [
-                point.fullLabel,
-                point.sessions,
-                point.counts.present,
-                point.counts.excused,
-                point.counts.sick,
-                point.counts.absent,
-                point.participants ? `${point.presentPercent}%` : '—',
-              ])}
-            />
-          </ChartCard>
-
-          <ChartCard
-            title="Komposisi Warga"
-            description={`${composition.total} warga aktif menurut jenis kelamin dan kategori sensus.`}
-          >
-            <SplitBar slices={genderSlices} />
-            <BarList items={categoryBars} />
-            <ChartTable
-              head={['Kategori', 'Jumlah', 'Porsi']}
-              rows={composition.categories.map((slice) => [slice.label, slice.count, `${slice.percent}%`])}
-            />
-          </ChartCard>
-
-          <ChartCard
-            title="Hasda & ASAD per Kelas"
-            description="Kelas yang paling tertinggal berada di atas. Hanya kelas yang punya peserta wajib materi."
-          >
-            {materialRows.length ? (
-              <>
-                <ChartLegend series={MATERIAL_SERIES} />
-                <GroupedBarList rows={materialRows} series={MATERIAL_SERIES} />
-                <ChartTable
-                  head={['Kelas', 'Hasda', 'ASAD']}
-                  rows={materialByClass.map((item) => [
-                    item.className,
-                    `${item.hasda.done}/${item.hasda.total} (${item.hasda.percent}%)`,
-                    `${item.asad.done}/${item.asad.total} (${item.asad.percent}%)`,
-                  ])}
-                />
-              </>
-            ) : (
-              <div className="empty-state">Belum ada kelas dengan peserta wajib Hasda atau ASAD pada bulan ini.</div>
-            )}
-          </ChartCard>
-        </div>
-      </section>
-
       <section className="dashboard-grid">
         <article className="card">
           <div className="card-heading">
-            <div><h2>Target Materi Bulanan</h2><p>Mengikuti bulan yang dipilih pada Infografis.</p></div>
+            <div><h2>Target Materi Bulanan</h2><p>Ketuntasan Hasda dan ASAD pada bulan yang dipilih.</p></div>
+            <label className="month-filter">
+              <span>Bulan</span>
+              <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
+            </label>
           </div>
           <div className="progress-list">
             <ProgressBlock title="Penyampaian Hasda" {...hasda} />

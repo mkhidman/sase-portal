@@ -27,8 +27,7 @@ Versi terakhir: **0.13.2**. Fitur dibangun bertahap (fase 1–13) dan direkam di
 9. **Keluarga & Kontak Wali** — pengelompokan keluarga, banyak kontak wali per warga, wali ditautkan ke warga lain.
 10. **Kualitas Data** — deteksi masalah (tanpa kelas, tanpa kontak, anak tanpa wali, TTL kosong, kategori/kelas tidak selaras, usia 55+ belum masuk Usia Istimewa) + deteksi kandidat duplikat.
 11. **Penggabungan Data Duplikat** — merge 2 warga transaksional dengan aturan konflik (absensi: Hadir>Sakit>Izin>Alpa, dst), snapshot & riwayat.
-12. **Notulensi Musyawarah** — notulensi rapat + tindak lanjut keputusan (penanggung jawab harus peserta).
-13. **Manajemen Akun Admin** — buat/nonaktifkan Admin, reset password sementara, wajib ganti password, transfer penugasan kelas.
+12. **Manajemen Akun Admin** — buat/nonaktifkan Admin, reset password sementara, wajib ganti password, transfer penugasan kelas.
 
 ### Fitur lintas-fase (penting)
 
@@ -128,7 +127,6 @@ File akar penting: `vite.config.ts`, `vercel.json` (SPA rewrite), `.env.example`
 | `/jadwal`, `/absensi`, `/materi`, `/tindak-lanjut` | Jadwal, Absensi, Hasda & ASAD, Tindak Lanjut | Admin & Superadmin (Admin dibatasi kelas diampu) |
 | `/keluarga-wali` | Keluarga & Wali | Admin (kelas diampu) & Superadmin |
 | `/rekap`, `/laporan-bulanan` | Rekap, Laporan Bulanan | Admin (cakupan kelas) & Superadmin |
-| `/notulensi`, `/notulensi/tindak-lanjut` | Notulensi, Tindak Lanjut Keputusan | semua |
 | `/sensus`, `/kualitas-data`, `/kelas`, `/kenaikan-kelas`, `/arsip-jamaah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kelas, Kenaikan & Mutasi, Status & Arsip, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
 
 ---
@@ -184,4 +182,4 @@ npm run preview               # pratinjau build produksi (uji PWA/offline)
 - Draft offline tersimpan lokal, tapi pengiriman final **butuh koneksi** (tidak ada antrean background).
 - Periode yang ditutup mengunci perubahan operasional (jadwal, absensi, follow-up, materi, status, kelas) untuk bulan itu.
 - Fitur "Penggabungan" di Kualitas Data: fase 11 hanya mendeteksi kandidat; merge penuh (fase 12) tersedia di menu Kualitas Data untuk Superadmin.
-- `prototype-notulensi.html` adalah prototipe halaman notulensi (referensi visual), bukan bagian dari build.
+- `prototype-notulensi.html` adalah sisa prototipe modul Notulensi Musyawarah yang sudah dihapus (migration 022); bukan bagian dari build dan dapat dibuang.

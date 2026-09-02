@@ -4,7 +4,6 @@ import {
   BookOpenCheck,
   CalendarDays,
   ChartNoAxesColumn,
-  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   ContactRound,
@@ -14,7 +13,6 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
-  FileText,
   RefreshCw,
   Settings,
   ShieldAlert,
@@ -62,13 +60,6 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
         ],
       },
       {
-        id: 'musyawarah', label: 'Musyawarah', icon: FileText,
-        items: [
-          { to: '/notulensi', label: 'Notulensi', icon: FileText },
-          { to: '/notulensi/tindak-lanjut', label: 'Tindak Lanjut Keputusan', icon: CheckCircle2 },
-        ],
-      },
-      {
         id: 'laporan', label: 'Laporan', icon: FileChartColumn,
         items: [
           { to: '/rekap', label: 'Rekap Keseluruhan', icon: ChartNoAxesColumn },
@@ -99,13 +90,6 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
         id: 'jamaah', label: 'Warga', icon: Users,
         items: [
           { to: '/keluarga-wali', label: 'Keluarga & Wali', icon: ContactRound },
-        ],
-      },
-      {
-        id: 'musyawarah', label: 'Musyawarah', icon: FileText,
-        items: [
-          { to: '/notulensi', label: 'Notulensi', icon: FileText },
-          { to: '/notulensi/tindak-lanjut', label: 'Tindak Lanjut Keputusan', icon: CheckCircle2 },
         ],
       },
     {

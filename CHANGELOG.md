@@ -1,13 +1,16 @@
 ## Belum dirilis
 
+- Menghapus modul Notulensi Musyawarah beserta halaman Notulensi, Tindak Lanjut Keputusan, ekspor PDF notulensi, dan editor teks kaya yang hanya dipakai modul tersebut.
+- Menambahkan migration `022_drop_meeting_notes.sql` yang menghapus tabel, RPC, dan enum notulensi secara permanen.
+- Memindahkan pemilih bulan Dashboard ke kartu Target Materi Bulanan.
+- Mengubah Ringkasan Kategori Sensus, Komposisi Sensus pada Laporan Bulanan, dan halaman Kelas Pengajian menjadi infografis batang bertumpuk, dengan angka Laki-laki, Perempuan, dan total tetap tertulis pada tiap baris.
+- Menyatukan ketiganya pada komponen `GenderComposition` sehingga panjang batang dapat dibandingkan antar baris.
+- Memisahkan kelas nonaktif ke kelompok tersendiri pada halaman Kelas Pengajian dan menegaskan bahwa totalnya adalah keanggotaan, bukan jumlah warga, karena satu warga dapat mengikuti lebih dari satu kelas.
 - Menambahkan pengubahan dan pembatalan jadwal pengajian, termasuk untuk jadwal yang sudah lewat agar jadwal keliru tidak selamanya muncul sebagai belum diabsen.
 - Menambahkan migration `021_schedule_update_delete.sql` agar Admin dapat mengubah dan membatalkan jadwal kelas yang diampunya.
 - Menegaskan keadaan offline pada Absensi Kelas: tombol simpan berubah menjadi `Simpan nanti · offline`, dan setelah koneksi kembali muncul ajakan `Kirim sekarang` karena pengiriman tetap perlu ditekan pengguna.
 - Memindahkan hasil penyimpanan absensi ke bar simpan yang melayang di layar mobile supaya konfirmasi terlihat tanpa perlu menggulir ke dasar daftar peserta.
 - Menutup pesan sukses absensi secara otomatis setelah 10 detik agar tidak menetap dan menyesatkan.
-- Menambahkan section Infografis pada Dashboard: tren kehadiran 6 bulan, komposisi warga, dan progres Hasda & ASAD per kelas.
-- Memindahkan pemilih bulan Dashboard ke atas section Infografis agar satu filter dipakai bersama blok Target Materi.
-- Menyediakan tampilan tabel untuk setiap grafik supaya nilainya tetap terbaca tanpa mengandalkan warna.
 - Tidak memerlukan migration Supabase baru.
 - Mengubah seluruh tabel menjadi tampilan kartu pada layar mobile (lebar 820px ke bawah) agar tidak perlu digeser ke samping.
 - Menyeragamkan tampilan seluruh textarea agar mengikuti gaya isian lain, termasuk kolom Materi sambung / keterangan pada Absensi Kelas dan Catatan periode pada Laporan Bulanan.
