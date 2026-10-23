@@ -182,10 +182,10 @@ export function JamaahArchivePage() {
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats archive-stats">
-        <StatCard label="Warga Aktif" value={activeCount} note="Masuk kelas dan absensi" icon={<UserCheck size={18} />} />
-        <StatCard label="Warga Nonaktif" value={inactiveCount} note="Tersimpan dalam arsip" icon={<Archive size={18} />} />
-        <StatCard label="Perubahan Bulan Ini" value={changesThisMonth} note="Aktif maupun nonaktif" icon={<CalendarDays size={18} />} />
-        <StatCard label="Pernah Aktif Kembali" value={restoredCount} note="Riwayat reaktivasi" icon={<RotateCcw size={18} />} />
+        <StatCard tone="mint" label="Warga Aktif" value={activeCount} note="Masuk kelas dan absensi" icon={<UserCheck size={18} />} />
+        <StatCard tone="violet" label="Warga Nonaktif" value={inactiveCount} note="Tersimpan dalam arsip" icon={<Archive size={18} />} />
+        <StatCard tone="sky" label="Perubahan Bulan Ini" value={changesThisMonth} note="Aktif maupun nonaktif" icon={<CalendarDays size={18} />} />
+        <StatCard tone="mint" label="Pernah Aktif Kembali" value={restoredCount} note="Riwayat reaktivasi" icon={<RotateCcw size={18} />} />
       </section>
 
       <div className="notice archive-notice">

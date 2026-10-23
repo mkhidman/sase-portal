@@ -10,25 +10,36 @@
 
 :root {
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #172019;
-  background: #f5f7f5;
+  color: #15241d;
+  background: #f2fbf7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --bg: #f5f7f5;
+  --bg: #f2fbf7;
   color-scheme: light;
 
   /* Empat tingkat permukaan. Sebelumnya nilai yang hampir sama ditulis 18 versi berbeda. */
   --surface: #ffffff;        /* kartu dan modal */
   --surface-raised: #fbfdfc; /* baris di dalam kartu */
-  --surface-sunken: #f7faf8; /* panel, header tabel, chip netral */
-  --surface-soft: #eef4ef;   /* aksen lembut bernuansa merek */
-  --surface-2: #eef4ef;
-  --accent: #eef4ef;
-  --text: #172019;
-  --muted: #66736a;
-  --line: #dce5de;
-  --primary: #1f6f4a;
-  --primary-dark: #15553a;
+  --surface-sunken: #f4f8f6; /* panel, header tabel, chip netral */
+  --surface-soft: #ddf5ea;   /* aksen lembut bernuansa merek */
+  --surface-2: #ddf5ea;
+  --accent: #ddf5ea;
+  --text: #15241d;
+  --muted: #637a6e;
+  --line: #e4ece7;
+
+  /* --primary selalu memikul teks putih (.button.primary), jadi nilainya dibatasi
+     kontras, bukan selera: #0b8059 memberi 4,94:1 terhadap putih. Mint yang lebih
+     cerah tetap dipakai sebagai --accent-bright, tapi HANYA untuk bidang dekoratif
+     yang tidak pernah menanggung teks kecil (isian progress, titik aktif, aksen).
+     Jangan menaikkan --primary ke #0f9b6c atau #10b981: keduanya jatuh ke 3,6:1. */
+  --primary: #0b8059;
+  --primary-dark: #086847;
+  --accent-bright: #10b981;
+
+  /* Token status sengaja TIDAK ikut digeser. Nilainya mengikat ke warna border
+     yang ditulis manual (#9ed1ad, #a6c1e7, #efd584, #ed9992) pada .status-select
+     dan .status-button, dan dipakai untuk membedakan Hadir/Izin/Sakit/Alpa. */
   --success-bg: #e2f4e8;
   --success: #17623b;
   --info-bg: #e9f2ff;
@@ -38,12 +49,28 @@
   --danger-bg: #fee7e5;
   --danger: #a92b22;
 
+  /* Empat nada tint untuk stat tile. Tiap pasangan diperiksa >= 4,5:1:
+     mint 5,03 - sky 5,47 - violet 5,98 - amber 6,37. */
+  --tint-mint-bg: #d7f5e8;
+  --tint-mint-fg: #0a7352;
+  --tint-sky-bg: #dbeafe;
+  --tint-sky-fg: #1d4ed8;
+  --tint-violet-bg: #ede9fe;
+  --tint-violet-fg: #6d28d9;
+  --tint-amber-bg: #fef3c7;
+  --tint-amber-fg: #92400e;
+
   /* Warna seri grafik. Sengaja bukan token status: --warning dan --danger terlalu
      mirip sebagai bidang isian dan tidak terbedakan pada buta warna deutan. */
   --chart-series-1: #1f8a5a;
   --chart-series-2: #2c61a4;
   --chart-track: #e8eeea;
-  --shadow: 0 10px 30px rgba(25, 55, 37, 0.08);
+
+  /* Bayangan berjenjang menggantikan border sebagai pemisah kartu. */
+  --shadow-sm: 0 1px 2px rgba(16, 42, 30, .05);
+  --shadow-card: 0 2px 4px rgba(16, 42, 30, .03), 0 8px 24px rgba(16, 42, 30, .06);
+  --shadow-float: 0 4px 8px rgba(16, 42, 30, .04), 0 16px 40px rgba(16, 42, 30, .08);
+  --shadow: var(--shadow-float);
 
   /* Skala tipografi. Batas bawah 11px: di bawah itu tidak terbaca di layar HP. */
   --fs-2xs: 11px;
@@ -70,16 +97,29 @@
   --radius-xs: 8px;
   --radius-sm: 11px;
   --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
   --radius-pill: 999px;
 
-  --focus-ring: 0 0 0 3px rgba(31, 111, 74, .28);
+  /* Kerapatan. Nilai bawaan lapang; .app-main[data-density="compact"] menimpanya
+     di satu tempat, sehingga tidak ada CSS kembar per halaman. */
+  --card-pad: 24px;
+  --card-gap: 20px;
+  --cell-pad-y: 16px;
+
+  --focus-ring: 0 0 0 3px rgba(11, 128, 89, .28);
 }
 
 * { box-sizing: border-box; }
 html { min-width: 320px; background: var(--bg); }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: linear-gradient(160deg, #f2fbf7 0%, #eef5fb 100%);
+  background-attachment: fixed;
+}
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .6; }
@@ -92,10 +132,10 @@ a { color: inherit; }
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
-.sidebar :focus-visible,
-.bottom-nav :focus-visible {
-  outline-color: #cfe8da;
-}
+/* Sidebar dan bottom-nav sama-sama berlatar terang, jadi keduanya memakai
+   outline --primary yang sama dengan sisa aplikasi. Sebelumnya di sini ada
+   outline-color: #cfe8da -- warna untuk latar gelap, nyaris tak terlihat di
+   bottom-nav yang putih. */
 
 /* Hormati pengaturan perangkat yang meminta gerakan seminimal mungkin. */
 @media (prefers-reduced-motion: reduce) {
@@ -119,7 +159,7 @@ a { color: inherit; }
   padding: 24px;
   background: radial-gradient(circle at top right, rgba(31, 111, 74, .14), transparent 38%), linear-gradient(180deg, #f9fcfa, #edf4ef);
 }
-.login-card { width: min(510px, 100%); padding: 28px; border-radius: var(--radius-xl); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.login-card { width: min(510px, 100%); padding: 28px; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-float); }
 .login-brand, .brand-row { display: flex; align-items: center; gap: 13px; }
 .brand-mark { width: 50px; height: 50px; border-radius: var(--radius-md); display: grid; place-items: center; flex: 0 0 auto; background: var(--primary); color: white; font-weight: 900; }
 .login-brand span:last-child, .brand-row > span:nth-child(2) { display: grid; gap: 3px; }
@@ -140,22 +180,70 @@ a { color: inherit; }
 .form-error { margin: 12px 0 0; color: var(--danger); font-size: var(--fs-sm); }
 
 /* Layout */
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: 270px minmax(0, 1fr); }
-.sidebar { position: sticky; top: 0; height: 100vh; padding: 22px 16px; overflow-y: auto; background: #123c2a; color: #eef7f1; display: flex; flex-direction: column; z-index: 50; }
-.sidebar .brand-mark { background: #e8f5ed; color: #174c34; }
-.sidebar .brand-row { margin-bottom: 26px; }
-.sidebar .brand-row strong { color: white; }
-.sidebar .brand-row small { color: #b9d0c3; }
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+/* Banner offline melayang (position: fixed), jadi ruangnya disediakan oleh shell. */
+.app-shell.with-offline-banner { padding-top: 48px; }
+.sidebar {
+  position: sticky;
+  top: var(--space-3);
+  grid-row: 1 / -1;
+  height: calc(100vh - var(--space-6));
+  padding: 18px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  z-index: 50;
+}
+/* .brand-mark TIDAK ditimpa di sini: di panel putih ia memakai bentuk bawaannya
+   (latar --primary, teks putih). Timpaan lama membalikkannya untuk latar hijau tua. */
+.sidebar .brand-row { margin-bottom: 22px; padding: 0 4px; }
+.sidebar .brand-row strong { color: var(--text); }
+.sidebar .brand-row small { color: var(--muted); }
 .sidebar-nav { display: grid; gap: 7px; }
-.sidebar-nav a { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--radius-sm); text-decoration: none; color: #c7ddd0; font-size: var(--fs-lg); }
-.sidebar-nav a:hover, .sidebar-nav a.active { color: white; background: rgba(255,255,255,.11); }
-.sidebar-user { margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.13); display: grid; gap: 11px; }
-.sidebar-user-title { display: flex; align-items: flex-start; gap: 10px; }
-.sidebar-user-title span { display: grid; gap: 3px; }
-.sidebar-user-title small { color: #b9d0c3; font-size: var(--fs-xs); }
-.sidebar-user > button { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.16); background: transparent; color: white; }
-.demo-pill { width: max-content; padding: 5px 8px; border-radius: var(--radius-pill); background: rgba(255,255,255,.1); color: #dcebe1; font-size: var(--fs-2xs); font-weight: 800; }
-.app-main { min-width: 0; padding: var(--space-7); }
+.sidebar-nav a { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--radius-sm); text-decoration: none; color: var(--muted); font-size: var(--fs-lg); }
+.sidebar-nav a:hover { color: var(--primary-dark); background: var(--surface-sunken); }
+.sidebar-nav a.active { color: var(--primary-dark); background: var(--surface-soft); font-weight: 700; }
+
+/* Topbar: isinya dipindah dari dasar sidebar, tidak ada yang baru dibangun. */
+.topbar {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 60px;
+  padding: 10px var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.topbar-spacer { flex: 1 1 auto; }
+.topbar-user { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.topbar-user > span:last-child { display: grid; gap: 1px; min-width: 0; }
+.topbar-user strong { font-size: var(--fs-sm); }
+.topbar-user small { color: var(--muted); font-size: var(--fs-2xs); }
+.demo-pill { width: max-content; padding: 5px 8px; border-radius: var(--radius-pill); background: var(--surface-soft); color: var(--primary-dark); font-size: var(--fs-2xs); font-weight: 800; }
+
+.app-main { grid-column: 2; min-width: 0; padding: var(--space-5) var(--space-5) var(--space-7); }
+
+/* Halaman kerja harian (Sensus, Absensi, Jadwal, ...) merapatkan diri lewat tiga
+   variabel saja. Dipetakan dari rute di AppLayout.tsx, bukan ditulis per halaman. */
+.app-main[data-density="compact"] {
+  --card-pad: 14px;
+  --card-gap: 12px;
+  --cell-pad-y: 9px;
+}
 
 /* Base UI */
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
@@ -166,7 +254,7 @@ a { color: inherit; }
 .button.primary { background: var(--primary); color: white; }
 .button.primary:hover { background: var(--primary-dark); }
 .button.outline { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
-.button.soft { background: var(--surface-soft); color: var(--primary); }
+.button.soft { background: var(--surface-soft); color: var(--primary-dark); }
 .button.danger { background: var(--danger-bg); color: var(--danger); }
 .button.small { min-height: 34px; padding: 7px 10px; font-size: var(--fs-xs); }
 .button.full { width: 100%; }
@@ -174,19 +262,29 @@ a { color: inherit; }
 .person-detail-button { width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .person-detail-button:hover .person-name { color: var(--primary); text-decoration: underline; }
 .icon-button { width: 44px; height: 44px; border-radius: var(--radius-sm); display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
-.card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: 0 4px 18px rgba(25,55,37,.04); }
+.card { min-width: 0; padding: var(--card-pad); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-card); }
 .card h2 { margin-bottom: 5px; font-size: var(--fs-xl); }
 .card p { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
 .card-heading, .section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 15px; }
-.stats-grid { display: grid; gap: 15px; margin-bottom: 15px; }
+.stats-grid { display: grid; gap: var(--card-gap); margin-bottom: var(--card-gap); }
 .three-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .four-columns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.stat-card { display: flex; justify-content: space-between; gap: 12px; }
-.stat-card > div { display: grid; }
+.stat-card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); }
+.stat-card > div { min-width: 0; flex: 1 1 110px; display: grid; }
 .stat-label { color: var(--muted); font-size: var(--fs-sm); }
-.stat-value { margin: 8px 0 5px; font-size: var(--fs-5xl); letter-spacing: -.03em; }
+.stat-value { margin: 6px 0 4px; font-size: var(--fs-5xl); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .stat-card small { color: var(--muted); font-size: var(--fs-xs); }
-.stat-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary); font-weight: 900; }
+.stat-icon { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--tint-mint-bg); color: var(--tint-mint-fg); font-weight: 900; }
+.stat-icon[data-tone="sky"] { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
+.stat-icon[data-tone="violet"] { background: var(--tint-violet-bg); color: var(--tint-violet-fg); }
+.stat-icon[data-tone="amber"] { background: var(--tint-amber-bg); color: var(--tint-amber-fg); }
+
+/* Chip tren. Hanya dipakai bila ada angka pembanding yang betul-betul dihitung --
+   lihat catatan di StatCard (src/components/UI.tsx). */
+.stat-delta { width: max-content; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; padding: 3px 7px; border-radius: var(--radius-pill); font-size: var(--fs-2xs); font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat-delta.up { background: var(--success-bg); color: var(--success); }
+.stat-delta.down { background: var(--danger-bg); color: var(--danger); }
+.stat-delta.flat { background: var(--surface-sunken); color: var(--muted); }
 .notice { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #d9e7dc; border-radius: var(--radius-sm); background: var(--surface-sunken); color: #355343; font-size: var(--fs-sm); line-height: 1.5; }
 .warning-notice { background: var(--warning-bg); border-color: #efd584; color: #72510b; }
 .inline-message { margin-top: 13px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--success-bg); color: var(--success); font-size: var(--fs-sm); }
@@ -242,7 +340,7 @@ a { color: inherit; }
 .progress-heading > div { display: grid; gap: 3px; }
 .progress-heading small, .progress-meta { color: var(--muted); font-size: var(--fs-2xs); }
 .progress-track { height: 9px; overflow: hidden; border-radius: var(--radius-pill); background: #e8eeea; }
-.progress-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--primary); }
+.progress-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--accent-bright); }
 .progress-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; }
 .dashboard-help { display: flex; align-items: center; gap: 13px; }
 .dashboard-help > div { flex: 1; }
@@ -252,7 +350,7 @@ a { color: inherit; }
 .field-help { color: var(--muted); font-size: var(--fs-xs); font-weight: 400; line-height: 1.5; }
 .participant-candidates { max-height: 230px; overflow: auto; display: grid; gap: 5px; margin-top: 7px; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
 .participant-candidates button { display: flex; align-items: center; gap: 7px; padding: 8px 9px; border: 0; border-radius: var(--radius-xs); color: var(--text); background: var(--surface); text-align: left; font-size: var(--fs-sm); }
-.participant-candidates button:hover { color: var(--primary); background: var(--surface-soft); }
+.participant-candidates button:hover { color: var(--primary-dark); background: var(--surface-soft); }
 .participant-candidates small { margin-left: auto; color: var(--muted); font-size: var(--fs-2xs); }
 .selected-person { display: flex; align-items: center; gap: 1px; padding: 3px 5px 3px 3px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
 .selected-person .person { padding: 0; border: 0; background: transparent; }
@@ -277,7 +375,7 @@ a { color: inherit; }
 .schedule-actions { display: flex; align-items: center; gap: 6px; }
 .icon-button.danger { color: var(--danger); border-color: #efaaa4; background: var(--danger-bg); }
 .icon-button:disabled { opacity: .45; }
-.date-tile { width: 48px; padding: 7px 4px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary); }
+.date-tile { width: 48px; padding: 7px 4px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary-dark); }
 .date-tile strong { font-size: var(--fs-xl); }
 .date-tile small { font-size: var(--fs-2xs); font-weight: 800; text-transform: uppercase; }
 .schedule-copy, .session-copy { min-width: 0; display: grid; gap: 4px; }
@@ -292,7 +390,7 @@ a { color: inherit; }
 .toolbar select { width: auto; flex: 0 1 210px; min-width: 150px; }
 .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-md); -webkit-overflow-scrolling: touch; }
 table { width: 100%; min-width: 820px; border-collapse: collapse; background: var(--surface); }
-th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; font-size: var(--fs-sm); vertical-align: middle; }
+th, td { padding: var(--cell-pad-y) 13px; border-bottom: 1px solid var(--line); text-align: left; font-size: var(--fs-sm); vertical-align: middle; }
 th { position: sticky; top: 0; z-index: 1; background: var(--surface-sunken); color: #58645c; font-size: var(--fs-xs); }
 tr:last-child td { border-bottom: 0; }
 .person { min-width: 0; display: flex; align-items: center; gap: 9px; }
@@ -378,14 +476,26 @@ tr:last-child td { border-bottom: 0; }
 .modal-footer { bottom: 0; justify-content: flex-end; border-top: 1px solid var(--line); }
 
 @media (max-width: 1120px) {
+  :root {
+    --card-pad: 18px;
+    --card-gap: 14px;
+  }
+  /* Sidebar dirampingkan: pada 845px, 264px memakan 31% lebar layar. */
+  .app-shell { grid-template-columns: 228px minmax(0, 1fr); }
+  .offline-banner { left: 240px; }
+  .app-main { padding: var(--space-4) var(--space-4) var(--space-6); }
   .dashboard-grid { grid-template-columns: 1fr; }
   .four-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 820px) {
   /* Di bawah 820px navigasi ditangani BottomNav + MobileMoreMenu, sidebar tidak dipakai. */
-  .app-shell { display: block; }
+  .app-shell { display: block; padding: 0; }
+  .app-shell.with-offline-banner { padding-top: 0; }
   .sidebar { display: none; }
+  /* Topbar ikut disembunyikan: status offline sudah punya banner sendiri, dan
+     profil + keluar tersedia di MobileMoreMenu. */
+  .topbar { display: none; }
   .app-main { padding: var(--space-5) var(--space-4); }
   .page-header { align-items: center; }
   .page-header h1 { font-size: var(--fs-3xl); }
@@ -484,7 +594,7 @@ tr:last-child td { border-bottom: 0; }
 }
 
 /* Fase 3: modal admin dan import sensus */
-.button.subtle { background: var(--surface-soft); color: var(--primary); }
+.button.subtle { background: var(--surface-soft); color: var(--primary-dark); }
 .page-message { margin: -7px 0 15px; }
 .field { display: grid; gap: 7px; color: #4d5b52; font-size: var(--fs-sm); font-weight: 800; }
 .field > input, .field > select, .password-input input {
@@ -521,7 +631,7 @@ tr:last-child td { border-bottom: 0; }
 .admin-class-heading legend { padding: 0; font-size: var(--fs-md); font-weight: 900; color: var(--text); }
 .admin-class-heading small { display: block; max-width: 510px; margin-top: 4px; color: var(--muted); font-size: var(--fs-2xs); font-weight: 500; line-height: 1.45; }
 .admin-class-tools { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.admin-class-tools > span { padding: 5px 8px; border-radius: var(--radius-pill); background: var(--surface-soft); color: var(--primary); font-size: var(--fs-2xs); font-weight: 900; }
+.admin-class-tools > span { padding: 5px 8px; border-radius: var(--radius-pill); background: var(--surface-soft); color: var(--primary-dark); font-size: var(--fs-2xs); font-weight: 900; }
 .admin-class-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }
 .admin-class-picker .class-check {
   position: relative;
@@ -588,7 +698,7 @@ tr:last-child td { border-bottom: 0; }
 .offline-banner {
   position: fixed;
   top: 0;
-  left: 270px;
+  left: 276px;
   right: 0;
   z-index: 45;
   min-height: 36px;
@@ -603,28 +713,31 @@ tr:last-child td { border-bottom: 0; }
   font-size: var(--fs-xs);
   font-weight: 800;
 }
-.app-main.with-offline-banner { padding-top: 64px; }
+/* Ruang untuk banner offline disediakan .app-shell; di mobile shell tidak
+   berpadding sehingga .app-main yang mengambil alih (lihat blok 820px). */
+.app-main.with-offline-banner { padding-top: 0; }
 .connection-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 9px 10px;
-  border-radius: var(--radius-sm);
-  background: rgba(255,255,255,.08);
-  color: #dcebe1;
+  padding: 7px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  color: var(--primary-dark);
 }
-.connection-card.offline { background: rgba(255,203,72,.12); color: #ffe6a1; }
+.connection-card.offline { background: var(--warning-bg); color: var(--warning); }
 .connection-card > span { display: grid; gap: 2px; min-width: 0; }
 .connection-card strong { font-size: var(--fs-xs); }
 .connection-card small { color: inherit; opacity: .78; font-size: var(--fs-2xs); line-height: 1.35; }
 .connection-card button { border: 0; background: transparent; color: inherit; font-size: var(--fs-2xs); font-weight: 900; }
-.sidebar-user .install-button { border-color: rgba(226,244,232,.3); background: rgba(226,244,232,.12); }
+.topbar .install-button { min-height: 38px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--text); font-size: var(--fs-xs); font-weight: 800; }
+.topbar .install-button:hover { border-color: var(--primary); color: var(--primary-dark); }
 
 .backup-card { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; margin-top: 15px; }
 .backup-copy { display: flex; align-items: center; gap: 12px; }
 .backup-copy h2 { margin-bottom: 4px; }
-.backup-icon { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary); }
+.backup-icon { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary-dark); }
 .backup-summary { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .backup-summary span { padding: 5px 8px; border-radius: var(--radius-pill); background: var(--surface-sunken); color: #637067; font-size: var(--fs-2xs); font-weight: 800; }
 
@@ -707,7 +820,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .period-status-main > div { min-width: 0; display: grid; gap: 4px; }
 .period-status-main strong { font-size: var(--fs-md); }
 .period-status-main small { color: var(--muted); font-size: var(--fs-2xs); line-height: 1.45; }
-.period-status-icon { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary); }
+.period-status-icon { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary-dark); }
 .period-status-card.closed .period-status-icon { background: var(--warning-bg); color: var(--warning); }
 .monthly-report-filters { display: grid; grid-template-columns: minmax(190px, .55fr) minmax(240px, 1fr); gap: 11px; margin-bottom: 14px; }
 .monthly-report-filters label { display: grid; gap: 7px; font-size: var(--fs-sm); font-weight: 800; color: #4d5b52; }
@@ -750,11 +863,12 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
-  color: var(--muted);
+  color: var(--text);
   font-size: var(--fs-2xs);
   white-space: nowrap;
 }
-.progression-flow-item strong { color: var(--primary); }
+/* --muted (4,05:1) dan --primary (4,31:1) sama-sama gagal di atas --surface-soft. */
+.progression-flow-item strong { color: var(--primary-dark); }
 .progression-stats .stat-value { font-size: clamp(var(--fs-xl), 2vw, var(--fs-4xl)); overflow-wrap: anywhere; }
 .progression-workspace { margin-bottom: 15px; }
 .progression-settings {
@@ -962,7 +1076,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .family-card > header > div:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
 .family-card > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-md); }
 .family-card > header small { color: var(--muted); font-size: var(--fs-2xs); }
-.family-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary); }
+.family-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary-dark); }
 .family-card-actions { display: flex; gap: 6px; }
 .danger-icon { color: var(--danger); }
 .family-members { display: grid; gap: 8px; padding: 11px; }
@@ -1040,17 +1154,17 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: #c7ddd0;
+  color: var(--muted);
   text-align: left;
   font-size: var(--fs-lg);
 }
-.sidebar-group-button:hover,
-.sidebar-nav-group.active > .sidebar-group-button { color: white; background: rgba(255,255,255,.09); }
+.sidebar-group-button:hover { color: var(--primary-dark); background: var(--surface-sunken); }
+.sidebar-nav-group.active > .sidebar-group-button { color: var(--primary-dark); background: var(--surface-soft); font-weight: 700; }
 .sidebar-group-button svg:last-child { transition: transform .18s ease; }
 .sidebar-group-button svg.rotated { transform: rotate(180deg); }
 .sidebar-subnav { display: grid; gap: 3px; padding: 2px 0 4px 17px; }
 .sidebar-subnav a { min-height: 40px; padding: 9px 10px; font-size: var(--fs-sm); }
-.sidebar-subnav a::before { content: ''; width: 1px; align-self: stretch; margin-right: 1px; background: rgba(255,255,255,.12); }
+.sidebar-subnav a::before { content: ''; width: 1px; align-self: stretch; margin-right: 1px; background: var(--line); }
 
 .pagination-bar {
   display: flex;
@@ -1433,7 +1547,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 
 .mobile-more-item.active {
   background: var(--success-bg);
-  color: var(--primary);
+  color: var(--primary-dark);
   font-weight: 800;
 }
 
@@ -1462,7 +1576,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .mobile-more-identity > span:nth-child(2) { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .mobile-more-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-md); }
 .mobile-more-identity small { color: var(--muted); font-size: var(--fs-xs); }
-.mobile-more-avatar { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary); }
+.mobile-more-avatar { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--primary-dark); }
 .mobile-more-connection { display: flex; align-items: center; gap: 10px; padding: 11px; border: 1px solid #a9d3ba; border-radius: var(--radius-sm); background: var(--success-bg); color: var(--success); }
 .mobile-more-connection.offline { border-color: #efd584; background: var(--warning-bg); color: #72510b; }
 .mobile-more-connection > span { min-width: 0; flex: 1; display: grid; gap: 2px; }
@@ -1482,14 +1596,14 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 
 /* Halaman pesan penuh: 404 dan akses ditolak */
 .page-notice { max-width: 520px; margin: 40px auto; display: grid; justify-items: center; gap: 4px; padding: 30px 24px; text-align: center; }
-.page-notice-icon { width: 54px; height: 54px; margin-bottom: 8px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary); }
+.page-notice-icon { width: 54px; height: 54px; margin-bottom: 8px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary-dark); }
 .page-notice h2 { margin: 0; font-size: var(--fs-2xl); }
 .page-notice p { max-width: 400px; color: var(--muted); font-size: var(--fs-md); line-height: 1.6; }
 .page-notice-action { margin-top: 14px; }
 
 /* Status muat dan kegagalan memuat data secara global */
 .app-loading-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 70; height: 3px; overflow: hidden; }
-.app-loading-bar span { display: block; width: 38%; height: 100%; border-radius: var(--radius-pill); background: var(--primary); animation: loadingSlide 1.1s ease-in-out infinite; }
+.app-loading-bar span { display: block; width: 38%; height: 100%; border-radius: var(--radius-pill); background: var(--accent-bright); animation: loadingSlide 1.1s ease-in-out infinite; }
 .app-error-banner { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; padding: 13px 14px; border: 1px solid #efaaa4; border-left: 4px solid var(--danger); border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger); }
 .app-error-banner.cache { border-color: #efd584; border-left-color: var(--warning); background: var(--warning-bg); color: #72510b; }
 .app-error-banner > svg { flex: 0 0 auto; }

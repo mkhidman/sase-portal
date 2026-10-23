@@ -1,3 +1,4 @@
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { initials } from '../lib/utils'
 import type { Feedback } from '../lib/feedback'
@@ -11,15 +12,42 @@ export function InlineMessage({ value, className = '' }: { value: Feedback | nul
   )
 }
 
-export function StatCard({ label, value, note, icon }: { label: string; value: string | number; note: string; icon: ReactNode }) {
+/** Nada tint ikon stat. Keempatnya sudah diperiksa kontras >= 4,5:1 di styles.css. */
+export type StatTone = 'mint' | 'sky' | 'violet' | 'amber'
+
+/**
+ * Chip tren pada stat tile.
+ *
+ * Isi `label` HANYA dengan angka pembanding yang betul-betul dihitung dari data
+ * dua periode. Jangan mengarang tren: stat tile dipakai pengurus untuk mengambil
+ * keputusan, dan "naik 12,5%" yang tidak berdasar lebih berbahaya daripada tidak
+ * menampilkan apa pun. Bila tidak ada pembanding, cukup kosongkan dan pakai `note`.
+ */
+export type StatDelta = { label: string; direction: 'up' | 'down' | 'flat' }
+
+export function StatCard({ label, value, note, icon, tone = 'mint', delta }: {
+  label: string
+  value: string | number
+  note: string
+  icon: ReactNode
+  tone?: StatTone
+  delta?: StatDelta
+}) {
   return (
     <article className="card stat-card">
+      <span className="stat-icon" data-tone={tone}>{icon}</span>
       <div>
         <span className="stat-label">{label}</span>
         <strong className="stat-value">{value}</strong>
+        {delta ? (
+          <span className={`stat-delta ${delta.direction}`}>
+            {delta.direction === 'up' ? <ArrowUpRight size={12} aria-hidden /> : null}
+            {delta.direction === 'down' ? <ArrowDownRight size={12} aria-hidden /> : null}
+            {delta.label}
+          </span>
+        ) : null}
         <small>{note}</small>
       </div>
-      <span className="stat-icon">{icon}</span>
     </article>
   )
 }

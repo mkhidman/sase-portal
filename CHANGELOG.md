@@ -1,5 +1,14 @@
 ## Belum dirilis
 
+- Memperbarui tampilan seluruh aplikasi: sidebar menjadi panel putih mengambang, latar memakai gradasi lembut, dan kartu melepas garis tepi dengan bayangan berjenjang sebagai penggantinya.
+- Memindahkan status koneksi, waktu sinkron terakhir, tombol pasang aplikasi, profil, dan tombol keluar dari dasar sidebar ke topbar baru. Isinya tidak bertambah, hanya berpindah tempat, dan topbar hanya muncul pada layar desktop karena di mobile semuanya sudah tersedia lewat banner offline dan menu Lainnya.
+- Menggeser warna utama dari hijau tua `#1f6f4a` ke `#0b8059` yang lebih cerah. Nilainya dibatasi kontras: `#0f9b6c` yang semula dipertimbangkan hanya mencapai 3,62:1 terhadap teks putih sehingga tidak lolos WCAG AA. Mint cerah `#10b981` tetap dipakai sebagai `--accent-bright`, khusus bidang dekoratif tanpa teks seperti isian progress dan bar pemuatan.
+- Mengubah stat tile menjadi ikon bertint di sebelah kiri angka, dengan empat nada warna. Amber hanya dipakai untuk metrik yang menuntut tindakan, sehingga angka netral tidak terbaca sebagai peringatan.
+- Menambahkan dua tingkat kerapatan: halaman ringkasan tetap lapang, sedangkan halaman kerja harian merapat agar satu layar tetap memuat banyak warga. Keduanya memakai satu set CSS yang sama dan hanya berbeda pada tiga variabel.
+- Memperbaiki penanda fokus keyboard pada navigasi bawah di layar mobile, yang sebelumnya memakai warna untuk latar gelap sehingga nyaris tidak terlihat di atas bar putih.
+- Memperbaiki empat kombinasi warna yang gagal uji kontras setelah palet bergeser: tombol lembut, sorotan daftar peserta, label alur kenaikan kelas, dan item aktif pada menu Lainnya.
+- Memperbaiki stat tile yang terhimpit pada layar sempit (tiga kolom di bawah 1120px): blok teks kini turun ke bawah ikon ketika ruang di sampingnya habis, dan sidebar dirampingkan pada rentang lebar tersebut.
+- Tidak memerlukan migration Supabase baru.
 - Menghapus modul Notulensi Musyawarah beserta halaman Notulensi, Tindak Lanjut Keputusan, ekspor PDF notulensi, dan editor teks kaya yang hanya dipakai modul tersebut.
 - Menambahkan migration `022_drop_meeting_notes.sql` yang menghapus tabel, RPC, dan enum notulensi secara permanen.
 - Memindahkan pemilih bulan Dashboard ke kartu Target Materi Bulanan.

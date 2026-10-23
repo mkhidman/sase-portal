@@ -216,10 +216,10 @@ export function CensusPage() {
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard label="Total Aktif" value={active.length} note="Seluruh kategori" icon={<UsersRound size={20} />} />
-        <StatCard label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} note="Data sensus aktif" icon={<Mars size={20} />} />
-        <StatCard label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} note="Data sensus aktif" icon={<Venus size={20} />} />
-        <StatCard label="Kategori Sensus" value={CENSUS_CATEGORIES.length} note="Kategori utama" icon={<Layers size={20} />} />
+        <StatCard tone="mint" label="Total Aktif" value={active.length} note="Seluruh kategori" icon={<UsersRound size={20} />} />
+        <StatCard tone="sky" label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} note="Data sensus aktif" icon={<Mars size={20} />} />
+        <StatCard tone="violet" label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} note="Data sensus aktif" icon={<Venus size={20} />} />
+        <StatCard tone="mint" label="Kategori Sensus" value={CENSUS_CATEGORIES.length} note="Kategori utama" icon={<Layers size={20} />} />
       </section>
 
       <article className="card census-composition-card">

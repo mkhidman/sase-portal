@@ -192,10 +192,10 @@ export function ClassProgressionPage() {
       </section>
 
       <section className="stats-grid four-columns compact-stats progression-stats">
-        <StatCard label="Anggota Kelas Asal" value={sourceMembers.length} note={sourceClass?.name ?? 'Pilih kelas'} icon={<UsersRound size={18} />} />
-        <StatCard label="Warga Dipilih" value={selectedIds.length} note="Siap dipindahkan" icon={<CheckSquare2 size={18} />} />
-        <StatCard label="Kelas Tujuan" value={targetClass?.name ?? '-'} note={recommendedTarget?.id === targetClassId ? 'Rekomendasi alur' : 'Pilihan manual'} icon={<Shuffle size={18} />} />
-        <StatCard label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} note={updateCensus ? 'Disesuaikan otomatis' : 'Tidak diubah'} icon={<Sparkles size={18} />} />
+        <StatCard tone="sky" label="Anggota Kelas Asal" value={sourceMembers.length} note={sourceClass?.name ?? 'Pilih kelas'} icon={<UsersRound size={18} />} />
+        <StatCard tone="mint" label="Warga Dipilih" value={selectedIds.length} note="Siap dipindahkan" icon={<CheckSquare2 size={18} />} />
+        <StatCard tone="violet" label="Kelas Tujuan" value={targetClass?.name ?? '-'} note={recommendedTarget?.id === targetClassId ? 'Rekomendasi alur' : 'Pilihan manual'} icon={<Shuffle size={18} />} />
+        <StatCard tone="mint" label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} note={updateCensus ? 'Disesuaikan otomatis' : 'Tidak diubah'} icon={<Sparkles size={18} />} />
       </section>
 
       <article className="card progression-workspace">

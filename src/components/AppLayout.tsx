@@ -29,9 +29,16 @@ import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { usePwaInstall } from '../hooks/usePwaInstall'
-import { formatDateTime } from '../lib/utils'
+import { formatDateTime, initials } from '../lib/utils'
 import { BOTTOM_NAV_ROUTES, BottomNav } from './BottomNav'
 import { MobileMoreMenu } from './MobileMoreMenu'
+
+/**
+ * Halaman ringkasan tetap lapang; sisanya merapat. Kerapatan diterapkan sebagai
+ * atribut pada .app-main, yang hanya menimpa --card-pad, --card-gap, dan
+ * --cell-pad-y -- bukan lewat CSS terpisah per halaman.
+ */
+const SPACIOUS_ROUTES = new Set(['/', '/rekap', '/laporan-bulanan', '/kelas', '/pengaturan'])
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ size?: number }> }
 type NavGroup = { id: string; label: string; icon: ComponentType<{ size?: number }>; items: NavItem[] }
@@ -133,8 +140,10 @@ export function AppLayout() {
     if (activeGroup) setOpenGroup(activeGroup)
   }, [activeGroup])
 
+  const density = SPACIOUS_ROUTES.has(location.pathname) ? undefined : 'compact'
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${!online ? 'with-offline-banner' : ''}`}>
       {!online ? <div className="offline-banner"><WifiOff size={15} /> Offline · data terakhir tetap dapat dibuka, absensi disimpan sebagai draft</div> : null}
       <aside className="sidebar">
         <div className="brand-row">
@@ -159,19 +168,25 @@ export function AppLayout() {
             )
           })}
         </nav>
-        <div className="sidebar-user">
-          <div className={`connection-card ${online ? 'online' : 'offline'}`}>
-            {online ? <Wifi size={16} /> : <WifiOff size={16} />}
-            <span><strong>{online ? (usingCachedData ? 'Menggunakan cache' : 'Terhubung') : 'Tidak ada koneksi'}</strong><small>{lastSyncedAt ? `Sinkron terakhir ${formatDateTime(lastSyncedAt)}` : 'Belum pernah sinkron'}</small></span>
-            {online && usingCachedData ? <button type="button" onClick={() => void reload()}>Ulangi</button> : null}
-          </div>
-          {canInstall ? <button className="install-button" type="button" onClick={() => void install()}><Download size={16} /> Pasang di perangkat</button> : null}
-          <div className="sidebar-user-title"><Users size={18} /><span><strong>{user?.name}</strong><small>{user?.role === 'superadmin' ? 'Akses seluruh kelas' : `${user?.assignedClassIds.length ?? 0} kelas diampu`}</small></span></div>
-          {isDemo ? <span className="demo-pill">Mode demo</span> : null}
-          <button type="button" onClick={() => void signOut()}><LogOut size={16} /> Keluar</button>
-        </div>
       </aside>
-      <main className={`app-main ${!online ? 'with-offline-banner' : ''}`}>
+      {/* Topbar hanya desktop. Di bawah 820px isinya sudah tersedia lewat
+          banner offline dan MobileMoreMenu, jadi .topbar disembunyikan. */}
+      <header className="topbar">
+        <div className={`connection-card ${online ? 'online' : 'offline'}`}>
+          {online ? <Wifi size={16} /> : <WifiOff size={16} />}
+          <span><strong>{online ? (usingCachedData ? 'Menggunakan cache' : 'Terhubung') : 'Tidak ada koneksi'}</strong><small>{lastSyncedAt ? `Sinkron terakhir ${formatDateTime(lastSyncedAt)}` : 'Belum pernah sinkron'}</small></span>
+          {online && usingCachedData ? <button type="button" onClick={() => void reload()}>Ulangi</button> : null}
+        </div>
+        <span className="topbar-spacer" />
+        {isDemo ? <span className="demo-pill">Mode demo</span> : null}
+        {canInstall ? <button className="install-button" type="button" onClick={() => void install()}><Download size={16} /> Pasang di perangkat</button> : null}
+        <div className="topbar-user">
+          <span className="avatar">{initials(user?.name ?? '')}</span>
+          <span><strong>{user?.name}</strong><small>{user?.role === 'superadmin' ? 'Akses seluruh kelas' : `${user?.assignedClassIds.length ?? 0} kelas diampu`}</small></span>
+        </div>
+        <button className="icon-button" type="button" aria-label="Keluar" title="Keluar" onClick={() => void signOut()}><LogOut size={16} /></button>
+      </header>
+      <main className={`app-main ${!online ? 'with-offline-banner' : ''}`} data-density={density}>
         {loading ? <div className="app-loading-bar" role="status" aria-label="Memuat data"><span /></div> : null}
         {error ? (
           <div className={`app-error-banner ${usingCachedData ? 'cache' : ''}`} role="alert">

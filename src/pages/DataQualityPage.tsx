@@ -130,10 +130,10 @@ export function DataQualityPage() {
       />
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard label="Kelengkapan Data" value={`${result.completenessPercent}%`} note="Warga aktif tanpa temuan" icon={<ShieldCheck size={20} />} />
-        <StatCard label="Temuan Kritis" value={critical} note="Menghambat proses absensi" icon={<CircleAlert size={20} />} />
-        <StatCard label="Perlu Diperiksa" value={warnings} note="Kontak atau klasifikasi" icon={<AlertTriangle size={20} />} />
-        <StatCard label="Potensi Duplikat" value={result.duplicates.length} note={`${mergeHistory.length} pernah digabung`} icon={<UsersRound size={20} />} />
+        <StatCard tone="mint" label="Kelengkapan Data" value={`${result.completenessPercent}%`} note="Warga aktif tanpa temuan" icon={<ShieldCheck size={20} />} />
+        <StatCard tone="amber" label="Temuan Kritis" value={critical} note="Menghambat proses absensi" icon={<CircleAlert size={20} />} />
+        <StatCard tone="amber" label="Perlu Diperiksa" value={warnings} note="Kontak atau klasifikasi" icon={<AlertTriangle size={20} />} />
+        <StatCard tone="violet" label="Potensi Duplikat" value={result.duplicates.length} note={`${mergeHistory.length} pernah digabung`} icon={<UsersRound size={20} />} />
       </section>
 
       <article className="card data-quality-summary">

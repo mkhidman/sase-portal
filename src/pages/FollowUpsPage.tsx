@@ -143,9 +143,9 @@ export function FollowUpsPage() {
       {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Catatan tindak lanjut hanya dapat dilihat.</div> : null}
 
       <section className="stats-grid three-columns">
-        <StatCard label="Perlu Ditindaklanjuti" value={openCount} note="Belum berstatus selesai" icon={<UserRoundCheck size={20} />} />
-        <StatCard label="Prioritas" value={priorityCount} note="Alpa ≥6 kali atau 4 sesi beruntun" icon={<TriangleAlert size={20} />} />
-        <StatCard label="Jatuh Tempo" value={dueCount} note="Tanggal tindak lanjut hari ini/lewat" icon={<CalendarClock size={20} />} />
+        <StatCard tone="sky" label="Perlu Ditindaklanjuti" value={openCount} note="Belum berstatus selesai" icon={<UserRoundCheck size={20} />} />
+        <StatCard tone="amber" label="Prioritas" value={priorityCount} note="Alpa ≥6 kali atau 4 sesi beruntun" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="amber" label="Jatuh Tempo" value={dueCount} note="Tanggal tindak lanjut hari ini/lewat" icon={<CalendarClock size={20} />} />
       </section>
 
       <article className="card">

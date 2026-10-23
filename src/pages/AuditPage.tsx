@@ -51,9 +51,9 @@ export function AuditPage() {
       />
 
       <section className="stats-grid three-columns compact-stats">
-        <StatCard label="Aktivitas Tersimpan" value={auditLogs.length} note="Maksimal 200 aktivitas terbaru" icon={<Activity size={20} />} />
-        <StatCard label="Aktivitas Hari Ini" value={todayCount} note="Berdasarkan waktu perangkat" icon={<CalendarDays size={20} />} />
-        <StatCard label="Pengguna Terlibat" value={uniqueActors} note="Admin dan Superadmin" icon={<UsersRound size={20} />} />
+        <StatCard tone="sky" label="Aktivitas Tersimpan" value={auditLogs.length} note="Maksimal 200 aktivitas terbaru" icon={<Activity size={20} />} />
+        <StatCard tone="mint" label="Aktivitas Hari Ini" value={todayCount} note="Berdasarkan waktu perangkat" icon={<CalendarDays size={20} />} />
+        <StatCard tone="violet" label="Pengguna Terlibat" value={uniqueActors} note="Admin dan Superadmin" icon={<UsersRound size={20} />} />
       </section>
 
       <article className="card">

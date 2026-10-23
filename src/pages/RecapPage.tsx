@@ -115,9 +115,9 @@ export function RecapPage() {
       <PageHeader title="Rekap Keseluruhan Pengajian" description="Seluruh sesi kelas yang dapat diakses, termasuk Hasda dan ASAD." actions={<button className="button outline" onClick={exportSessions}><Download size={16} /> Ekspor Sesi CSV</button>} />
 
       <section className="stats-grid three-columns">
-        <StatCard label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<ClipboardList size={20} />} />
-        <StatCard label="Rata-Rata Hadir" value={`${averageAttendance}%`} note="Gabungan seluruh sesi" icon={<Percent size={20} />} />
-        <StatCard label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="sky" label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<ClipboardList size={20} />} />
+        <StatCard tone="mint" label="Rata-Rata Hadir" value={`${averageAttendance}%`} note="Gabungan seluruh sesi" icon={<Percent size={20} />} />
+        <StatCard tone="amber" label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card">

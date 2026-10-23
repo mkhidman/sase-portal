@@ -102,9 +102,9 @@ export function DashboardPage() {
       ) : null}
 
       <section className="stats-grid three-columns">
-        <StatCard label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
-        <StatCard label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi tersimpan`} icon={<CalendarCheck2 size={20} />} />
-        <StatCard label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
+        <StatCard tone="mint" label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
+        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi tersimpan`} icon={<CalendarCheck2 size={20} />} />
+        <StatCard tone="violet" label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
       </section>
 
       <section className="dashboard-grid">

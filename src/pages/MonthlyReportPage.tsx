@@ -227,10 +227,10 @@ export function MonthlyReportPage() {
       </article>
 
       <section className="stats-grid four-columns report-stats">
-        <StatCard label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<ClipboardList size={20} />} />
-        <StatCard label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<Percent size={20} />} />
-        <StatCard label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<UsersRound size={20} />} />
-        <StatCard label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="sky" label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<ClipboardList size={20} />} />
+        <StatCard tone="mint" label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<Percent size={20} />} />
+        <StatCard tone="violet" label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<UsersRound size={20} />} />
+        <StatCard tone="amber" label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card monthly-census-composition">
