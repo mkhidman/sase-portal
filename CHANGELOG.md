@@ -1,5 +1,7 @@
 ## Belum dirilis
 
+- Menambahkan tes otomatis pertama di projek ini, memakai penjalan tes bawaan Node sehingga tidak ada dependency baru. Jalankan dengan `npm test`.
+- Menguji 18 aturan yang kalau rusak tidak memunculkan error apa pun, hanya angka laporan yang diam-diam berubah: kenaikan kelas dan pengarsipan sesudah tanggal potret tidak boleh mengubah laporan bulan itu, rata-rata kehadiran adalah rerata persentase tiap sesi, dan ketuntasan bulan atau materi lain tidak boleh ikut terhitung.
 - Menanyakan konfirmasi sebelum membuang isian absensi yang belum terkirim. Saat terjadi bentrok dengan perangkat lain, tombol Muat versi terbaru langsung menghapus isian lokal tanpa bertanya, padahal peringatan di atasnya menyatakan isian itu aman. Pengurus yang menuruti petunjuk di layar bisa kehilangan absensi satu kelas penuh.
 - Mengubah kalimat peringatan bentrok agar menyatakan keadaan sebenarnya: isian belum tertimpa, tetapi juga belum terkirim, dan memuat versi server akan membuangnya.
 - Mempercepat penyimpanan absensi. Sebelumnya tiap peserta yang hadir memicu pencarian linier ke seluruh daftar warga sekaligus penyapuan seluruh tabel riwayat, sehingga biayanya jumlah peserta dikali jumlah warga dikali panjang riwayat. Peta warga dan indeks riwayat kini dibangun sekali di luar perulangan.

@@ -14,12 +14,15 @@ Seluruh teks UI, pesan error user-facing, nama migration, komentar, README, dan 
 npm install
 cp .env.example .env          # atau: copy .env.example .env (Windows)
 npm run dev                   # vite dev server di :5173 (service worker TIDAK aktif)
+npm test                      # penjalan tes bawaan Node, tanpa dependency
 npm run typecheck             # tsc -b --pretty false
 npm run build                 # tsc -b && vite build → dist/
 npm run preview               # satu-satunya cara menguji PWA/offline secara lokal
 ```
 
-Tidak ada test runner, linter, atau formatter di projek ini. **Verifikasi perubahan = `npm run typecheck` (atau `npm run build`)** — tidak ada perintah lain untuk menjalankan "satu test".
+Tidak ada linter atau formatter. **Verifikasi perubahan = `npm test` + `npm run typecheck`** (atau `npm run build`, yang menjalankan typecheck lebih dulu).
+
+Tes memakai penjalan bawaan Node, tanpa dependency: berkas `*.test.ts` di `src/`. Hanya fungsi murni di `src/lib/` yang diuji — tidak ada perender komponen. Satu berkas tes, satu aturan bisnis; utamakan aturan yang kalau rusak tidak memunculkan error, hanya mengubah angka laporan diam-diam.
 
 Mode demo (`VITE_DEMO_MODE=true`) menjalankan aplikasi tanpa Supabase sama sekali, memakai `src/data/demo.ts` + localStorage. Ini cara tercepat menguji perubahan UI tanpa backend.
 

@@ -1,6 +1,6 @@
 import { addDays, format, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { MATERIAL_LABELS } from './constants'
+import { MATERIAL_LABELS } from './constants.ts'
 import type { AttendanceSession, AttendanceStatus, CensusCategory, ClassMembershipHistory, Jamaah, JamaahStatusHistory, MaterialCompletion, MaterialType } from '../types/domain'
 
 export function localIsoDate(date = new Date()): string {
