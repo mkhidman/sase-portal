@@ -260,6 +260,7 @@ a { color: inherit; }
 .button.full { width: 100%; }
 .text-button { border: 0; background: transparent; color: var(--primary); font-weight: 800; font-size: var(--fs-sm); }
 .person-detail-button { width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.person-detail-button:hover .person strong { color: var(--primary); text-decoration: underline; }
 .icon-button { width: 44px; height: 44px; border-radius: var(--radius-sm); display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
 .card { min-width: 0; padding: var(--card-pad); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-card); }
 .card h2 { margin-bottom: 5px; font-size: var(--fs-xl); }

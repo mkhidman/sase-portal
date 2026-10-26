@@ -39,6 +39,21 @@ async function loadSupabaseUser(userId: string): Promise<AppUser> {
   }
 }
 
+/**
+ * Objek user baru memicu pemuatan ulang seluruh data di DataContext. Waktu login
+ * terakhir berubah setiap kali masuk tetapi tidak memengaruhi apa pun yang dibaca
+ * aplikasi, jadi perubahan itu sendiri tidak boleh menyebabkan unduh ulang.
+ */
+function sameAccess(left: AppUser, right: AppUser): boolean {
+  return left.id === right.id
+    && left.role === right.role
+    && left.active === right.active
+    && left.mustChangePassword === right.mustChangePassword
+    && left.name === right.name
+    && left.email === right.email
+    && [...left.assignedClassIds].sort().join(',') === [...right.assignedClassIds].sort().join(',')
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -113,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const realtimeClient = supabase
     const refresh = () => {
       void loadSupabaseUser(user.id)
-        .then(setUser)
+        .then((next) => setUser((current) => (current && sameAccess(current, next) ? current : next)))
         .catch(async () => {
           await realtimeClient.auth.signOut()
           setUser(null)

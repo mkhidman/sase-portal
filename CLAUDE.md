@@ -77,7 +77,7 @@ Edge Functions di-deploy terpisah: `supabase functions deploy <nama> --no-verify
 - Saat penulisan cache gagal, cache lama **sengaja tidak dihapus**. `setItem` yang gagal tidak merusak nilai sebelumnya, dan data basi masih lebih berguna daripada tidak ada data.
 - `sweepStaleAttendanceDrafts()` dipanggil sekali tiap pengguna di DataContext dan membuang draft yang lebih tua dari 30 hari. Tanpa ini draft yang ditinggalkan menumpuk selamanya, karena satu-satunya pembersih lain adalah tombol Keluar yang nyaris tidak pernah ditekan pada PWA.
 
-Service worker (`public/sw.js`) hanya aktif di build produksi. Setelah deploy, user perlu hard-refresh agar SW baru aktif.
+Service worker (`public/sw.js`) hanya aktif di build produksi. **Sengaja tanpa `skipWaiting()` dan `clients.claim()`**: versi baru menunggu sampai seluruh tab aplikasi ditutup. Mengambil alih tab yang sedang terbuka membuat halaman itu menjalankan kode lama sementara potongan halaman miliknya sudah dihapus dari cache pada `activate`, sehingga menu yang ditekan tepat sesudah deploy bisa gagal dimuat. Konsekuensinya user perlu menutup semua tab (atau hard-refresh) agar versi baru aktif — itu memang harga yang dipilih.
 
 ## Gaya kode
 

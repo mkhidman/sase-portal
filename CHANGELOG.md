@@ -1,5 +1,9 @@
 ## Belum dirilis
 
+- Membuat service worker versi baru menunggu sampai seluruh tab ditutup, tidak lagi mengambil alih tab yang sedang terbuka. Sebelumnya halaman yang sudah terbuka tetap menjalankan kode lama sementara potongan halamannya baru saja dihapus dari cache, sehingga menu yang ditekan tepat sesudah deploy bisa gagal dimuat.
+- Menghentikan pemuatan ulang seluruh data ketika yang berubah pada profil hanya waktu login terakhir. Setiap kali masuk, data 13 tabel sempat diunduh dua kali.
+- Mengembalikan tanda garis bawah saat kursor melintas di atas nama warga pada Data Sensus. Aturannya sudah ada sejak lama tetapi menargetkan kelas yang tidak pernah ada di tampilan, jadi tidak pernah terlihat.
+- Mengeluarkan `supabase/.temp/linked-project.json` dari pelacakan git. Berkas itu sudah tercakup `.gitignore` tetapi terlanjur ikut sebelum aturannya ada.
 - Mengumpulkan ketuntasan materi bulan berjalan satu kali di Laporan Bulanan dan Hasda & ASAD, menggantikan tiga dan satu pemindaian penuh yang dijalankan untuk tiap peserta. Di Hasda & ASAD pemindaian itu berada di dalam pembanding pengurutan, sehingga terpanggil ratusan kali setiap layar digambar.
 - Menyimpan hasil potret warga di Laporan Bulanan agar tidak dihitung ulang setiap layar digambar. Sebelumnya mengetik satu huruf pada Catatan periode menjalankan ulang seluruh perhitungan halaman.
 - Menyederhanakan penyimpanan absensi: peserta yang hadir dikumpulkan dulu lalu dipotret sekali jalan, sehingga `src/lib/utils.ts` cukup membuka satu fungsi potret, bukan tiga.
