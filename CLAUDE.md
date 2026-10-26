@@ -68,6 +68,10 @@ Edge Functions di-deploy terpisah: `supabase functions deploy <nama> --no-verify
 
 `src/lib/offline.ts` menyimpan dua hal di localStorage, keduanya **per-user**: cache bootstrap (`sj-bootstrap-cache-v1:<userId>`, kedaluwarsa 24 jam) dan draft absensi (`sj-attendance-draft-v2:<userId>:<classId>:<date>:<materialType>:<materialName>`). Keduanya best-effort — kegagalan penulisan tidak boleh menggagalkan alur utama. Draft tersimpan lokal, tetapi **submit final tetap butuh koneksi** (tidak ada antrean background sync).
 
+- `saveBootstrapCache()` mengembalikan `OfflineCacheStatus` (`ok` | `quota` | `failed`), bukan `void`. DataContext menyimpannya sebagai `offlineCacheStatus` dan AppLayout memunculkan peringatan. **Jangan kembalikan jadi menelan galat diam-diam** — mode offline yang mati tanpa pemberitahuan baru ketahuan saat pengguna sudah di lokasi tanpa sinyal.
+- Saat penulisan cache gagal, cache lama **sengaja tidak dihapus**. `setItem` yang gagal tidak merusak nilai sebelumnya, dan data basi masih lebih berguna daripada tidak ada data.
+- `sweepStaleAttendanceDrafts()` dipanggil sekali tiap pengguna di DataContext dan membuang draft yang lebih tua dari 30 hari. Tanpa ini draft yang ditinggalkan menumpuk selamanya, karena satu-satunya pembersih lain adalah tombol Keluar yang nyaris tidak pernah ditekan pada PWA.
+
 Service worker (`public/sw.js`) hanya aktif di build produksi. Setelah deploy, user perlu hard-refresh agar SW baru aktif.
 
 ## Gaya kode

@@ -5,6 +5,10 @@
 - Mengganti `jamaahSnapshotAsOfDate` dengan tiga fungsi: `buildJamaahHistoryIndex`, `jamaahSnapshotFromIndex` untuk pemakaian di dalam perulangan, dan `jamaahSnapshotsAsOfDate` untuk sebuah daftar warga.
 - Hasil perhitungan tidak berubah sama sekali. Kesetaraan diuji dengan membandingkan implementasi lama dan baru pada 1.993 kasus: empat ukuran data, enam tanggal potret, termasuk warga tanpa riwayat dan tanggal pencatatan yang kembar. Tidak ada satu pun selisih.
 - Pada 500 warga dengan 3.000 baris riwayat, pemotretan satu halaman laporan turun dari 34,8 ms menjadi 1,9 ms, dan simulasi simpan absensi 60 peserta turun dari 4,1 ms menjadi 0,7 ms. Selisihnya makin lebar seiring riwayat bertambah, karena biayanya tidak lagi berlipat.
+- Membersihkan draft absensi yang ditinggalkan dan sudah lebih dari 30 hari, dijalankan sekali setiap pengguna saat data dimuat. Sebelumnya draft semacam itu tidak pernah terhapus karena satu-satunya pembersih adalah tombol Keluar, yang pada aplikasi terpasang hampir tidak pernah ditekan.
+- Memberi tahu pengguna ketika data untuk mode offline gagal disimpan. Kegagalan ini sebelumnya ditelan diam-diam, sehingga kemampuan offline bisa mati tanpa tanda apa pun dan baru ketahuan saat pengurus sudah berada di lokasi tanpa sinyal.
+- Membedakan penyimpanan perangkat penuh dari kegagalan lain, dengan penjelasan dan langkah yang berbeda untuk masing-masing.
+- Mempertahankan cache lama ketika penulisan yang baru gagal, karena data lama masih lebih berguna daripada tidak ada data sama sekali.
 - Tidak memerlukan migration Supabase baru.
 
 ## 0.14.0

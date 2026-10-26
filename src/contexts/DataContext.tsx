@@ -53,7 +53,7 @@ import { useAuth } from './AuthContext'
 import { isDemoMode, supabase } from '../lib/supabase'
 import { buildJamaahHistoryIndex, censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotFromIndex, localIsoDate } from '../lib/utils'
 import { buildGeneralAttendanceBreakdown, GENERAL_ATTENDANCE_CLASS_NAME } from '../lib/generalAttendance'
-import { loadBootstrapCache, saveBootstrapCache } from '../lib/offline'
+import { loadBootstrapCache, saveBootstrapCache, sweepStaleAttendanceDrafts, type OfflineCacheStatus } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
 
 interface SaveAttendanceInput {
@@ -72,6 +72,7 @@ interface DataContextValue extends BootstrapData {
   error: string | null
   usingCachedData: boolean
   lastSyncedAt: string | null
+  offlineCacheStatus: OfflineCacheStatus
   visibleClasses: StudyClass[]
   visibleJamaah: Jamaah[]
   reload: () => Promise<void>
@@ -128,6 +129,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [usingCachedData, setUsingCachedData] = useState(false)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
+  const [offlineCacheStatus, setOfflineCacheStatus] = useState<OfflineCacheStatus>('ok')
 
   const reload = useCallback(async () => {
     if (!user) {
@@ -141,7 +143,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const loaded = await loadBootstrap(user)
       setData(loaded)
-      saveBootstrapCache(user.id, loaded)
+      setOfflineCacheStatus(saveBootstrapCache(user.id, loaded))
       setUsingCachedData(false)
       setLastSyncedAt(new Date().toISOString())
     } catch (cause) {
@@ -162,6 +164,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void reload()
   }, [reload])
+
+  useEffect(() => {
+    if (!user) return
+    sweepStaleAttendanceDrafts(user.id)
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -208,7 +215,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setData((current) => {
       const next = updater(current)
       void persistDemo(next)
-      if (user) saveBootstrapCache(user.id, next)
+      if (user) {
+        const status = saveBootstrapCache(user.id, next)
+        // Dijadwalkan agar tidak memicu pembaruan state di dalam updater setData.
+        queueMicrotask(() => setOfflineCacheStatus(status))
+      }
       return next
     })
   }, [user])
@@ -238,6 +249,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       error,
       usingCachedData,
       lastSyncedAt,
+      offlineCacheStatus,
       visibleClasses,
       visibleJamaah,
       reload,
@@ -716,7 +728,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setData(resetDemoBootstrap())
       },
     }),
-    [data, error, isPeriodClosed, lastSyncedAt, loading, reload, updateData, user, usingCachedData, visibleClasses, visibleJamaah],
+    [data, error, isPeriodClosed, lastSyncedAt, loading, offlineCacheStatus, reload, updateData, user, usingCachedData, visibleClasses, visibleJamaah],
   )
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

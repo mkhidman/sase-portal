@@ -3,6 +3,19 @@ import type { AttendanceStatus, BootstrapData, MaterialType } from '../types/dom
 const CACHE_PREFIX = 'sj-bootstrap-cache-v1'
 const DRAFT_PREFIX = 'sj-attendance-draft-v2'
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000
+const DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * 'quota' berarti penyimpanan perangkat penuh sehingga mode offline tidak lagi
+ * punya data cadangan. Dulu kegagalan ini ditelan diam-diam, padahal pengguna baru
+ * menyadarinya saat sudah di lokasi tanpa sinyal.
+ */
+export type OfflineCacheStatus = 'ok' | 'quota' | 'failed'
+
+function isQuotaError(cause: unknown): boolean {
+  if (!(cause instanceof DOMException)) return false
+  return cause.name === 'QuotaExceededError' || cause.name === 'NS_ERROR_DOM_QUOTA_REACHED' || cause.code === 22
+}
 
 export interface AttendanceDraft {
   userId: string
@@ -28,14 +41,19 @@ export function bootstrapCacheKey(userId: string): string {
   return `${CACHE_PREFIX}:${userId}`
 }
 
-export function saveBootstrapCache(userId: string, data: BootstrapData): void {
+export function saveBootstrapCache(userId: string, data: BootstrapData): OfflineCacheStatus {
+  // Tetap best effort: alur utama tidak boleh gagal karena penyimpanan penuh. Bedanya
+  // sekarang kegagalan dilaporkan ke pemanggil supaya bisa diberitahukan ke pengguna.
   try {
     localStorage.setItem(
       bootstrapCacheKey(userId),
       JSON.stringify({ data, cachedAt: new Date().toISOString() }),
     )
-  } catch {
-    // Cache is best effort. The main data flow must not fail if browser storage is full.
+    return 'ok'
+  } catch (cause) {
+    // Cache lama sengaja dibiarkan. setItem yang gagal tidak merusak nilai sebelumnya,
+    // dan data basi masih lebih berguna daripada tidak ada data sama sekali saat offline.
+    return isQuotaError(cause) ? 'quota' : 'failed'
   }
 }
 
@@ -103,6 +121,27 @@ export function loadAttendanceDraft(
   return safeParse<AttendanceDraft>(
     localStorage.getItem(attendanceDraftKey(userId, classId, date, materialType, materialName)),
   )
+}
+
+/**
+ * Draft yang dibuka lalu ditinggalkan tanpa disimpan tidak pernah terhapus sendiri.
+ * Satu-satunya pembersih sebelumnya adalah tombol Keluar, padahal pada PWA pengguna
+ * nyaris tidak pernah keluar. Dipanggil sekali saat data pertama dimuat.
+ */
+export function sweepStaleAttendanceDrafts(userId: string, maxAgeMs = DRAFT_MAX_AGE_MS): number {
+  const prefix = `${DRAFT_PREFIX}:${userId}:`
+  const now = Date.now()
+  const keysToRemove: string[] = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (!key?.startsWith(prefix)) continue
+    const draft = safeParse<AttendanceDraft>(localStorage.getItem(key))
+    const updatedAt = draft ? new Date(draft.updatedAt).getTime() : Number.NaN
+    // Draft tanpa tanggal yang terbaca sudah tidak dapat dipulihkan, jadi ikut dibuang.
+    if (!Number.isFinite(updatedAt) || now - updatedAt > maxAgeMs) keysToRemove.push(key)
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key))
+  return keysToRemove.length
 }
 
 export function removeAttendanceDraft(

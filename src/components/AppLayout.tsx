@@ -120,7 +120,7 @@ function overflowGroups(groups: NavGroup[]): NavGroup[] {
 
 export function AppLayout() {
   const { user, signOut, isDemo } = useAuth()
-  const { usingCachedData, lastSyncedAt, reload, loading, error } = useData()
+  const { usingCachedData, lastSyncedAt, reload, loading, error, offlineCacheStatus } = useData()
   const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
   const online = useNetworkStatus()
@@ -198,6 +198,19 @@ export function AppLayout() {
             <button className="button small outline" type="button" disabled={loading} onClick={() => void reload()}>
               <RefreshCw size={14} /> {loading ? 'Memuat…' : 'Coba lagi'}
             </button>
+          </div>
+        ) : null}
+        {offlineCacheStatus !== 'ok' ? (
+          <div className="app-error-banner cache" role="status">
+            <Database size={19} />
+            <div>
+              <strong>{offlineCacheStatus === 'quota' ? 'Penyimpanan perangkat penuh' : 'Data offline gagal disimpan'}</strong>
+              <span>
+                {offlineCacheStatus === 'quota'
+                  ? 'Data terbaru tidak tersimpan untuk mode offline. Saat tidak ada sinyal, yang terbuka adalah salinan lama, atau kosong bila belum pernah tersimpan. Kosongkan ruang penyimpanan browser lalu muat ulang halaman.'
+                  : 'Data terbaru tidak tersimpan di perangkat. Aplikasi tetap berjalan selama masih ada koneksi.'}
+              </span>
+            </div>
           </div>
         ) : null}
         <Outlet />
