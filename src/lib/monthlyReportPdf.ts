@@ -247,7 +247,7 @@ class PdfDocument {
   }
 }
 
-export function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8Array {
+function buildMonthlyReportPdfBytes(input: MonthlyReportPdfInput): Uint8Array {
   const pdf = new PdfDocument()
   const drawPageHeader = () => {
     pdf.fillRect(0, PAGE_HEIGHT - 58, PAGE_WIDTH, 58, [31, 111, 74])

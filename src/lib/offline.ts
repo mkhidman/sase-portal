@@ -37,7 +37,7 @@ function safeParse<T>(value: string | null): T | null {
   }
 }
 
-export function bootstrapCacheKey(userId: string): string {
+function bootstrapCacheKey(userId: string): string {
   return `${CACHE_PREFIX}:${userId}`
 }
 
@@ -90,7 +90,7 @@ function normalizedMaterialKey(materialName: string): string {
   return encodeURIComponent(materialName.trim().toLowerCase() || 'default')
 }
 
-export function attendanceDraftKey(
+function attendanceDraftKey(
   userId: string,
   classId: string,
   date: string,

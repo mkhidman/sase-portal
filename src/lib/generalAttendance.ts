@@ -1,7 +1,7 @@
 import type { AttendanceSession, CensusCategory, Jamaah, StudyClass } from '../types/domain'
 
 export const GENERAL_ATTENDANCE_CLASS_NAME = 'Pengajian Umum'
-export const GENERAL_ATTENDANCE_MATERIAL_PREFIX = '[Pengajian Umum]'
+const GENERAL_ATTENDANCE_MATERIAL_PREFIX = '[Pengajian Umum]'
 
 const GENERATED_GROUPS: Array<{ censusCategory: CensusCategory; className: string }> = [
   { censusCategory: 'Pra Remaja', className: 'Pra Remaja' },
@@ -9,7 +9,7 @@ const GENERATED_GROUPS: Array<{ censusCategory: CensusCategory; className: strin
   { censusCategory: 'Usia Nikah', className: 'Pra Nikah' },
 ]
 
-export function generatedGeneralMaterialName(materialName: string): string {
+function generatedGeneralMaterialName(materialName: string): string {
   const normalized = materialName.trim()
   return normalized ? `${GENERAL_ATTENDANCE_MATERIAL_PREFIX} ${normalized}` : GENERAL_ATTENDANCE_MATERIAL_PREFIX
 }

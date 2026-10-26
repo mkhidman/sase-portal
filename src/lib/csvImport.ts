@@ -49,7 +49,7 @@ function detectDelimiter(text: string): ',' | ';' {
   return semicolons > commas ? ';' : ','
 }
 
-export function parseCsv(text: string): string[][] {
+function parseCsv(text: string): string[][] {
   const clean = text.replace(/^\uFEFF/, '')
   const delimiter = detectDelimiter(clean)
   const rows: string[][] = []

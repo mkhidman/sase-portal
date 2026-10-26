@@ -10,21 +10,6 @@ export const CENSUS_CATEGORIES: CensusCategory[] = [
   'Duda & Janda',
 ]
 
-export const CLASS_NAMES = [
-  'Playgroup',
-  'PAUD',
-  'Caberawit Kelas A',
-  'Caberawit Kelas B',
-  'Caberawit Kelas C',
-  'Pra Remaja',
-  'Remaja',
-  'Pra Nikah',
-  'Pengajian Umum',
-  'Pengajian Ibu-Ibu',
-  'Pengajian Usia Istimewa',
-  '5 Unsur',
-] as const
-
 export const MATERIAL_LABELS: Record<MaterialType, string> = {
   hasda: 'Penyampaian Hasda',
   asad: 'Penyampaian ASAD',
@@ -46,14 +31,12 @@ export const ATTENDANCE_OPTIONS: AttendanceStatus[] = [
   'absent',
 ]
 
-
 export const FOLLOW_UP_STATUS_LABELS: Record<FollowUpStatus, string> = {
   pending: 'Belum ditindaklanjuti',
   contacted: 'Sudah dihubungi',
   visit_needed: 'Perlu kunjungan',
   resolved: 'Selesai',
 }
-
 
 export const CLASS_PROGRESSION: Record<string, string> = {
   Playgroup: 'PAUD',

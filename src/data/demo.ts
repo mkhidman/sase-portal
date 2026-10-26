@@ -12,7 +12,7 @@ export const DEMO_SUPERADMIN: AppUser = {
   lastLoginAt: new Date().toISOString(),
 }
 
-export const CLASS_IDS = {
+const CLASS_IDS = {
   playgroup: 'class-playgroup',
   paud: 'class-paud',
   cabA: 'class-caberawit-a',
@@ -38,7 +38,7 @@ export const DEMO_ADMIN: AppUser = {
   lastLoginAt: new Date(Date.now() - 86400000).toISOString(),
 }
 
-export const DEMO_ADMIN_2: AppUser = {
+const DEMO_ADMIN_2: AppUser = {
   id: 'user-admin-umum',
   name: 'Admin Pengajian Umum',
   email: 'admin.umum@example.test',
@@ -86,7 +86,7 @@ const jamaah: Jamaah[] = [
   { id: 'j-19', fullName: 'Andi Saputra', gender: 'Laki-laki', birthDate: '1995-09-14', phone: '081234567813', censusCategory: 'Usia Nikah', active: false, classIds: [] },
 ]
 
-export function createDemoBootstrap(): BootstrapData {
+function createDemoBootstrap(): BootstrapData {
   const today = localIsoDate()
   const month = monthValue()
   const session1Id = 'session-demo-1'

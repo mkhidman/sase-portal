@@ -38,8 +38,8 @@
   --accent-bright: #10b981;
 
   /* Token status sengaja TIDAK ikut digeser. Nilainya mengikat ke warna border
-     yang ditulis manual (#9ed1ad, #a6c1e7, #efd584, #ed9992) pada .status-select
-     dan .status-button, dan dipakai untuk membedakan Hadir/Izin/Sakit/Alpa. */
+     yang ditulis manual pada .status-button, dan dipakai untuk membedakan
+     Hadir/Izin/Sakit/Alpa. */
   --success-bg: #e2f4e8;
   --success: #17623b;
   --info-bg: #e9f2ff;
@@ -260,7 +260,6 @@ a { color: inherit; }
 .button.full { width: 100%; }
 .text-button { border: 0; background: transparent; color: var(--primary); font-weight: 800; font-size: var(--fs-sm); }
 .person-detail-button { width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
-.person-detail-button:hover .person-name { color: var(--primary); text-decoration: underline; }
 .icon-button { width: 44px; height: 44px; border-radius: var(--radius-sm); display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
 .card { min-width: 0; padding: var(--card-pad); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-card); }
 .card h2 { margin-bottom: 5px; font-size: var(--fs-xl); }
@@ -347,26 +346,7 @@ a { color: inherit; }
 .dashboard-help strong { font-size: var(--fs-md); }
 .dashboard-help p { margin-top: 4px; }
 
-.field-help { color: var(--muted); font-size: var(--fs-xs); font-weight: 400; line-height: 1.5; }
-.participant-candidates { max-height: 230px; overflow: auto; display: grid; gap: 5px; margin-top: 7px; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
-.participant-candidates button { display: flex; align-items: center; gap: 7px; padding: 8px 9px; border: 0; border-radius: var(--radius-xs); color: var(--text); background: var(--surface); text-align: left; font-size: var(--fs-sm); }
-.participant-candidates button:hover { color: var(--primary-dark); background: var(--surface-soft); }
-.participant-candidates small { margin-left: auto; color: var(--muted); font-size: var(--fs-2xs); }
-.selected-person { display: flex; align-items: center; gap: 1px; padding: 3px 5px 3px 3px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
-.selected-person .person { padding: 0; border: 0; background: transparent; }
-.selected-person .avatar { width: 28px; height: 28px; font-size: var(--fs-2xs); }
-.selected-person .person strong { font-size: var(--fs-xs); }
-.selected-person .person small { font-size: var(--fs-2xs); }
-.selected-person > button { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--radius-xs); color: var(--danger); background: transparent; }
-.selected-person > button:hover { background: var(--danger-bg); }
-.empty-inline { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-xs); }
 .danger-icon { color: var(--danger); }
-.overdue-date { color: var(--danger) !important; font-weight: 800; }
-.status-select { min-height: 40px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius-xs); font-size: var(--fs-2xs); font-weight: 800; }
-.status-select.success { color: var(--success); background: var(--success-bg); border-color: #9ed1ad; }
-.status-select.info { color: var(--info); background: var(--info-bg); border-color: #a6c1e7; }
-.status-select.warning { color: var(--warning); background: var(--warning-bg); border-color: #efd584; }
-.status-select.danger { color: var(--danger); background: var(--danger-bg); border-color: #ed9992; }
 
 /* Schedules */
 .schedule-list, .session-list { display: grid; gap: 9px; }
@@ -1570,7 +1550,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
   to { transform: translateY(0); }
 }
 
-/* Blok akun pada menu mobile: pengganti .sidebar-user yang disembunyikan di layar kecil */
+/* Blok akun pada menu mobile: pengganti isi topbar yang disembunyikan di layar kecil */
 .mobile-more-account { display: grid; gap: 10px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
 .mobile-more-identity { display: flex; align-items: center; gap: 11px; padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
 .mobile-more-identity > span:nth-child(2) { min-width: 0; flex: 1; display: grid; gap: 3px; }

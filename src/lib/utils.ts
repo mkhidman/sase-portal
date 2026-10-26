@@ -22,10 +22,6 @@ export function formatDate(value: string): string {
   return format(parseISO(value), 'dd MMMM yyyy', { locale: id })
 }
 
-export function formatShortDate(value: string): string {
-  return format(parseISO(value), 'dd MMM', { locale: id })
-}
-
 export function ageFromBirthDate(value?: string | null): number | null {
   if (!value) return null
 
@@ -127,7 +123,6 @@ export function formatDateTime(value: string): string {
   }).format(new Date(value))
 }
 
-
 export function censusCategoryForClassName(className: string, fallback: CensusCategory): CensusCategory {
   if (className === 'Playgroup') return 'Balita'
   if (['PAUD', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C'].includes(className)) return 'Caberawit'
@@ -136,34 +131,6 @@ export function censusCategoryForClassName(className: string, fallback: CensusCa
   if (className === 'Pra Nikah') return 'Usia Nikah'
   return fallback
 }
-
-export function classIdsAsOfDate(
-  jamaah: Jamaah,
-  histories: ClassMembershipHistory[],
-  snapshotDate: string,
-): string[] {
-  const classIds = new Set(jamaah.classIds)
-  histories
-    .filter((item) => item.jamaahId === jamaah.id && item.effectiveDate > snapshotDate)
-    .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.createdAt.localeCompare(a.createdAt))
-    .forEach((item) => {
-      if (item.toClassId) classIds.delete(item.toClassId)
-      if (item.fromClassId) classIds.add(item.fromClassId)
-    })
-  return [...classIds]
-}
-
-export function censusCategoryAsOfDate(
-  jamaah: Jamaah,
-  histories: ClassMembershipHistory[],
-  snapshotDate: string,
-): CensusCategory {
-  const relevant = histories
-    .filter((item) => item.jamaahId === jamaah.id && item.effectiveDate > snapshotDate)
-    .sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate) || a.createdAt.localeCompare(b.createdAt))
-  return relevant.length ? relevant[0]!.previousCensusCategory : jamaah.censusCategory
-}
-
 
 /**
  * Riwayat dikelompokkan per warga satu kali, lalu dipakai berulang. Tanpa ini tiap

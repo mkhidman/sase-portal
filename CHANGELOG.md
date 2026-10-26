@@ -9,6 +9,10 @@
 - Memberi tahu pengguna ketika data untuk mode offline gagal disimpan. Kegagalan ini sebelumnya ditelan diam-diam, sehingga kemampuan offline bisa mati tanpa tanda apa pun dan baru ketahuan saat pengurus sudah berada di lokasi tanpa sinyal.
 - Membedakan penyimpanan perangkat penuh dari kegagalan lain, dengan penjelasan dan langkah yang berbeda untuk masing-masing.
 - Mempertahankan cache lama ketika penulisan yang baru gagal, karena data lama masih lebih berguna daripada tidak ada data sama sekali.
+- Menghapus empat potong kode yang tidak dipakai siapa pun: `CLASS_NAMES`, `classIdsAsOfDate`, `censusCategoryAsOfDate`, dan `formatShortDate`. `CLASS_NAMES` yang paling perlu hilang karena ia daftar nama kelas kedua yang menganggur di samping daftar asli di database.
+- Mempersempit sembilan fungsi dan konstanta yang ternyata hanya dipakai di filenya sendiri menjadi tidak lagi diekspor. Tipe yang bernasib sama sengaja dibiarkan, karena tipe hilang saat build sehingga mengubahnya hanya menambah keramaian tanpa hasil.
+- Menghapus 16 aturan CSS yang tidak lagi dimiliki elemen mana pun, sisa modul Notulensi dan pembaruan tampilan sebelumnya. Jumlah kelas CSS turun dari 355 menjadi 347 dan tidak ada lagi yang yatim.
+- Menghapus aturan hover pada nama warga di Data Sensus yang selama ini tidak pernah berfungsi karena kelas yang dirujuknya tidak ada di tampilan. Tampilan tidak berubah sedikit pun, sebab aturan itu memang tidak pernah aktif.
 - Tidak memerlukan migration Supabase baru.
 
 ## 0.14.0
