@@ -51,7 +51,7 @@ import {
 import { resetDemoBootstrap } from '../data/demo'
 import { useAuth } from './AuthContext'
 import { isDemoMode, supabase } from '../lib/supabase'
-import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotAsOfDate, localIsoDate } from '../lib/utils'
+import { buildJamaahHistoryIndex, censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotFromIndex, localIsoDate } from '../lib/utils'
 import { buildGeneralAttendanceBreakdown, GENERAL_ATTENDANCE_CLASS_NAME } from '../lib/generalAttendance'
 import { loadBootstrapCache, saveBootstrapCache } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
@@ -323,10 +323,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const isGeneralSession = classNameMap.get(session.classId) === GENERAL_ATTENDANCE_CLASS_NAME
         const completionJamaahIds: string[] = []
         if (isMandatoryMaterial(session.materialType)) {
+          // Peta warga dan indeks riwayat dibangun sekali di luar perulangan. Sebelumnya
+          // tiap peserta hadir memicu pencarian linier plus sapuan riwayat penuh, sehingga
+          // menyimpan satu sesi berbiaya jumlah peserta dikali jumlah warga dan riwayat.
+          const jamaahById = new Map(data.jamaah.map((item) => [item.id, item]))
+          const historyIndex = buildJamaahHistoryIndex(data.classHistory, data.statusHistory)
           for (const [jamaahId, status] of Object.entries(session.statuses)) {
-            const person = data.jamaah.find((item) => item.id === jamaahId)
+            const person = jamaahById.get(jamaahId)
             if (status !== 'present' || !person) continue
-            const historicalPerson = jamaahSnapshotAsOfDate(person, data.classHistory, data.statusHistory, session.date)
+            const historicalPerson = jamaahSnapshotFromIndex(person, historyIndex, session.date)
             if (historicalPerson.active && isEligibleForMaterial(session.materialType, historicalPerson, classNameMap)) {
               completionJamaahIds.push(jamaahId)
             }

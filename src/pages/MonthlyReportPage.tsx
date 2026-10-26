@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES, FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
-import { attendanceCounts, isEligibleForMaterial, jamaahSnapshotAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { attendanceCounts, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { downloadMonthlyReportPdf } from '../lib/monthlyReportPdf'
 import type { AttendanceStatus } from '../types/domain'
 
@@ -40,9 +40,7 @@ export function MonthlyReportPage() {
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const selectedClasses = visibleClasses.filter((item) => classId === 'all' || item.id === classId)
   const snapshotDate = monthEndDate(month)
-  const snapshotJamaah = jamaah.map((person) =>
-    jamaahSnapshotAsOfDate(person, classHistory, statusHistory, snapshotDate),
-  )
+  const snapshotJamaah = jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, snapshotDate)
   const selectedClassIds = new Set(selectedClasses.map((item) => item.id))
   const censusPopulation = snapshotJamaah.filter((person) => {
     if (!person.active) return false

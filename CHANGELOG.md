@@ -1,3 +1,12 @@
+## Belum dirilis
+
+- Mempercepat penyimpanan absensi. Sebelumnya tiap peserta yang hadir memicu pencarian linier ke seluruh daftar warga sekaligus penyapuan seluruh tabel riwayat, sehingga biayanya jumlah peserta dikali jumlah warga dikali panjang riwayat. Peta warga dan indeks riwayat kini dibangun sekali di luar perulangan.
+- Mempercepat lima halaman yang memotret keadaan warga pada tanggal tertentu: Dashboard, Rekap Keseluruhan, Tindak Lanjut Absensi, Hasda & ASAD, dan Laporan Bulanan. Semuanya memakai `jamaahSnapshotsAsOfDate` yang mengelompokkan riwayat satu kali, menggantikan pemanggilan per orang yang menyapu ulang seluruh riwayat.
+- Mengganti `jamaahSnapshotAsOfDate` dengan tiga fungsi: `buildJamaahHistoryIndex`, `jamaahSnapshotFromIndex` untuk pemakaian di dalam perulangan, dan `jamaahSnapshotsAsOfDate` untuk sebuah daftar warga.
+- Hasil perhitungan tidak berubah sama sekali. Kesetaraan diuji dengan membandingkan implementasi lama dan baru pada 1.993 kasus: empat ukuran data, enam tanggal potret, termasuk warga tanpa riwayat dan tanggal pencatatan yang kembar. Tidak ada satu pun selisih.
+- Pada 500 warga dengan 3.000 baris riwayat, pemotretan satu halaman laporan turun dari 34,8 ms menjadi 1,9 ms, dan simulasi simpan absensi 60 peserta turun dari 4,1 ms menjadi 0,7 ms. Selisihnya makin lebar seiring riwayat bertambah, karena biayanya tidak lagi berlipat.
+- Tidak memerlukan migration Supabase baru.
+
 ## 0.14.0
 
 - Memperbarui seluruh dependency ke versi terbaru: React dan React DOM 19.3.1, Vite 8.3.5, `@supabase/supabase-js` 2.118.0, `lucide-react` 1.61.0, `react-router-dom` 7.18.4, `@vitejs/plugin-react` 6.1.2, beserta paket tipe pendampingnya.

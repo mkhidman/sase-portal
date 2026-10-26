@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
-import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
 import { buildMissedAttendance } from '../lib/missedAttendance'
 import { analyzeDataQuality } from '../lib/dataQuality'
@@ -46,7 +46,7 @@ export function DashboardPage() {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5)
   const materialSnapshot = useMemo(
-    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(selectedMonth))),
+    () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, monthEndDate(selectedMonth)),
     [classHistory, jamaah, selectedMonth, statusHistory],
   )
 

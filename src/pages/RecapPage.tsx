@@ -14,7 +14,7 @@ import {
   downloadCsv,
   formatDate,
   isEligibleForMaterial,
-  jamaahSnapshotAsOfDate,
+  jamaahSnapshotsAsOfDate,
   monthEndDate,
   monthValue,
   percentage,
@@ -49,7 +49,7 @@ export function RecapPage() {
 
   const sessionPagination = usePagination(sessions, `${month}|${classId}`)
   const snapshotJamaah = useMemo(
-    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(month))),
+    () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, monthEndDate(month)),
     [classHistory, jamaah, month, statusHistory],
   )
 

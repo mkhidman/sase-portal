@@ -165,10 +165,39 @@ export function censusCategoryAsOfDate(
 }
 
 
-export function jamaahSnapshotAsOfDate(
-  jamaah: Jamaah,
+/**
+ * Riwayat dikelompokkan per warga satu kali, lalu dipakai berulang. Tanpa ini tiap
+ * pemanggilan snapshot menyapu seluruh tabel riwayat, sehingga memotret satu daftar
+ * warga berbiaya jumlah warga dikali panjang riwayat.
+ */
+export interface JamaahHistoryIndex {
+  classByJamaah: Map<string, ClassMembershipHistory[]>
+  statusByJamaah: Map<string, JamaahStatusHistory[]>
+}
+
+function groupByJamaah<T extends { jamaahId: string }>(items: T[]): Map<string, T[]> {
+  const grouped = new Map<string, T[]>()
+  items.forEach((item) => {
+    const bucket = grouped.get(item.jamaahId)
+    if (bucket) bucket.push(item)
+    else grouped.set(item.jamaahId, [item])
+  })
+  return grouped
+}
+
+export function buildJamaahHistoryIndex(
   classHistories: ClassMembershipHistory[],
   statusHistories: JamaahStatusHistory[],
+): JamaahHistoryIndex {
+  return {
+    classByJamaah: groupByJamaah(classHistories),
+    statusByJamaah: groupByJamaah(statusHistories),
+  }
+}
+
+export function jamaahSnapshotFromIndex(
+  jamaah: Jamaah,
+  index: JamaahHistoryIndex,
   snapshotDate: string,
 ): Jamaah {
   const state = {
@@ -178,11 +207,11 @@ export function jamaahSnapshotAsOfDate(
   }
 
   const events = [
-    ...classHistories
-      .filter((item) => item.jamaahId === jamaah.id && item.effectiveDate > snapshotDate)
+    ...(index.classByJamaah.get(jamaah.id) ?? [])
+      .filter((item) => item.effectiveDate > snapshotDate)
       .map((item) => ({ kind: 'class' as const, effectiveDate: item.effectiveDate, createdAt: item.createdAt, item })),
-    ...statusHistories
-      .filter((item) => item.jamaahId === jamaah.id && item.effectiveDate > snapshotDate)
+    ...(index.statusByJamaah.get(jamaah.id) ?? [])
+      .filter((item) => item.effectiveDate > snapshotDate)
       .map((item) => ({ kind: 'status' as const, effectiveDate: item.effectiveDate, createdAt: item.createdAt, item })),
   ].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.createdAt.localeCompare(a.createdAt))
 
@@ -208,6 +237,16 @@ export function jamaahSnapshotAsOfDate(
     classIds: [...state.classIds],
     censusCategory: state.censusCategory,
   }
+}
+
+export function jamaahSnapshotsAsOfDate(
+  jamaahList: Jamaah[],
+  classHistories: ClassMembershipHistory[],
+  statusHistories: JamaahStatusHistory[],
+  snapshotDate: string,
+): Jamaah[] {
+  const index = buildJamaahHistoryIndex(classHistories, statusHistories)
+  return jamaahList.map((person) => jamaahSnapshotFromIndex(person, index, snapshotDate))
 }
 
 export function monthEndDate(month: string): string {

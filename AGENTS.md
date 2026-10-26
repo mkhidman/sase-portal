@@ -75,7 +75,7 @@ Semua tabel inti dimuat sekaligus via `loadBootstrap(user)` dan direduksi menjad
 ### Pola penting yang harus dipertahankan
 
 - **Selalu ada validasi aturan bisnis di frontend DAN di database (RPC/RLS).** Jangan hapus salah satu lapisan.
-- **Snapshot historis**: laporan/rekap harus memakai `jamaahSnapshotAsOfDate` (rekonstruksi kelas/kategori/status aktif sesuai tanggal) — jangan pakai data terkini untuk laporan bulan lalu.
+- **Snapshot historis**: laporan/rekap harus memakai `jamaahSnapshotsAsOfDate` (rekonstruksi kelas/kategori/status aktif sesuai tanggal) — jangan pakai data terkini untuk laporan bulan lalu. Di dalam perulangan, pakai `buildJamaahHistoryIndex` + `jamaahSnapshotFromIndex`.
 - **Optimistic locking absensi**: simpan selalu membawa `expectedRevision`; database menolak jika `revision` sudah berubah (error `ATTENDANCE_CONFLICT`).
 - **Transaksi atomik via RPC**: `save_jamaah_record`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `save_meeting_note_record`, `bulk_import_jamaah`. Operasi mutasi baru yang multi-tabel **harus** jadi RPC security definer, bukan beberapa query dari client.
 - **Baru-baru ini (`isDemoMode`)**: demo mode menjalankan logika merge/simpan di sisi client (`mergeDemoJamaah`, dsb.) — jika mengubah aturan merge/proses, ubah **dua-duanya** (RPC di `supabase/migrations/` + versi demo di `src/lib/`).

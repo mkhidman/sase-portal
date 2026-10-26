@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { PageHeader, Person, ProgressBlock } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
-import { formatDate, isEligibleForMaterial, jamaahSnapshotAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { formatDate, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
 
 const HASDA_GROUPS = ['Semua Peserta', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
 const ASAD_GROUPS = ['Semua Peserta', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
@@ -31,7 +31,7 @@ export function MaterialsPage() {
   const effectiveGroup = groups.includes(group) ? group : groups[0] ?? 'Semua Peserta'
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
   const snapshotJamaah = useMemo(
-    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(month))),
+    () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, monthEndDate(month)),
     [classHistory, jamaah, month, statusHistory],
   )
 

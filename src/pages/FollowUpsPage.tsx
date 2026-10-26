@@ -9,7 +9,7 @@ import { useData } from '../contexts/DataContext'
 import { FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
 import { buildAttendanceRisks, normalizeWhatsappNumber, type AttendanceRisk } from '../lib/followUps'
 import { preferredContactForJamaah } from '../lib/contacts'
-import { formatDate, jamaahSnapshotAsOfDate, localIsoDate, monthEndDate, monthValue } from '../lib/utils'
+import { formatDate, jamaahSnapshotsAsOfDate, localIsoDate, monthEndDate, monthValue } from '../lib/utils'
 import type { FollowUpStatus, JamaahFollowUp } from '../types/domain'
 
 const STATUS_OPTIONS: FollowUpStatus[] = ['pending', 'contacted', 'visit_needed', 'resolved']
@@ -49,7 +49,7 @@ export function FollowUpsPage() {
   const effectiveClassId = visibleClasses.some((item) => item.id === classId) ? classId : visibleClasses[0]?.id ?? ''
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const snapshotJamaah = useMemo(
-    () => jamaah.map((person) => jamaahSnapshotAsOfDate(person, classHistory, statusHistory, monthEndDate(month))),
+    () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, monthEndDate(month)),
     [classHistory, jamaah, month, statusHistory],
   )
   const allRisks = useMemo(() => buildAttendanceRisks({
