@@ -73,6 +73,7 @@ interface DataContextValue extends BootstrapData {
   usingCachedData: boolean
   lastSyncedAt: string | null
   offlineCacheStatus: OfflineCacheStatus
+  classNameMap: Map<string, string>
   visibleClasses: StudyClass[]
   visibleJamaah: Jamaah[]
   reload: () => Promise<void>
@@ -224,6 +225,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     })
   }, [user])
 
+  // Peta nama kelas dipakai sembilan kali di delapan halaman. Dibangun sekali di sini
+  // supaya tiap halaman tidak menyusunnya ulang.
+  const classNameMap = useMemo(() => new Map(data.classes.map((item) => [item.id, item.name])), [data.classes])
+
   const visibleClasses = useMemo(() => {
     if (!user) return []
     if (user.role === 'superadmin') return data.classes.filter((item) => item.active)
@@ -250,6 +255,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       usingCachedData,
       lastSyncedAt,
       offlineCacheStatus,
+      classNameMap,
       visibleClasses,
       visibleJamaah,
       reload,
@@ -728,7 +734,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setData(resetDemoBootstrap())
       },
     }),
-    [data, error, isPeriodClosed, lastSyncedAt, loading, offlineCacheStatus, reload, updateData, user, usingCachedData, visibleClasses, visibleJamaah],
+    [classNameMap, data, error, isPeriodClosed, lastSyncedAt, loading, offlineCacheStatus, reload, updateData, user, usingCachedData, visibleClasses, visibleJamaah],
   )
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

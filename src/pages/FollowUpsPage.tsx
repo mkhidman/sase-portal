@@ -23,7 +23,7 @@ function statusBadge(status: FollowUpStatus): string {
 
 export function FollowUpsPage() {
   const {
-    classes,
+    classNameMap,
     visibleClasses,
     jamaah,
     classHistory,
@@ -47,7 +47,6 @@ export function FollowUpsPage() {
   const { confirm, dialog: confirmDialog } = useConfirm()
 
   const effectiveClassId = visibleClasses.some((item) => item.id === classId) ? classId : visibleClasses[0]?.id ?? ''
-  const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const snapshotJamaah = useMemo(
     () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, monthEndDate(month)),
     [classHistory, jamaah, month, statusHistory],
@@ -164,7 +163,7 @@ export function FollowUpsPage() {
             return (
               <article className={`followup-card ${risk.level === 'priority' ? 'priority' : ''}`} key={`${risk.classId}-${risk.jamaah.id}`}>
                 <div className="followup-main">
-                  <Person name={risk.jamaah.fullName} meta={`${risk.jamaah.censusCategory} · ${classMap.get(risk.classId) ?? 'Kelas'}`} />
+                  <Person name={risk.jamaah.fullName} meta={`${risk.jamaah.censusCategory} · ${classNameMap.get(risk.classId) ?? 'Kelas'}`} />
                   <div className="followup-metrics">
                     <span><small>Kehadiran</small><strong>{risk.attendanceRate}%</strong></span>
                     <span><small>Hadir</small><strong>{risk.presentCount}/{risk.totalSessions}</strong></span>
@@ -193,7 +192,7 @@ export function FollowUpsPage() {
         {selected ? (
           <>
             <div className="followup-modal-summary">
-              <Person name={selected.jamaah.fullName} meta={`${classMap.get(selected.classId) ?? 'Kelas'} · Kehadiran ${selected.attendanceRate}%`} />
+              <Person name={selected.jamaah.fullName} meta={`${classNameMap.get(selected.classId) ?? 'Kelas'} · Kehadiran ${selected.attendanceRate}%`} />
               <div className="badge-list">{selected.reasons.map((reason) => <span className="badge warning" key={reason}>{reason}</span>)}</div>
             </div>
             <div className="form-grid one-column">

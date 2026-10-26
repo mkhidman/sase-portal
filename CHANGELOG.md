@@ -13,6 +13,10 @@
 - Mempersempit sembilan fungsi dan konstanta yang ternyata hanya dipakai di filenya sendiri menjadi tidak lagi diekspor. Tipe yang bernasib sama sengaja dibiarkan, karena tipe hilang saat build sehingga mengubahnya hanya menambah keramaian tanpa hasil.
 - Menghapus 16 aturan CSS yang tidak lagi dimiliki elemen mana pun, sisa modul Notulensi dan pembaruan tampilan sebelumnya. Jumlah kelas CSS turun dari 355 menjadi 347 dan tidak ada lagi yang yatim.
 - Menghapus aturan hover pada nama warga di Data Sensus yang selama ini tidak pernah berfungsi karena kelas yang dirujuknya tidak ada di tampilan. Tampilan tidak berubah sedikit pun, sebab aturan itu memang tidak pernah aktif.
+- Menyatukan perhitungan rata-rata kehadiran dan progres ketuntasan Hasda/ASAD yang sebelumnya disalin baris per baris di Dashboard dan Rekap, menjadi `averageAttendanceRate` dan `materialProgressFor` di satu tempat. Selama ini aturannya harus diubah di dua tempat, dan kalau satu terlewat kedua halaman akan menampilkan angka berbeda untuk hal yang sama tanpa ada yang menangkapnya.
+- Mempercepat perhitungan ketuntasan materi sekalian. Versi lama memindai seluruh daftar ketuntasan untuk tiap peserta; sekarang ketuntasan bulan berjalan dikumpulkan sekali lalu dicocokkan.
+- Memindahkan peta nama kelas ke DataContext. Sebelumnya peta yang sama dibangun ulang sembilan kali di delapan halaman, dengan tiga nama variabel berbeda, dan di empat halaman dinamai `classMap` padahal isinya nama kelas, bukan objek kelas.
+- Angka yang tampil tidak berubah. Kesetaraan diuji dengan membandingkan perhitungan lama dan baru pada 183 kasus, termasuk sesi tanpa peserta dan kelas tanpa anggota. Tidak ada selisih.
 - Tidak memerlukan migration Supabase baru.
 
 ## 0.14.0

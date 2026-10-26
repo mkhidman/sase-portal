@@ -32,6 +32,7 @@ function changeTypeLabel(value: ClassChangeType): string {
 
 export function ClassProgressionPage() {
   const {
+    classNameMap,
     classes,
     jamaah,
     classHistory,
@@ -40,7 +41,6 @@ export function ClassProgressionPage() {
   } = useData()
 
   const activeClasses = useMemo(() => classes.filter((item) => item.active), [classes])
-  const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const personMap = useMemo(() => new Map(jamaah.map((item) => [item.id, item])), [jamaah])
 
   const initialSource = activeClasses.find((item) => item.name === 'Playgroup')?.id ?? activeClasses[0]?.id ?? ''
@@ -145,14 +145,14 @@ export function ClassProgressionPage() {
     return [...classHistory]
       .filter((item) => {
         const person = personMap.get(item.jamaahId)
-        const sourceName = item.fromClassId ? classMap.get(item.fromClassId) ?? '' : ''
-        const targetName = item.toClassId ? classMap.get(item.toClassId) ?? '' : ''
+        const sourceName = item.fromClassId ? classNameMap.get(item.fromClassId) ?? '' : ''
+        const targetName = item.toClassId ? classNameMap.get(item.toClassId) ?? '' : ''
         const matchesClass = historyClassId === 'all' || item.fromClassId === historyClassId || item.toClassId === historyClassId
         const matchesQuery = !query || [person?.fullName, sourceName, targetName, item.notes].join(' ').toLowerCase().includes(query)
         return matchesClass && matchesQuery
       })
       .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.createdAt.localeCompare(a.createdAt))
-  }, [classHistory, classMap, historyClassId, historySearch, personMap])
+  }, [classHistory, classNameMap, historyClassId, historySearch, personMap])
 
   const historyPagination = usePagination(filteredHistory, `${historySearch}|${historyClassId}`)
 
@@ -163,8 +163,8 @@ export function ClassProgressionPage() {
         item.effectiveDate,
         personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan',
         changeTypeLabel(item.changeType),
-        item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-',
-        item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-',
+        item.fromClassId ? classNameMap.get(item.fromClassId) ?? '-' : '-',
+        item.toClassId ? classNameMap.get(item.toClassId) ?? '-' : '-',
         item.previousCensusCategory,
         item.newCensusCategory,
         item.notes,
@@ -249,7 +249,7 @@ export function ClassProgressionPage() {
             <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader" className="checkbox-column">Pilih</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori Saat Ini</th><th scope="col" role="columnheader">Kelas Lain Tetap Dipertahankan</th><th scope="col" role="columnheader">Rencana</th></tr></thead>
             <tbody role="rowgroup">
               {filteredMembers.length ? memberPagination.pageItems.map((person) => {
-                const otherClasses = person.classIds.filter((id) => id !== sourceClassId).map((id) => classMap.get(id) ?? 'Kelas')
+                const otherClasses = person.classIds.filter((id) => id !== sourceClassId).map((id) => classNameMap.get(id) ?? 'Kelas')
                 const nextCategory = targetClass ? censusCategoryForClassName(targetClass.name, person.censusCategory) : person.censusCategory
                 return (
                   <tr role="row" className={selectedIds.includes(person.id) ? 'selected-row' : ''} key={person.id}>
@@ -294,7 +294,7 @@ export function ClassProgressionPage() {
                 <tr role="row" key={item.id}>
                   <td role="cell" data-label="Tanggal efektif"><strong>{formatDate(item.effectiveDate)}</strong><small className="table-subtext">Dicatat {formatDateTime(item.createdAt)}</small></td>
                   <td role="cell" data-cell="primary"><Person name={personMap.get(item.jamaahId)?.fullName ?? 'Warga tidak ditemukan'} meta={personMap.get(item.jamaahId)?.phone || 'Data warga'} /></td>
-                  <td role="cell" data-label="Perubahan kelas"><div className="transition-preview compact"><span>{item.fromClassId ? classMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
+                  <td role="cell" data-label="Perubahan kelas"><div className="transition-preview compact"><span>{item.fromClassId ? classNameMap.get(item.fromClassId) ?? '-' : '-'}</span><ArrowRight size={13} /><strong>{item.toClassId ? classNameMap.get(item.toClassId) ?? '-' : '-'}</strong></div></td>
                   <td role="cell" data-label="Perubahan kategori">{item.previousCensusCategory === item.newCensusCategory ? <span className="badge muted">Tetap {item.newCensusCategory}</span> : <span className="badge info">{item.previousCensusCategory} → {item.newCensusCategory}</span>}</td>
                   <td role="cell" data-label="Jenis"><span className="badge success">{changeTypeLabel(item.changeType)}</span></td>
                   <td role="cell" data-label="Catatan">{item.notes || <span className="muted-copy">—</span>}</td>

@@ -37,6 +37,7 @@ function profileFrom(person: Jamaah, other?: Jamaah): MergeProfile {
 
 export function DataQualityPage() {
   const {
+    classNameMap,
     jamaah, classes, guardianContacts, attendanceSessions, materialCompletions, followUps,
     classHistory, statusHistory, familyMembers, mergeHistory, mergeDuplicateJamaah,
   } = useData()
@@ -51,7 +52,6 @@ export function DataQualityPage() {
 
   const result = useMemo(() => analyzeDataQuality(jamaah, classes, guardianContacts), [classes, guardianContacts, jamaah])
   const peopleById = useMemo(() => new Map(jamaah.map((person) => [person.id, person])), [jamaah])
-  const classNameById = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const query = search.trim().toLowerCase()
   const filteredIssues = useMemo(() => result.issues.filter((issue) => {
     const person = peopleById.get(issue.jamaahId)
@@ -226,7 +226,7 @@ export function DataQualityPage() {
                 <div><dt>Tanggal lahir</dt><dd>{person.birthDate || 'Belum diisi'}</dd></div>
                 <div><dt>WhatsApp</dt><dd>{person.phone || 'Belum diisi'}</dd></div>
                 <div><dt>Status</dt><dd>{person.active ? 'Aktif' : 'Nonaktif'}</dd></div>
-                <div><dt>Kelas</dt><dd>{person.classIds.map((id) => classNameById.get(id)).filter(Boolean).join(', ') || 'Belum ada'}</dd></div>
+                <div><dt>Kelas</dt><dd>{person.classIds.map((id) => classNameMap.get(id)).filter(Boolean).join(', ') || 'Belum ada'}</dd></div>
               </dl>
               <div className="merge-related-counts">
                 <span>{counts.attendance} sesi</span><span>{counts.materials} materi</span><span>{counts.followUps} tindak lanjut</span><span>{counts.guardians} wali</span><span>{counts.histories} histori</span>
@@ -247,7 +247,7 @@ export function DataQualityPage() {
               <label className="field"><span>Kategori sensus</span><select value={mergeProfile.censusCategory} onChange={(event) => setMergeProfile({ ...mergeProfile, censusCategory: event.target.value as Jamaah['censusCategory'] })}>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span>Status warga</span><select value={String(mergeProfile.active)} disabled><option value="true">Aktif</option><option value="false">Nonaktif</option></select><small>Status aktif dipertahankan bila salah satu data masih aktif.</small></label>
             </div>
-            <div className="merge-union-note"><strong>Kelas hasil gabungan:</strong> {[...new Set([...primaryPerson.classIds, ...duplicatePerson.classIds])].map((id) => classNameById.get(id)).filter(Boolean).join(', ') || 'Belum ada kelas'}</div>
+            <div className="merge-union-note"><strong>Kelas hasil gabungan:</strong> {[...new Set([...primaryPerson.classIds, ...duplicatePerson.classIds])].map((id) => classNameMap.get(id)).filter(Boolean).join(', ') || 'Belum ada kelas'}</div>
             {relatedCounts(primaryPerson.id).family && relatedCounts(duplicatePerson.id).family && relatedCounts(primaryPerson.id).family !== relatedCounts(duplicatePerson.id).family
               ? <div className="notice warning-notice">Kedua data berada pada keluarga berbeda. Keluarga milik data utama akan dipertahankan dan konflik dicatat dalam riwayat penggabungan.</div> : null}
           </section>

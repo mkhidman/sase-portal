@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
 type SortMode = (typeof SORT_OPTIONS)[number]['value']
 
 export function MaterialsPage() {
-  const { classes, visibleClasses, jamaah, classHistory, statusHistory, materialCompletions, toggleFollowUp, isPeriodClosed } = useData()
+  const { classNameMap, classes, visibleClasses, jamaah, classHistory, statusHistory, materialCompletions, toggleFollowUp, isPeriodClosed } = useData()
   const [month, setMonth] = useState(monthValue())
   const [materialType, setMaterialType] = useState<'hasda' | 'asad'>('hasda')
   const [group, setGroup] = useState('Semua Peserta')
@@ -23,7 +23,6 @@ export function MaterialsPage() {
   const [workingId, setWorkingId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  const classNameMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const visibleClassNames = useMemo(() => new Set(visibleClasses.map((item) => item.name)), [visibleClasses])
   const groups = (materialType === 'hasda' ? HASDA_GROUPS : ASAD_GROUPS).filter(
     (item) => item === 'Semua Peserta' || ['Menikah', 'Duda & Janda'].includes(item) || visibleClassNames.has(item),

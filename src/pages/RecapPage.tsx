@@ -11,10 +11,11 @@ import { usePagination } from '../hooks/usePagination'
 import { ATTENDANCE_LABELS } from '../lib/constants'
 import {
   attendanceCounts,
+  averageAttendanceRate,
   downloadCsv,
   formatDate,
-  isEligibleForMaterial,
   jamaahSnapshotsAsOfDate,
+  materialProgressFor,
   monthEndDate,
   monthValue,
   percentage,
@@ -25,7 +26,7 @@ import type { AttendanceSession } from '../types/domain'
 export function RecapPage() {
   const navigate = useNavigate()
   const {
-    classes,
+    classNameMap,
     visibleClasses,
     jamaah,
     classHistory,
@@ -42,7 +43,6 @@ export function RecapPage() {
   const { confirm, dialog: confirmDialog } = useConfirm()
 
   const allowedIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
-  const classNameMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const sessions = attendanceSessions
     .filter((session) => allowedIds.has(session.classId) && session.date.startsWith(month) && (classId === 'all' || session.classId === classId))
     .sort((a, b) => b.date.localeCompare(a.date) || b.savedAt.localeCompare(a.savedAt))
@@ -53,25 +53,10 @@ export function RecapPage() {
     [classHistory, jamaah, month, statusHistory],
   )
 
-  const averageAttendance = sessions.length
-    ? Math.round(
-        sessions.reduce((sum, session) => {
-          const counts = attendanceCounts(session.statuses)
-          return sum + percentage(counts.present, Object.keys(session.statuses).length)
-        }, 0) / sessions.length,
-      )
-    : 0
+  const averageAttendance = averageAttendanceRate(sessions)
 
-  function progressFor(materialType: 'hasda' | 'asad') {
-    const participants = snapshotJamaah.filter(
-      (person) => person.active && person.classIds.some((id) => allowedIds.has(id)) && isEligibleForMaterial(materialType, person, classNameMap),
-    )
-    const done = participants.filter((person) => materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)).length
-    return { done, total: participants.length, percent: percentage(done, participants.length) }
-  }
-
-  const hasda = progressFor('hasda')
-  const asad = progressFor('asad')
+  const hasda = materialProgressFor('hasda', snapshotJamaah, materialCompletions, month, allowedIds, classNameMap)
+  const asad = materialProgressFor('asad', snapshotJamaah, materialCompletions, month, allowedIds, classNameMap)
   const pending = (hasda.total - hasda.done) + (asad.total - asad.done)
 
   async function remove(session: AttendanceSession) {

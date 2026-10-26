@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
-import { attendanceCounts, formatDate, isEligibleForMaterial, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { averageAttendanceRate, formatDate, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, materialProgressFor, monthEndDate, monthValue } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
 import { buildMissedAttendance } from '../lib/missedAttendance'
 import { analyzeDataQuality } from '../lib/dataQuality'
@@ -13,6 +13,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const {
+    classNameMap,
     classes,
     visibleClasses,
     visibleJamaah,
@@ -28,18 +29,10 @@ export function DashboardPage() {
   } = useData()
   const [selectedMonth, setSelectedMonth] = useState(monthValue())
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
-  const classNameMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
 
   const visibleSessions = attendanceSessions.filter((session) => visibleClassIds.has(session.classId))
-  const averageAttendance = visibleSessions.length
-    ? Math.round(
-        visibleSessions.reduce((total, session) => {
-          const counts = attendanceCounts(session.statuses)
-          return total + percentage(counts.present, Object.keys(session.statuses).length)
-        }, 0) / visibleSessions.length,
-      )
-    : 0
+  const averageAttendance = averageAttendanceRate(visibleSessions)
 
   const upcomingSchedules = schedules
     .filter((schedule) => visibleClassIds.has(schedule.classId) && schedule.date >= localIsoDate())
@@ -50,20 +43,8 @@ export function DashboardPage() {
     [classHistory, jamaah, selectedMonth, statusHistory],
   )
 
-  function materialProgress(material: 'hasda' | 'asad') {
-    const participants = materialSnapshot.filter(
-      (person) => person.active && person.classIds.some((id) => visibleClassIds.has(id)) && isEligibleForMaterial(material, person, classNameMap),
-    )
-    const done = participants.filter((person) =>
-      materialCompletions.some(
-        (completion) => completion.month === selectedMonth && completion.materialType === material && completion.jamaahId === person.id,
-      ),
-    ).length
-    return { total: participants.length, done, percent: percentage(done, participants.length) }
-  }
-
-  const hasda = materialProgress('hasda')
-  const asad = materialProgress('asad')
+  const hasda = materialProgressFor('hasda', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
+  const asad = materialProgressFor('asad', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
   const currentMonth = monthValue()
   const attendanceRisks = visibleClasses
     .flatMap((studyClass) => buildAttendanceRisks({ jamaah: visibleJamaah, sessions: attendanceSessions, followUps, classId: studyClass.id, month: currentMonth }))

@@ -37,6 +37,7 @@ const EMPTY_FORM: ChangeForm = {
 
 export function JamaahArchivePage() {
   const {
+    classNameMap,
     jamaah,
     classes,
     statusHistory,
@@ -55,7 +56,6 @@ export function JamaahArchivePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
 
-  const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const personMap = useMemo(() => new Map(jamaah.map((item) => [item.id, item])), [jamaah])
   const historiesByPerson = useMemo(() => {
     const map = new Map<string, JamaahStatusHistory[]>()
@@ -78,14 +78,14 @@ export function JamaahArchivePage() {
     return jamaah
       .filter((person) => {
         const latest = latestHistory(person.id)
-        const classNames = lastKnownClasses(person).map((id) => classMap.get(id) ?? '').join(' ')
+        const classNames = lastKnownClasses(person).map((id) => classNameMap.get(id) ?? '').join(' ')
         const haystack = [person.fullName, person.phone, person.censusCategory, classNames, latest?.notes ?? ''].join(' ').toLowerCase()
         const statusMatches = statusFilter === 'all' || (statusFilter === 'active' ? person.active : !person.active)
         const reasonMatches = reasonFilter === 'all' || latest?.reason === reasonFilter
         return (!query || haystack.includes(query)) && statusMatches && reasonMatches
       })
       .sort((a, b) => Number(b.active) - Number(a.active) || a.fullName.localeCompare(b.fullName, 'id'))
-  }, [classMap, historiesByPerson, jamaah, reasonFilter, search, statusFilter])
+  }, [classNameMap, historiesByPerson, jamaah, reasonFilter, search, statusFilter])
 
   const pagination = usePagination(filtered, `${search}|${statusFilter}|${reasonFilter}`)
 
@@ -162,7 +162,7 @@ export function JamaahArchivePage() {
         personMap.get(item.jamaahId)?.fullName ?? 'Warga',
         item.newActive ? 'Diaktifkan kembali' : 'Dinonaktifkan / diarsipkan',
         JAMAAH_STATUS_REASON_LABELS[item.reason],
-        item.classIds.map((id) => classMap.get(id) ?? id).join(' | '),
+        item.classIds.map((id) => classNameMap.get(id) ?? id).join(' | '),
         item.notes,
         item.createdAt,
       ]),
@@ -217,7 +217,7 @@ export function JamaahArchivePage() {
                   <tr role="row" key={person.id}>
                     <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
                     <td role="cell" data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
-                    <td role="cell" data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
+                    <td role="cell" data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
                     <td role="cell" data-label="Status"><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
                     <td role="cell" data-label="Perubahan terakhir">
                       {latest ? (
@@ -276,7 +276,7 @@ export function JamaahArchivePage() {
               {changeMode === 'reactivate' ? (
                 <fieldset className="form-span-two"><legend>Kelas yang akan diikuti *</legend><div className="checkbox-grid">{classes.filter((item) => item.active).map((studyClass) => <label className={`checkbox-card ${form.classIds.includes(studyClass.id) ? 'selected' : ''}`} key={studyClass.id}><input type="checkbox" checked={form.classIds.includes(studyClass.id)} onChange={() => toggleClass(studyClass.id)} /><span>{studyClass.name}</span></label>)}</div></fieldset>
               ) : (
-                <div className="form-span-two archive-removed-classes"><strong>Kelas yang akan dilepas</strong><div className="badge-list">{selectedPerson.classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>)}</div></div>
+                <div className="form-span-two archive-removed-classes"><strong>Kelas yang akan dilepas</strong><div className="badge-list">{selectedPerson.classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>)}</div></div>
               )}
             </div>
             {closed ? <div className="form-error">Periode tanggal efektif sudah ditutup.</div> : null}
@@ -294,7 +294,7 @@ export function JamaahArchivePage() {
                 <div>
                   <div className="status-history-heading"><strong>{item.newActive ? 'Diaktifkan kembali' : 'Dipindahkan ke arsip'}</strong><span className={`badge ${item.newActive ? 'success' : 'danger'}`}>{JAMAAH_STATUS_REASON_LABELS[item.reason]}</span></div>
                   <p>{item.notes || 'Tidak ada catatan.'}</p>
-                  <div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classMap.get(id) ?? 'Kelas'}</span>)}</div>
+                  <div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>)}</div>
                   <small>Efektif {formatDate(item.effectiveDate)} · Dicatat {formatDateTime(item.createdAt)}</small>
                 </div>
               </article>

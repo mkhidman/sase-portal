@@ -1,5 +1,5 @@
 import { ClipboardList, Download, FileCheck2, Lock, LockOpen, Percent, TriangleAlert, UsersRound } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { GenderComposition } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
@@ -19,6 +19,7 @@ function monthLabel(month: string): string {
 export function MonthlyReportPage() {
   const { user } = useAuth()
   const {
+    classNameMap,
     classes,
     visibleClasses,
     jamaah,
@@ -37,7 +38,6 @@ export function MonthlyReportPage() {
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item.name])), [classes])
   const selectedClasses = visibleClasses.filter((item) => classId === 'all' || item.id === classId)
   const snapshotDate = monthEndDate(month)
   const snapshotJamaah = jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, snapshotDate)
@@ -80,7 +80,7 @@ export function MonthlyReportPage() {
     )
     const recorded = totals.present + totals.excused + totals.sick + totals.absent
     const materialProgress = (materialType: 'hasda' | 'asad') => {
-      const eligible = members.filter((person) => isEligibleForMaterial(materialType, person, classMap))
+      const eligible = members.filter((person) => isEligibleForMaterial(materialType, person, classNameMap))
       const done = eligible.filter((person) => materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)).length
       return { total: eligible.length, done, percent: eligible.length ? percentage(done, eligible.length) : null }
     }
@@ -99,7 +99,7 @@ export function MonthlyReportPage() {
 
   const materialTotals = (materialType: 'hasda' | 'asad') => {
     const participants = snapshotJamaah.filter((person) =>
-      person.active && person.classIds.some((id) => selectedClassIds.has(id)) && isEligibleForMaterial(materialType, person, classMap),
+      person.active && person.classIds.some((id) => selectedClassIds.has(id)) && isEligibleForMaterial(materialType, person, classNameMap),
     )
     const unique = [...new Map(participants.map((person) => [person.id, person])).values()]
     const isCompleted = (personId: string) => materialCompletions.some(
@@ -130,7 +130,7 @@ export function MonthlyReportPage() {
     const statuses = report.sessions.map((session) => session.statuses[person.id]).filter(Boolean) as AttendanceStatus[]
     const counts = attendanceCounts(Object.fromEntries(statuses.map((status, index) => [String(index), status])))
     const completion = (materialType: 'hasda' | 'asad') => {
-      if (!isEligibleForMaterial(materialType, person, classMap)) return '-'
+      if (!isEligibleForMaterial(materialType, person, classNameMap)) return '-'
       return materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id) ? 'Tuntas' : 'Belum'
     }
     const followUp = followUps.find((item) => item.periodMonth === month && item.classId === report.classId && item.jamaahId === person.id)
@@ -154,7 +154,7 @@ export function MonthlyReportPage() {
     downloadMonthlyReportPdf({
       month,
       monthLabel: monthLabel(month),
-      classLabel: classId === 'all' ? 'Semua kelas' : classMap.get(classId) ?? 'Kelas',
+      classLabel: classId === 'all' ? 'Semua kelas' : classNameMap.get(classId) ?? 'Kelas',
       periodStatus: closed ? 'Ditutup' : 'Terbuka',
       periodNotes: period?.notes ?? '',
       totals: { sessions: sessions.length, attendanceRate: averageAttendance, present: totalPresent, records: totalRecords, jamaah: uniqueJamaah, openFollowUps },

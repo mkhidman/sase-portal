@@ -1,7 +1,7 @@
 import { addDays, format, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { MATERIAL_LABELS } from './constants'
-import type { AttendanceStatus, CensusCategory, ClassMembershipHistory, Jamaah, JamaahStatusHistory, MaterialType } from '../types/domain'
+import type { AttendanceSession, AttendanceStatus, CensusCategory, ClassMembershipHistory, Jamaah, JamaahStatusHistory, MaterialCompletion, MaterialType } from '../types/domain'
 
 export function localIsoDate(date = new Date()): string {
   const year = date.getFullYear()
@@ -214,6 +214,50 @@ export function jamaahSnapshotsAsOfDate(
 ): Jamaah[] {
   const index = buildJamaahHistoryIndex(classHistories, statusHistories)
   return jamaahList.map((person) => jamaahSnapshotFromIndex(person, index, snapshotDate))
+}
+
+/**
+ * Dipakai bersama Dashboard dan Rekap. Sebelumnya kedua halaman menyalin
+ * perhitungan ini baris per baris, sehingga aturannya harus diubah di dua tempat.
+ */
+export function averageAttendanceRate(sessions: AttendanceSession[]): number {
+  if (!sessions.length) return 0
+  const total = sessions.reduce((sum, session) => {
+    const counts = attendanceCounts(session.statuses)
+    return sum + percentage(counts.present, Object.keys(session.statuses).length)
+  }, 0)
+  return Math.round(total / sessions.length)
+}
+
+export interface MaterialProgress {
+  done: number
+  total: number
+  percent: number
+}
+
+export function materialProgressFor(
+  material: Extract<MaterialType, 'hasda' | 'asad'>,
+  snapshot: Jamaah[],
+  completions: MaterialCompletion[],
+  month: string,
+  allowedClassIds: Set<string>,
+  classNamesById: Map<string, string>,
+): MaterialProgress {
+  const participants = snapshot.filter(
+    (person) =>
+      person.active &&
+      person.classIds.some((id) => allowedClassIds.has(id)) &&
+      isEligibleForMaterial(material, person, classNamesById),
+  )
+  // Ketuntasan bulan ini dikumpulkan sekali. Versi lama memindai seluruh daftar
+  // ketuntasan untuk tiap peserta, jadi biayanya jumlah peserta dikali jumlah catatan.
+  const completed = new Set(
+    completions
+      .filter((item) => item.month === month && item.materialType === material)
+      .map((item) => item.jamaahId),
+  )
+  const done = participants.filter((person) => completed.has(person.id)).length
+  return { done, total: participants.length, percent: percentage(done, participants.length) }
 }
 
 export function monthEndDate(month: string): string {
