@@ -1,5 +1,7 @@
 ## Belum dirilis
 
+- Menanyakan konfirmasi sebelum membuang isian absensi yang belum terkirim. Saat terjadi bentrok dengan perangkat lain, tombol Muat versi terbaru langsung menghapus isian lokal tanpa bertanya, padahal peringatan di atasnya menyatakan isian itu aman. Pengurus yang menuruti petunjuk di layar bisa kehilangan absensi satu kelas penuh.
+- Mengubah kalimat peringatan bentrok agar menyatakan keadaan sebenarnya: isian belum tertimpa, tetapi juga belum terkirim, dan memuat versi server akan membuangnya.
 - Mempercepat penyimpanan absensi. Sebelumnya tiap peserta yang hadir memicu pencarian linier ke seluruh daftar warga sekaligus penyapuan seluruh tabel riwayat, sehingga biayanya jumlah peserta dikali jumlah warga dikali panjang riwayat. Peta warga dan indeks riwayat kini dibangun sekali di luar perulangan.
 - Mempercepat lima halaman yang memotret keadaan warga pada tanggal tertentu: Dashboard, Rekap Keseluruhan, Tindak Lanjut Absensi, Hasda & ASAD, dan Laporan Bulanan. Semuanya memakai `jamaahSnapshotsAsOfDate` yang mengelompokkan riwayat satu kali, menggantikan pemanggilan per orang yang menyapu ulang seluruh riwayat.
 - Mengganti `jamaahSnapshotAsOfDate` dengan tiga fungsi: `buildJamaahHistoryIndex`, `jamaahSnapshotFromIndex` untuk pemakaian di dalam perulangan, dan `jamaahSnapshotsAsOfDate` untuk sebuah daftar warga.

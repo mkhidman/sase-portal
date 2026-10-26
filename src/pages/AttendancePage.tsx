@@ -2,6 +2,7 @@ import { CloudUpload, RefreshCw, Save, Search, ShieldAlert, WifiOff } from 'luci
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { InlineMessage, PageHeader, Person } from '../components/UI'
+import { useConfirm } from '../components/useConfirm'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
@@ -16,6 +17,7 @@ export function AttendancePage() {
   const [params] = useSearchParams()
   const { user, isDemo } = useAuth()
   const { jamaah, visibleClasses, visibleJamaah, attendanceSessions, saveAttendance, isPeriodClosed } = useData()
+  const { confirm, dialog: confirmDialog } = useConfirm()
   const initialClass = params.get('class') ?? visibleClasses[0]?.id ?? ''
   const initialDate = params.get('date') ?? localIsoDate()
   const initialMaterial = (params.get('material') as MaterialType | null) ?? 'general'
@@ -200,8 +202,18 @@ export function AttendancePage() {
     changeStatuses(next)
   }
 
-  function loadServerVersion() {
+  // Memuat versi server membuang isian yang belum terkirim, jadi harus ditanyakan dulu.
+  // Isian absensi satu kelas adalah kerja yang tidak dapat dipulihkan dari mana pun.
+  async function loadServerVersion() {
     if (!existing) return
+    const approved = await confirm({
+      title: 'Buang isian yang belum terkirim?',
+      description: `Isian di perangkat ini (${counts.present} hadir) akan dibuang dan diganti versi server (${serverCounts.present} hadir). Isian yang dibuang tidak dapat dikembalikan.`,
+      confirmLabel: 'Buang dan muat versi server',
+      cancelLabel: 'Batal',
+      tone: 'danger',
+    })
+    if (!approved) return
     if (user) removeAttendanceDraft(user.id, classId, date, materialType, materialName)
     hydrateFromLatest(existing, false)
     setMessage(feedbackInfo('Versi terbaru dari server sudah dimuat. Silakan periksa sebelum mengubah kembali.'))
@@ -333,8 +345,8 @@ export function AttendancePage() {
         {conflictDetected ? (
           <div className="notice attendance-conflict-notice">
             <ShieldAlert size={20} />
-            <div><strong>Ada perubahan dari perangkat lain</strong><span>Versi server sekarang {existing?.revision ?? '-'} dengan {serverCounts.present} hadir, sedangkan draftmu memiliki {counts.present} hadir. Draft lokal tetap aman, tetapi tidak boleh langsung menimpa versi server.</span></div>
-            <button className="button danger small" type="button" onClick={loadServerVersion}><RefreshCw size={14} /> Muat versi terbaru</button>
+            <div><strong>Ada perubahan dari perangkat lain</strong><span>Versi server sekarang {existing?.revision ?? '-'} dengan {serverCounts.present} hadir, sedangkan isian di perangkat ini {counts.present} hadir. Isianmu belum tertimpa, tetapi juga belum terkirim. Memuat versi server akan membuangnya, jadi catat dulu bila masih diperlukan.</span></div>
+            <button className="button danger small" type="button" onClick={() => void loadServerVersion()}><RefreshCw size={14} /> Muat versi terbaru</button>
           </div>
         ) : null}
 
@@ -398,6 +410,7 @@ export function AttendancePage() {
           <button className={`button ${offlineHold ? 'outline' : 'primary'}`} disabled={saveBlocked} onClick={() => void submit()}>{offlineHold ? <WifiOff size={16} /> : unsentAfterReconnect ? <CloudUpload size={16} /> : <Save size={16} />} {saving ? 'Menyimpan…' : offlineHold ? 'Simpan nanti' : unsentAfterReconnect ? 'Kirim' : 'Simpan'}</button>
         </div>
       </div>
+      {confirmDialog}
     </>
   )
 }
