@@ -1,5 +1,9 @@
-## Belum dirilis
+## 0.14.0
 
+- Memperbarui seluruh dependency ke versi terbaru: React dan React DOM 19.3.1, Vite 8.3.5, `@supabase/supabase-js` 2.118.0, `lucide-react` 1.61.0, `react-router-dom` 7.18.4, `@vitejs/plugin-react` 6.1.2, beserta paket tipe pendampingnya.
+- Menutup empat kerentanan dependency (satu sedang, tiga tinggi) yang seluruhnya berasal dari perkakas build lama dan hilang begitu Vite ikut diperbarui.
+- Mencatat bahwa bundle utama bertambah dari 551,90 kB menjadi 591,41 kB (gzip 158,19 kB menjadi 169,94 kB). Penyebab terbesarnya React 19.3.1 sendiri (sekitar 9 kB gzip), sisanya `@supabase/supabase-js` dan `lucide-react`. Pembaruan Vite justru mengecilkan keluaran sekitar 4 kB, dan tidak ada ikon `lucide-react` yang berubah nama sehingga tidak ada penyesuaian kode.
+- Menghapus `prototype-notulensi.html` beserta rujukannya di dokumentasi. File itu sisa prototipe modul Notulensi Musyawarah yang sudah dibongkar pada migration 022 dan tidak pernah menjadi bagian build.
 - Memperbarui tampilan seluruh aplikasi: sidebar menjadi panel putih mengambang, latar memakai gradasi lembut, dan kartu melepas garis tepi dengan bayangan berjenjang sebagai penggantinya.
 - Memindahkan status koneksi, waktu sinkron terakhir, tombol pasang aplikasi, profil, dan tombol keluar dari dasar sidebar ke topbar baru. Isinya tidak bertambah, hanya berpindah tempat, dan topbar hanya muncul pada layar desktop karena di mobile semuanya sudah tersedia lewat banner offline dan menu Lainnya.
 - Menggeser warna utama dari hijau tua `#1f6f4a` ke `#0b8059` yang lebih cerah. Nilainya dibatasi kontras: `#0f9b6c` yang semula dipertimbangkan hanya mencapai 3,62:1 terhadap teks putih sehingga tidak lolos WCAG AA. Mint cerah `#10b981` tetap dipakai sebagai `--accent-bright`, khusus bidang dekoratif tanpa teks seperti isian progress dan bar pemuatan.

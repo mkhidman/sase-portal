@@ -75,4 +75,4 @@ CSS murni di `src/styles.css` (tanpa Tailwind/CSS-in-JS). Arrow function compone
 
 ## Kondisi saat ini
 
-Backup JSON bisa diunduh tetapi restore belum ada. Modul Notulensi Musyawarah sudah dihapus (migration 022); `prototype-notulensi.html` di root adalah sisa prototipenya dan bukan bagian build.
+Backup JSON bisa diunduh tetapi restore belum ada. Modul Notulensi Musyawarah sudah dihapus (migration 022).

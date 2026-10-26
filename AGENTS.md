@@ -12,7 +12,7 @@ Bahasa antarmuka, kode, migration, dan dokumentasi projek seluruhnya **Bahasa In
 - **Superadmin** — akses penuh ke semua modul dan semua kelas.
 - **Admin / Wali Kelas** — hanya melihat dan mengisi data kelas yang diampunya (pembatasan via Row Level Security).
 
-Versi terakhir: **0.13.2**. Fitur dibangun bertahap (fase 1–13) dan direkam di `CHANGELOG.md`.
+Versi terakhir: **0.14.0**. Fitur dibangun bertahap (fase 1–13) dan direkam di `CHANGELOG.md`.
 
 ### Cakupan fitur utama
 
@@ -182,4 +182,3 @@ npm run preview               # pratinjau build produksi (uji PWA/offline)
 - Draft offline tersimpan lokal, tapi pengiriman final **butuh koneksi** (tidak ada antrean background).
 - Periode yang ditutup mengunci perubahan operasional (jadwal, absensi, follow-up, materi, status, kelas) untuk bulan itu.
 - Fitur "Penggabungan" di Kualitas Data: fase 11 hanya mendeteksi kandidat; merge penuh (fase 12) tersedia di menu Kualitas Data untuk Superadmin.
-- `prototype-notulensi.html` adalah sisa prototipe modul Notulensi Musyawarah yang sudah dihapus (migration 022); bukan bagian dari build dan dapat dibuang.
