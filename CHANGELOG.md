@@ -1,5 +1,9 @@
 ## Belum dirilis
 
+- Mengumpulkan ketuntasan materi bulan berjalan satu kali di Laporan Bulanan dan Hasda & ASAD, menggantikan tiga dan satu pemindaian penuh yang dijalankan untuk tiap peserta. Di Hasda & ASAD pemindaian itu berada di dalam pembanding pengurutan, sehingga terpanggil ratusan kali setiap layar digambar.
+- Menyimpan hasil potret warga di Laporan Bulanan agar tidak dihitung ulang setiap layar digambar. Sebelumnya mengetik satu huruf pada Catatan periode menjalankan ulang seluruh perhitungan halaman.
+- Menyederhanakan penyimpanan absensi: peserta yang hadir dikumpulkan dulu lalu dipotret sekali jalan, sehingga `src/lib/utils.ts` cukup membuka satu fungsi potret, bukan tiga.
+- Menghapus satu peta nama kelas yang masih disusun ulang di dalam penyimpanan absensi, padahal nilainya sudah tersedia dari DataContext.
 - Menambahkan tes otomatis pertama di projek ini, memakai penjalan tes bawaan Node sehingga tidak ada dependency baru. Jalankan dengan `npm test`.
 - Menguji 18 aturan yang kalau rusak tidak memunculkan error apa pun, hanya angka laporan yang diam-diam berubah: kenaikan kelas dan pengarsipan sesudah tanggal potret tidak boleh mengubah laporan bulan itu, rata-rata kehadiran adalah rerata persentase tiap sesi, dan ketuntasan bulan atau materi lain tidak boleh ikut terhitung.
 - Menanyakan konfirmasi sebelum membuang isian absensi yang belum terkirim. Saat terjadi bentrok dengan perangkat lain, tombol Muat versi terbaru langsung menghapus isian lokal tanpa bertanya, padahal peringatan di atasnya menyatakan isian itu aman. Pengurus yang menuruti petunjuk di layar bisa kehilangan absensi satu kelas penuh.

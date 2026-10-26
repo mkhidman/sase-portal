@@ -45,9 +45,16 @@ export function MaterialsPage() {
 
   const periodClosed = isPeriodClosed(month)
 
-  const isCompleted = (personId: string) => materialCompletions.some(
-    (item) => item.month === month && item.materialType === materialType && item.jamaahId === personId,
-  )
+  // Dikumpulkan sekali. Sebelumnya tiap pemanggilan memindai seluruh daftar ketuntasan,
+  // dan pembanding pengurutan di bawah memanggilnya ratusan kali tiap layar digambar.
+  const completedIds = useMemo(() => {
+    const ids = new Set<string>()
+    materialCompletions.forEach((item) => {
+      if (item.month === month && item.materialType === materialType) ids.add(item.jamaahId)
+    })
+    return ids
+  }, [materialCompletions, materialType, month])
+  const isCompleted = (personId: string) => completedIds.has(personId)
 
   const sortedParticipants = [...participants].sort((left, right) => {
     if (sortMode !== 'name') {

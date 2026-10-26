@@ -51,7 +51,7 @@ import {
 import { resetDemoBootstrap } from '../data/demo'
 import { useAuth } from './AuthContext'
 import { isDemoMode, supabase } from '../lib/supabase'
-import { buildJamaahHistoryIndex, censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotFromIndex, localIsoDate } from '../lib/utils'
+import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial, jamaahSnapshotsAsOfDate, localIsoDate } from '../lib/utils'
 import { buildGeneralAttendanceBreakdown, GENERAL_ATTENDANCE_CLASS_NAME } from '../lib/generalAttendance'
 import { loadBootstrapCache, saveBootstrapCache, sweepStaleAttendanceDrafts, type OfflineCacheStatus } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
@@ -337,23 +337,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           generatedFromSessionId: null,
         }
 
-        const classNameMap = new Map(data.classes.map((item) => [item.id, item.name]))
         const isGeneralSession = classNameMap.get(session.classId) === GENERAL_ATTENDANCE_CLASS_NAME
         const completionJamaahIds: string[] = []
         if (isMandatoryMaterial(session.materialType)) {
-          // Peta warga dan indeks riwayat dibangun sekali di luar perulangan. Sebelumnya
-          // tiap peserta hadir memicu pencarian linier plus sapuan riwayat penuh, sehingga
-          // menyimpan satu sesi berbiaya jumlah peserta dikali jumlah warga dan riwayat.
+          // Disimpan ke variabel supaya penyempitan tipe ikut terbawa ke dalam callback.
+          const materialType = session.materialType
+          // Peserta hadir dikumpulkan dulu, lalu dipotret sekali jalan. Sebelumnya tiap
+          // peserta memicu pencarian linier ke seluruh daftar warga plus sapuan riwayat
+          // penuh, sehingga menyimpan satu sesi berbiaya perkalian ketiganya.
           const jamaahById = new Map(data.jamaah.map((item) => [item.id, item]))
-          const historyIndex = buildJamaahHistoryIndex(data.classHistory, data.statusHistory)
-          for (const [jamaahId, status] of Object.entries(session.statuses)) {
-            const person = jamaahById.get(jamaahId)
-            if (status !== 'present' || !person) continue
-            const historicalPerson = jamaahSnapshotFromIndex(person, historyIndex, session.date)
-            if (historicalPerson.active && isEligibleForMaterial(session.materialType, historicalPerson, classNameMap)) {
-              completionJamaahIds.push(jamaahId)
+          const hadir = Object.entries(session.statuses)
+            .filter(([, status]) => status === 'present')
+            .map(([jamaahId]) => jamaahById.get(jamaahId))
+            .filter((person): person is Jamaah => Boolean(person))
+          jamaahSnapshotsAsOfDate(hadir, data.classHistory, data.statusHistory, session.date).forEach((person) => {
+            if (person.active && isEligibleForMaterial(materialType, person, classNameMap)) {
+              completionJamaahIds.push(person.id)
             }
-          }
+          })
         }
         const saveResult = await upsertAttendanceSession(
           session,

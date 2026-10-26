@@ -1,5 +1,5 @@
 import { ClipboardList, Download, FileCheck2, Lock, LockOpen, Percent, TriangleAlert, UsersRound } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { GenderComposition, type GenderCompositionRow } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
@@ -42,7 +42,21 @@ export function MonthlyReportPage() {
 
   const selectedClasses = visibleClasses.filter((item) => classId === 'all' || item.id === classId)
   const snapshotDate = monthEndDate(month)
-  const snapshotJamaah = jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, snapshotDate)
+  const snapshotJamaah = useMemo(
+    () => jamaahSnapshotsAsOfDate(jamaah, classHistory, statusHistory, snapshotDate),
+    [classHistory, jamaah, snapshotDate, statusHistory],
+  )
+  // Ketuntasan bulan berjalan dikumpulkan sekali. Versi lama memindai seluruh daftar
+  // ketuntasan untuk tiap peserta, di tiga tempat, dan halaman ini menghitung ulang
+  // semuanya setiap layar digambar -- termasuk saat mengetik di Catatan periode.
+  const completedThisMonth = useMemo(() => {
+    const byMaterial: Record<'hasda' | 'asad', Set<string>> = { hasda: new Set(), asad: new Set() }
+    materialCompletions.forEach((item) => {
+      if (item.month !== month) return
+      byMaterial[item.materialType]?.add(item.jamaahId)
+    })
+    return byMaterial
+  }, [materialCompletions, month])
   const selectedClassIds = new Set(selectedClasses.map((item) => item.id))
   const censusPopulation = snapshotJamaah.filter((person) => {
     if (!person.active) return false
@@ -105,7 +119,7 @@ export function MonthlyReportPage() {
     const recorded = totals.present + totals.excused + totals.sick + totals.absent
     const materialProgress = (materialType: 'hasda' | 'asad') => {
       const eligible = members.filter((person) => isEligibleForMaterial(materialType, person, classNameMap))
-      const done = eligible.filter((person) => materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id)).length
+      const done = eligible.filter((person) => completedThisMonth[materialType].has(person.id)).length
       return { total: eligible.length, done, percent: eligible.length ? percentage(done, eligible.length) : null }
     }
     return {
@@ -126,9 +140,7 @@ export function MonthlyReportPage() {
       person.active && person.classIds.some((id) => selectedClassIds.has(id)) && isEligibleForMaterial(materialType, person, classNameMap),
     )
     const unique = [...new Map(participants.map((person) => [person.id, person])).values()]
-    const isCompleted = (personId: string) => materialCompletions.some(
-      (item) => item.month === month && item.materialType === materialType && item.jamaahId === personId,
-    )
+    const isCompleted = (personId: string) => completedThisMonth[materialType].has(personId)
     const done = unique.filter((person) => isCompleted(person.id)).length
     const byGender = (gender: 'Laki-laki' | 'Perempuan') => {
       const genderParticipants = unique.filter((person) => person.gender === gender)
@@ -155,7 +167,7 @@ export function MonthlyReportPage() {
     const counts = attendanceCounts(Object.fromEntries(statuses.map((status, index) => [String(index), status])))
     const completion = (materialType: 'hasda' | 'asad') => {
       if (!isEligibleForMaterial(materialType, person, classNameMap)) return '-'
-      return materialCompletions.some((item) => item.month === month && item.materialType === materialType && item.jamaahId === person.id) ? 'Tuntas' : 'Belum'
+      return completedThisMonth[materialType].has(person.id) ? 'Tuntas' : 'Belum'
     }
     const followUp = followUps.find((item) => item.periodMonth === month && item.classId === report.classId && item.jamaahId === person.id)
     return {

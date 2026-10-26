@@ -5,8 +5,6 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
   averageAttendanceRate,
-  buildJamaahHistoryIndex,
-  jamaahSnapshotFromIndex,
   jamaahSnapshotsAsOfDate,
   materialProgressFor,
   monthEndDate,
@@ -125,16 +123,15 @@ test('beberapa perpindahan diputar mundur menurut urutan tanggal', () => {
   assert.deepEqual(jamaahSnapshotsAsOfDate([orang], riwayat, [], '2025-01-31')[0]!.classIds, ['pra-remaja'])
 })
 
-test('jalur indeks dan jalur daftar memberi hasil yang sama', () => {
+test('beberapa warga dipotret bersama tanpa saling mencemari', () => {
   const daftar = [
     warga({ id: 'w1', classIds: ['remaja'] }),
     warga({ id: 'w2', classIds: ['pra-nikah'], gender: 'Perempuan' }),
   ]
   const riwayat = [pindahKelas({ jamaahId: 'w1', fromClassId: 'pra-remaja', toClassId: 'remaja', effectiveDate: '2026-08-01' })]
-  const indeks = buildJamaahHistoryIndex(riwayat, [])
-  const lewatIndeks = daftar.map((p) => jamaahSnapshotFromIndex(p, indeks, '2026-07-31'))
-  const lewatDaftar = jamaahSnapshotsAsOfDate(daftar, riwayat, [], '2026-07-31')
-  assert.deepEqual(lewatIndeks, lewatDaftar)
+  const [satu, dua] = jamaahSnapshotsAsOfDate(daftar, riwayat, [], '2026-07-31')
+  assert.deepEqual(satu!.classIds, ['pra-remaja'])
+  assert.deepEqual(dua!.classIds, ['pra-nikah'])
 })
 
 // --- rata-rata kehadiran -----------------------------------------------------

@@ -137,7 +137,7 @@ export function censusCategoryForClassName(className: string, fallback: CensusCa
  * pemanggilan snapshot menyapu seluruh tabel riwayat, sehingga memotret satu daftar
  * warga berbiaya jumlah warga dikali panjang riwayat.
  */
-export interface JamaahHistoryIndex {
+interface JamaahHistoryIndex {
   classByJamaah: Map<string, ClassMembershipHistory[]>
   statusByJamaah: Map<string, JamaahStatusHistory[]>
 }
@@ -152,7 +152,7 @@ function groupByJamaah<T extends { jamaahId: string }>(items: T[]): Map<string, 
   return grouped
 }
 
-export function buildJamaahHistoryIndex(
+function buildJamaahHistoryIndex(
   classHistories: ClassMembershipHistory[],
   statusHistories: JamaahStatusHistory[],
 ): JamaahHistoryIndex {
@@ -162,7 +162,7 @@ export function buildJamaahHistoryIndex(
   }
 }
 
-export function jamaahSnapshotFromIndex(
+function jamaahSnapshotFromIndex(
   jamaah: Jamaah,
   index: JamaahHistoryIndex,
   snapshotDate: string,
