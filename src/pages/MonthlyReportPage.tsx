@@ -1,6 +1,6 @@
 import { ClipboardList, Download, FileCheck2, Lock, LockOpen, Percent, TriangleAlert, UsersRound } from 'lucide-react'
 import { useState } from 'react'
-import { GenderComposition } from '../components/GenderComposition'
+import { GenderComposition, type GenderCompositionRow } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, StatCard } from '../components/UI'
@@ -10,7 +10,9 @@ import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES, FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
 import { attendanceCounts, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
 import { downloadMonthlyReportPdf } from '../lib/monthlyReportPdf'
-import type { AttendanceStatus } from '../types/domain'
+import type { AttendanceStatus, StudyClass } from '../types/domain'
+
+const MANUAL_MEMBERSHIP_CLASS = '5 Unsur'
 
 function monthLabel(month: string): string {
   return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T00:00:00`))
@@ -54,6 +56,28 @@ export function MonthlyReportPage() {
     const female = members.filter((person) => person.gender === 'Perempuan').length
     return { categoryName, male, female, total: members.length }
   })
+  // Kelas nonaktif hanya relevan saat tidak ada filter kelas, dan tetap dibatasi hak akses:
+  // Superadmin melihat semuanya, Admin hanya kelas yang diampunya.
+  const inactiveClasses = classId === 'all'
+    ? classes.filter((item) => !item.active && (user?.role === 'superadmin' || (user?.assignedClassIds ?? []).includes(item.id)))
+    : []
+  const classGenderRow = (studyClass: StudyClass, groupLabel?: string): GenderCompositionRow => {
+    const members = snapshotJamaah.filter((person) => person.active && person.classIds.includes(studyClass.id))
+    return {
+      key: studyClass.id,
+      label: studyClass.name,
+      male: members.filter((person) => person.gender === 'Laki-laki').length,
+      female: members.filter((person) => person.gender === 'Perempuan').length,
+      total: members.length,
+      groupLabel,
+    }
+  }
+  const classGenderSummary = [
+    ...selectedClasses.map((item) => classGenderRow(item)),
+    ...inactiveClasses.map((item) => classGenderRow(item, 'Kelas nonaktif')),
+  ]
+  const hasManualClass = selectedClasses.some((item) => item.name === MANUAL_MEMBERSHIP_CLASS)
+
   const sessions = attendanceSessions.filter((item) => item.date.startsWith(month) && selectedClassIds.has(item.classId))
   const period = reportingPeriods.find((item) => item.month === month)
   const closed = period?.status === 'closed'
@@ -243,6 +267,25 @@ export function MonthlyReportPage() {
           </div>
         </div>
         <GenderComposition rows={censusGenderSummary.map((item) => ({ key: item.categoryName, label: item.categoryName, male: item.male, female: item.female, total: item.total }))} />
+      </article>
+
+      <article className="card">
+        <div className="card-heading">
+          <div>
+            <h2>Komposisi Kelas Pengajian</h2>
+            <p>Jumlah warga aktif laki-laki dan perempuan pada setiap kelas, menurut posisi akhir {monthLabel(month)}. Panjang batang sebanding dengan kelas terbesar.</p>
+          </div>
+        </div>
+        <GenderComposition
+          rows={classGenderSummary}
+          totalLabel="Total keanggotaan"
+          footnote={
+            <>
+              Total keanggotaan lebih besar dari jumlah warga karena satu warga dapat mengikuti lebih dari satu kelas.
+              {hasManualClass ? ` Keanggotaan ${MANUAL_MEMBERSHIP_CLASS} ditentukan secara manual, sisanya mengikuti data sensus warga.` : ''}
+            </>
+          }
+        />
       </article>
 
       <article className="card monthly-material-gender-summary">

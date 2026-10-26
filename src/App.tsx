@@ -15,7 +15,6 @@ const loaders = {
   attendance: () => import('./pages/AttendancePage'),
   audit: () => import('./pages/AuditPage'),
   census: () => import('./pages/CensusPage'),
-  classes: () => import('./pages/ClassesPage'),
   classProgression: () => import('./pages/ClassProgressionPage'),
   dataQuality: () => import('./pages/DataQualityPage'),
   familyContacts: () => import('./pages/FamilyContactsPage'),
@@ -32,7 +31,6 @@ const loaders = {
 const AttendancePage = lazy(() => loaders.attendance().then((m) => ({ default: m.AttendancePage })))
 const AuditPage = lazy(() => loaders.audit().then((m) => ({ default: m.AuditPage })))
 const CensusPage = lazy(() => loaders.census().then((m) => ({ default: m.CensusPage })))
-const ClassesPage = lazy(() => loaders.classes().then((m) => ({ default: m.ClassesPage })))
 const ClassProgressionPage = lazy(() => loaders.classProgression().then((m) => ({ default: m.ClassProgressionPage })))
 const DataQualityPage = lazy(() => loaders.dataQuality().then((m) => ({ default: m.DataQualityPage })))
 const FamilyContactsPage = lazy(() => loaders.familyContacts().then((m) => ({ default: m.FamilyContactsPage })))
@@ -80,7 +78,6 @@ export default function App() {
                   <Route element={<SuperadminRoute />}>
                     <Route path="sensus" element={<CensusPage />} />
                     <Route path="kualitas-data" element={<DataQualityPage />} />
-                    <Route path="kelas" element={<ClassesPage />} />
                     <Route path="kenaikan-kelas" element={<ClassProgressionPage />} />
                     <Route path="arsip-jamaah" element={<JamaahArchivePage />} />
                     <Route path="pengaturan" element={<SettingsPage />} />

@@ -17,6 +17,11 @@
 - Mempercepat perhitungan ketuntasan materi sekalian. Versi lama memindai seluruh daftar ketuntasan untuk tiap peserta; sekarang ketuntasan bulan berjalan dikumpulkan sekali lalu dicocokkan.
 - Memindahkan peta nama kelas ke DataContext. Sebelumnya peta yang sama dibangun ulang sembilan kali di delapan halaman, dengan tiga nama variabel berbeda, dan di empat halaman dinamai `classMap` padahal isinya nama kelas, bukan objek kelas.
 - Angka yang tampil tidak berubah. Kesetaraan diuji dengan membandingkan perhitungan lama dan baru pada 183 kasus, termasuk sesi tanpa peserta dan kelas tanpa anggota. Tidak ada selisih.
+- Memindahkan komposisi jumlah warga per kelas ke Laporan Bulanan dan menghapus halaman Kelas Pengajian beserta entri menunya. Halaman itu hanya memuat satu grafik tanpa aksi apa pun, sedangkan datanya dibutuhkan sekitar tiga bulan sekali, sehingga satu slot menu tetap terpakai sepanjang waktu untuk sesuatu yang jarang dibuka.
+- Mengubah angkanya menjadi posisi akhir bulan yang dipilih, bukan keadaan hari ini, mengikuti seluruh isi Laporan Bulanan. Dengan begitu komposisi bulan-bulan sebelumnya dapat ditengok tanpa menunggu tanggalnya lewat.
+- Mempertahankan pengelompokan kelas nonaktif dan catatan keanggotaan 5 Unsur. Kelas nonaktif hanya muncul ketika filter kelas sedang kosong, dan tetap dibatasi hak akses pengguna.
+- Menampilkan komposisi ini juga kepada Admin, terbatas pada kelas yang diampunya, mengikuti perilaku Laporan Bulanan yang sudah ada. Sebelumnya hanya Superadmin yang dapat melihatnya.
+- Isi PDF Laporan Bulanan sengaja tidak diubah.
 - Tidak memerlukan migration Supabase baru.
 
 ## 0.14.0

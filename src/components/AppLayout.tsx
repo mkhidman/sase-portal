@@ -10,7 +10,6 @@ import {
   Database,
   Download,
   FileChartColumn,
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   RefreshCw,
@@ -38,7 +37,7 @@ import { MobileMoreMenu } from './MobileMoreMenu'
  * atribut pada .app-main, yang hanya menimpa --card-pad, --card-gap, dan
  * --cell-pad-y -- bukan lewat CSS terpisah per halaman.
  */
-const SPACIOUS_ROUTES = new Set(['/', '/rekap', '/laporan-bulanan', '/kelas', '/pengaturan'])
+const SPACIOUS_ROUTES = new Set(['/', '/rekap', '/laporan-bulanan', '/pengaturan'])
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ size?: number }> }
 type NavGroup = { id: string; label: string; icon: ComponentType<{ size?: number }>; items: NavItem[] }
@@ -58,7 +57,6 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
       {
         id: 'pengajian', label: 'Pengajian', icon: CalendarDays,
         items: [
-          { to: '/kelas', label: 'Kelas Pengajian', icon: GraduationCap },
           { to: '/jadwal', label: 'Jadwal Pengajian', icon: CalendarDays },
           { to: '/absensi', label: 'Absensi Kelas', icon: ClipboardCheck },
           { to: '/tindak-lanjut', label: 'Tindak Lanjut Absensi', icon: UserRoundCheck },

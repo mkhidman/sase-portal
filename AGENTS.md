@@ -127,7 +127,7 @@ File akar penting: `vite.config.ts`, `vercel.json` (SPA rewrite), `.env.example`
 | `/jadwal`, `/absensi`, `/materi`, `/tindak-lanjut` | Jadwal, Absensi, Hasda & ASAD, Tindak Lanjut | Admin & Superadmin (Admin dibatasi kelas diampu) |
 | `/keluarga-wali` | Keluarga & Wali | Admin (kelas diampu) & Superadmin |
 | `/rekap`, `/laporan-bulanan` | Rekap, Laporan Bulanan | Admin (cakupan kelas) & Superadmin |
-| `/sensus`, `/kualitas-data`, `/kelas`, `/kenaikan-kelas`, `/arsip-jamaah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kelas, Kenaikan & Mutasi, Status & Arsip, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
+| `/sensus`, `/kualitas-data`, `/kenaikan-kelas`, `/arsip-jamaah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kenaikan & Mutasi, Status & Arsip, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
 
 ---
 
