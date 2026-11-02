@@ -77,7 +77,7 @@ Semua tabel inti dimuat sekaligus via `loadBootstrap(user)` dan direduksi menjad
 - **Selalu ada validasi aturan bisnis di frontend DAN di database (RPC/RLS).** Jangan hapus salah satu lapisan.
 - **Snapshot historis**: laporan/rekap harus memakai `jamaahSnapshotsAsOfDate` (rekonstruksi kelas/kategori/status aktif sesuai tanggal) — jangan pakai data terkini untuk laporan bulan lalu. Di dalam perulangan, pakai `buildJamaahHistoryIndex` + `jamaahSnapshotFromIndex`.
 - **Optimistic locking absensi**: simpan selalu membawa `expectedRevision`; database menolak jika `revision` sudah berubah (error `ATTENDANCE_CONFLICT`).
-- **Transaksi atomik via RPC**: `save_jamaah_record`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `save_meeting_note_record`, `bulk_import_jamaah`. Operasi mutasi baru yang multi-tabel **harus** jadi RPC security definer, bukan beberapa query dari client.
+- **Transaksi atomik via RPC**: `save_jamaah_record`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `save_meeting_record`, `bulk_import_jamaah`. Operasi mutasi baru yang multi-tabel **harus** jadi RPC security definer, bukan beberapa query dari client.
 - **Baru-baru ini (`isDemoMode`)**: demo mode menjalankan logika merge/simpan di sisi client (`mergeDemoJamaah`, dsb.) — jika mengubah aturan merge/proses, ubah **dua-duanya** (RPC di `supabase/migrations/` + versi demo di `src/lib/`).
 - **Kelas Pengajian Umum**: kelas `'Pengajian Umum'` (konstan `GENERAL_ATTENDANCE_CLASS_NAME` di `src/lib/generalAttendance.ts`) memicu pembuatan sesi rekap otomatis untuk Pra Remaja/Remaja/Pra Nikah hanya pada hari Senin & Rabu (`isGeneralAttendanceBreakdownDay`). Sesi otomatis bersifat read-only (`generatedFromSessionId`).
 
@@ -127,13 +127,13 @@ File akar penting: `vite.config.ts`, `vercel.json` (SPA rewrite), `.env.example`
 | `/jadwal`, `/absensi`, `/materi`, `/tindak-lanjut` | Jadwal, Absensi, Hasda & ASAD, Tindak Lanjut | Admin & Superadmin (Admin dibatasi kelas diampu) |
 | `/keluarga-wali` | Keluarga & Wali | Admin (kelas diampu) & Superadmin |
 | `/rekap`, `/laporan-bulanan` | Rekap, Laporan Bulanan | Admin (cakupan kelas) & Superadmin |
-| `/sensus`, `/kualitas-data`, `/kenaikan-kelas`, `/arsip-jamaah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kenaikan & Mutasi, Status & Arsip, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
+| `/sensus`, `/kualitas-data`, `/kenaikan-kelas`, `/arsip-jamaah`, `/musyawarah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kenaikan & Mutasi, Status & Arsip, Musyawarah, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
 
 ---
 
 ## 7. Backend Supabase
 
-- **Migration**: `supabase/migrations/` dijalankan berurutan (001 → 020). Setiap fitur baru menambah migration baru (jangan edit migration lama setelah ter-deploy).
+- **Migration**: `supabase/migrations/` dijalankan berurutan (001 → 023). Setiap fitur baru menambah migration baru (jangan edit migration lama setelah ter-deploy).
 - **RLS**: setiap tabel inti punya Row Level Security; Admin dibatasi kelas yang diampu via relasi `admin_class_assignments`. RLS `select` biasanya terbuka untuk authenticated; **mutasi** diarahkan lewat fungsi security definer.
 - **RPC utama** (lihat `src/data/repository.ts` untuk pasangan fungsi client):
   - `save_jamaah_record`, `bulk_import_jamaah`
@@ -141,7 +141,7 @@ File akar penting: `vite.config.ts`, `vercel.json` (SPA rewrite), `.env.example`
   - `save_family_record`, `save_linked_guardian_contact`
   - `bulk_transition_jamaah_classes`, `change_jamaah_active_status`
   - `merge_jamaah_duplicates`
-  - `save_meeting_note_record`
+  - `save_meeting_record` (notulensi + bahasan + tugas dalam satu transaksi)
   - `record_current_login`, `complete_password_change`
 - **Edge Functions**: `invite-admin` (buat akun Admin), `manage-admin` (actions: `replace_assignments`, `set_active`, `reset_password`, `transfer_assignments`). Deploy dengan `supabase functions deploy <nama> --no-verify-jwt`.
 - **Realtime**: semua tabel operasional masuk `supabase_realtime` publication (ditambahkan tiap migration).

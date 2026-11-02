@@ -1,5 +1,17 @@
 ## Belum dirilis
 
+- Menambahkan modul Musyawarah: notulensi yang diisi sebagai daftar masalah, bukan karangan bebas. Tiap bahasan punya kolom Masalah, Solusi, lalu baris tugas dengan penanggung jawab dan batas tanggal. Modul Notulensi lama (migration 020, dihapus 022) memakai empat kotak teks bebas sehingga hasilnya tidak bisa ditagih.
+- Menghimpun seluruh tugas dari semua musyawarah pada satu daftar "Tugas Belum Selesai" yang dapat disaring per penanggung jawab dan dicentang langsung. Batas tanggal terdekat berada di urutan atas, tugas yang lewat batas ditandai terlambat, tugas tanpa batas tanggal berada paling bawah.
+- Menyimpan status selesai sebagai waktu pencentangan (`done_at`), bukan enum tiga status seperti versi lama. Satu kolom sekaligus mencatat kapan dan oleh siapa tugas dicentang.
+- Memperbarui notulensi tidak lagi menghapus lalu menyisipkan ulang tugas-tugasnya. Dengan cara lama, menyunting notulensi akan menghapus centang "selesai" yang dibuat setelahnya tanpa ada yang menyadarinya.
+- Mengunci isi notulensi pada periode yang sudah ditutup, tetapi sengaja tidak mengunci pencentangan tugasnya: tugas dari musyawarah bulan lalu masih dikerjakan bulan ini, dan menutup buku bulan itu tidak boleh membekukan pekerjaan yang masih berjalan.
+- Mewajibkan setiap tugas memiliki penanggung jawab yang dipilih dari data warga. Tugas tanpa penanggung jawab tidak dapat ditagih kepada siapa pun.
+- Membuang daftar peserta musyawarah yang ada pada modul lama. Satu-satunya gunanya adalah mengharuskan penanggung jawab merupakan peserta, sehingga daftar hadir harus diisi lebih dulu sebelum tugas boleh dibagikan.
+- Menyertakan notulensi musyawarah pada backup JSON (`Pengaturan → Unduh Backup`). Modul lama tidak pernah tercakup backup, dan itulah sebabnya datanya hilang tanpa salinan saat dihapus migration 022.
+- Seluruh menu Musyawarah terbatas untuk Superadmin, di frontend maupun pada RLS dan RPC.
+- Menambahkan `openMeetingTaskRows` dan `meetingSummary` di `src/lib/meetingTasks.ts` beserta lima tes: urutan penagihan tugas dan penandaan terlambat kalau rusak tidak memunculkan error apa pun, hanya tugas yang sudah lewat batas tenggelam di bawah dan tidak pernah ditagih.
+- Memerlukan migration Supabase baru `023_musyawarah.sql`.
+
 - Membuat service worker versi baru menunggu sampai seluruh tab ditutup, tidak lagi mengambil alih tab yang sedang terbuka. Sebelumnya halaman yang sudah terbuka tetap menjalankan kode lama sementara potongan halamannya baru saja dihapus dari cache, sehingga menu yang ditekan tepat sesudah deploy bisa gagal dimuat.
 - Menghentikan pemuatan ulang seluruh data ketika yang berubah pada profil hanya waktu login terakhir. Setiap kali masuk, data 13 tabel sempat diunduh dua kali.
 - Mengembalikan tanda garis bawah saat kursor melintas di atas nama warga pada Data Sensus. Aturannya sudah ada sejak lama tetapi menargetkan kelas yang tidak pernah ada di tampilan, jadi tidak pernah terlihat.

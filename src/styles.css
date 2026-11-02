@@ -174,7 +174,7 @@ a { color: inherit; }
 .role-options small { color: var(--muted); line-height: 1.45; }
 .login-form { display: grid; gap: 13px; }
 .login-form label, .form-grid label, .attendance-filters label, .material-filters label, .recap-toolbar label { display: grid; gap: 7px; font-size: var(--fs-sm); font-weight: 800; color: #4d5b52; }
-.login-form input, .form-grid input, .form-grid select, .attendance-filters input, .attendance-filters select, .material-filters input, .material-filters select, .recap-toolbar input, .recap-toolbar select, .toolbar select, .card-heading input {
+.login-form input, .form-grid input, .form-grid select, .attendance-filters input, .attendance-filters select, .material-filters input, .material-filters select, .recap-toolbar input, .recap-toolbar select, .toolbar select, .card-heading input, .card-heading select {
   width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
 }
 .form-error { margin: 12px 0 0; color: var(--danger); font-size: var(--fs-sm); }
@@ -369,6 +369,7 @@ a { color: inherit; }
 .search-field input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--text); }
 /* Filter pada toolbar dirancang sebaris dengan kotak cari, bukan satu baris penuh masing-masing. */
 .toolbar select { width: auto; flex: 0 1 210px; min-width: 150px; }
+.card-heading select { width: auto; flex: 0 1 230px; min-width: 150px; }
 .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-md); -webkit-overflow-scrolling: touch; }
 table { width: 100%; min-width: 820px; border-collapse: collapse; background: var(--surface); }
 th, td { padding: var(--cell-pad-y) 13px; border-bottom: 1px solid var(--line); text-align: left; font-size: var(--fs-sm); vertical-align: middle; }
@@ -1103,6 +1104,38 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .guardian-candidate-list > button .person { min-width: 0; }
 .guardian-candidate-list > button > span { flex: 0 0 auto; color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; }
 .guardian-delete { margin-top: 14px; }
+
+/* Fase 23: notulensi musyawarah */
+.meeting-list { display: grid; gap: 12px; }
+.meeting-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); overflow: hidden; }
+.meeting-card > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 13px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.meeting-card > header > div:first-child { min-width: 0; display: grid; gap: 3px; }
+.meeting-card > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-md); }
+.meeting-card > header small { color: var(--muted); font-size: var(--fs-2xs); }
+.meeting-card-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+.meeting-topics { display: grid; gap: 10px; padding: 11px; }
+.meeting-topic { padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.meeting-problem { margin: 0 0 4px; font-size: var(--fs-sm); font-weight: 800; }
+.meeting-solution { margin: 0; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
+.meeting-task-list { margin: 9px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.meeting-task-list > li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 9px; border-radius: var(--radius-xs); background: var(--surface-sunken); }
+.meeting-task-list label { min-width: 0; display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); }
+.meeting-task-list > li > small { flex: 0 0 auto; color: var(--muted); font-size: var(--fs-2xs); text-align: right; }
+.meeting-task-list > li.done label span { color: var(--muted); text-decoration: line-through; }
+
+.topic-draft-list { display: grid; gap: 12px; }
+.topic-draft { padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-sunken); }
+.topic-draft > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.task-draft-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 11px 0 7px; }
+.task-draft-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px 150px auto; align-items: center; gap: 7px; margin-bottom: 7px; }
+.task-draft-row input, .task-draft-row select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-xs); }
+
+@media (max-width: 820px) {
+  .task-draft-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .task-draft-row select, .task-draft-row input[type="date"] { grid-column: 1 / -1; }
+  .meeting-task-list > li { align-items: flex-start; flex-direction: column; }
+  .meeting-task-list > li > small { text-align: left; }
+}
 
 @media (max-width: 1120px) {
   .family-card-grid { grid-template-columns: 1fr; }

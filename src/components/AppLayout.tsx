@@ -6,6 +6,7 @@ import {
   ChartNoAxesColumn,
   ChevronDown,
   ClipboardCheck,
+  ClipboardList,
   ContactRound,
   Database,
   Download,
@@ -74,6 +75,7 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
       {
         id: 'sistem', label: 'Sistem', icon: Settings,
         items: [
+          { to: '/musyawarah', label: 'Musyawarah', icon: ClipboardList },
           { to: '/aktivitas', label: 'Riwayat Aktivitas', icon: Activity },
           { to: '/pengaturan', label: 'Pengaturan Admin', icon: Settings },
         ],

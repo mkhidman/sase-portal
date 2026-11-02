@@ -200,6 +200,34 @@ export interface AuditLog {
   createdAt: string
 }
 
+export interface Meeting {
+  id: string
+  title: string
+  meetingDate: string
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MeetingTopic {
+  id: string
+  meetingId: string
+  sortOrder: number
+  problem: string
+  solution: string
+}
+
+export interface MeetingTask {
+  id: string
+  topicId: string
+  sortOrder: number
+  task: string
+  picJamaahId: string
+  dueDate: string
+  doneAt: string | null
+  doneBy: string | null
+}
+
 export interface BootstrapData {
   classes: StudyClass[]
   jamaah: Jamaah[]
@@ -216,4 +244,7 @@ export interface BootstrapData {
   familyMembers: FamilyMember[]
   guardianContacts: GuardianContact[]
   mergeHistory: JamaahMergeHistory[]
+  meetings: Meeting[]
+  meetingTopics: MeetingTopic[]
+  meetingTasks: MeetingTask[]
 }

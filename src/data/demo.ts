@@ -161,6 +161,18 @@ function createDemoBootstrap(): BootstrapData {
       { id: 'guardian-demo-4', jamaahId: 'j-16', guardianJamaahId: 'j-16', fullName: 'Bapak Hendra', relationship: 'Diri Sendiri', phone: '081234567806', isPrimary: true, notes: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     ],
     mergeHistory: [],
+    meetings: [
+      { id: 'meeting-demo-1', title: 'Musyawarah Pengurus', meetingDate: addIsoDays(-7), createdBy: DEMO_SUPERADMIN.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    meetingTopics: [
+      { id: 'topic-demo-1', meetingId: 'meeting-demo-1', sortOrder: 0, problem: 'Absensi Pra Remaja sering kosong pada hari Rabu.', solution: 'Menunjuk pendamping tetap untuk setiap Rabu.' },
+      { id: 'topic-demo-2', meetingId: 'meeting-demo-1', sortOrder: 1, problem: 'Nomor kontak wali banyak yang belum tercatat.', solution: 'Mendata ulang nomor wali lewat kelompok masing-masing.' },
+    ],
+    meetingTasks: [
+      { id: 'task-demo-1', topicId: 'topic-demo-1', sortOrder: 0, task: 'Menyusun jadwal piket pendamping Rabu', picJamaahId: 'j-15', dueDate: addIsoDays(3), doneAt: null, doneBy: null },
+      { id: 'task-demo-2', topicId: 'topic-demo-1', sortOrder: 1, task: 'Mengumumkan jadwal piket ke grup pengurus', picJamaahId: 'j-16', dueDate: addIsoDays(-2), doneAt: null, doneBy: null },
+      { id: 'task-demo-3', topicId: 'topic-demo-2', sortOrder: 0, task: 'Mengumpulkan nomor wali Caberawit', picJamaahId: 'j-15', dueDate: '', doneAt: new Date().toISOString(), doneBy: DEMO_SUPERADMIN.id },
+    ],
     auditLogs: [
       { id: 'audit-demo-1', actorId: DEMO_SUPERADMIN.id, actorName: DEMO_SUPERADMIN.name, actorEmail: DEMO_SUPERADMIN.email, action: 'insert', entityType: 'attendance_sessions', entityId: session2Id, summary: 'Menyimpan absensi Pra Remaja', metadata: {}, createdAt: new Date().toISOString() },
     ],
@@ -179,7 +191,7 @@ export function loadDemoBootstrap(): BootstrapData {
   try {
     const parsed = JSON.parse(stored) as BootstrapData
     const defaults = createDemoBootstrap()
-    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [] }
+    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [], meetings: parsed.meetings ?? defaults.meetings, meetingTopics: parsed.meetingTopics ?? defaults.meetingTopics, meetingTasks: parsed.meetingTasks ?? defaults.meetingTasks }
   } catch {
     const initial = createDemoBootstrap()
     saveDemoBootstrap(initial)

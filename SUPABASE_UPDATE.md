@@ -1,34 +1,32 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–021, jalankan satu migration berikut melalui Supabase SQL Editor:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan satu migration berikut melalui Supabase SQL Editor:
 
 ```text
-supabase/migrations/022_drop_meeting_notes.sql
+supabase/migrations/023_musyawarah.sql
 ```
 
-## ⚠️ Migration 022 menghapus data secara permanen
+## Migration 023 (Musyawarah)
 
-Migration ini membongkar modul Notulensi Musyawarah karena fiturnya tidak jadi dipakai:
+Membuat modul Musyawarah yang baru. Tabelnya memakai nama baru dan **tidak** memulihkan data notulensi lama — isi tabel lama sudah hilang permanen sejak migration 022.
 
-- Menghapus tabel `meeting_note_actions`, `meeting_note_participants`, dan `meeting_notes` beserta seluruh isinya, policy, index, dan trigger miliknya.
-- Menghapus fungsi `save_meeting_note_record`.
-- Menghapus tipe enum `meeting_action_status` dan `meeting_note_status`.
+- Tabel `meetings` (judul, tanggal), `meeting_topics` (masalah dan solusinya, milik satu musyawarah), dan `meeting_tasks` (tugas, penanggung jawab, batas tanggal, waktu selesai).
+- Ketiganya didaftarkan ke publication `supabase_realtime`.
+- RLS: seluruh pengguna terautentikasi dapat membaca; hanya Superadmin yang dapat menulis.
+- RPC `save_meeting_record(uuid, text, date, jsonb)` menyimpan satu notulensi beserta bahasan dan tugasnya dalam satu transaksi. Baris yang sudah ada diperbarui, bukan dihapus lalu disisipkan ulang, agar centang `done_at` tidak ikut terhapus setiap kali notulensi disunting.
+- Trigger `meetings_closed_period_guard` menolak perubahan notulensi pada bulan yang periodenya sudah ditutup. `meeting_tasks` sengaja **tidak** dijaga trigger ini: tugas dari musyawarah bulan lalu masih dikerjakan bulan ini.
+- Trigger audit dipasang pada `meetings` bila `write_audit_log()` sudah ada.
+- `pic_jamaah_id` memakai `on delete restrict`: warga yang masih memegang tugas musyawarah tidak dapat dihapus dari tabel `jamaah`.
 
-**Isi tabelnya tidak dapat dipulihkan.** Fitur backup JSON aplikasi (`Pengaturan → Unduh Backup`) tidak pernah menyertakan notulensi, jadi tidak ada salinan otomatis di mana pun. Bila isinya masih dibutuhkan, ekspor lebih dulu sebelum menjalankan migration:
+Migration 023 aman dijalankan berulang kali (memakai `if not exists` / `drop ... if exists`). Edge Function tidak perlu di-deploy ulang.
 
-```sql
-select * from public.meeting_notes;
-select * from public.meeting_note_participants;
-select * from public.meeting_note_actions;
-```
-
-Fungsi `set_updated_at` sengaja tidak ikut dihapus karena masih dipakai tabel lain. Tabel yang dihapus otomatis terlepas dari publication `supabase_realtime`, jadi tidak ada langkah tambahan untuk Realtime.
-
-Migration 022 aman dijalankan berulang kali (seluruh perintahnya memakai `if exists`). Edge Function tidak perlu di-deploy ulang.
-
-Jalankan migration **setelah** frontend baru dipublikasikan, atau bersamaan. Frontend baru sudah tidak membaca tabel notulensi sama sekali, sedangkan frontend lama akan error bila tabelnya sudah hilang.
+Jalankan migration **sebelum atau bersamaan dengan** publikasi frontend baru. Frontend baru tetap berjalan bila tabelnya belum ada (query yang gagal dengan kode `42P01`/`PGRST205` diabaikan), hanya saja halaman Musyawarah akan kosong dan penyimpanan gagal.
 
 Setelah deployment, lakukan refresh penuh untuk mengganti cache service worker.
+
+## Riwayat: migration 022 (menghapus modul Notulensi lama)
+
+Migration 022 menghapus tabel `meeting_notes`, `meeting_note_participants`, `meeting_note_actions`, fungsi `save_meeting_note_record`, serta enum `meeting_action_status` dan `meeting_note_status` **secara permanen**. Isinya tidak dapat dipulihkan dan tidak tercakup backup JSON aplikasi. Migration 023 membuat modul baru dengan nama tabel yang berbeda, bukan memulihkan yang lama.
 
 ## Riwayat: migration 021 (Admin dapat mengubah & membatalkan jadwal)
 

@@ -16,7 +16,7 @@ const EMPTY_FORM: AdminFormState = { fullName: '', email: '', password: '', clas
 export function SettingsPage() {
   const { isDemo } = useAuth()
   const data = useData()
-  const { admins, classes, jamaah, schedules, attendanceSessions, materialCompletions, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory, resetDemo, addAdmin, saveAdminAssignments, setAdminActive, resetAdminPassword, transferAdminClasses } = data
+  const { admins, classes, jamaah, schedules, attendanceSessions, materialCompletions, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory, meetings, meetingTopics, meetingTasks, resetDemo, addAdmin, saveAdminAssignments, setAdminActive, resetAdminPassword, transferAdminClasses } = data
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<AppUser | null>(null)
   const [resetting, setResetting] = useState<AppUser | null>(null)
@@ -102,7 +102,7 @@ export function SettingsPage() {
   }
 
   function downloadBackup() {
-    downloadJson(`backup-sase-portal-${localIsoDate()}.json`, { version: 2, exportedAt: new Date().toISOString(), summary: { classes: classes.length, jamaah: jamaah.length, schedules: schedules.length, attendanceSessions: attendanceSessions.length, materialCompletions: materialCompletions.length, admins: admins.length }, data: { classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory } })
+    downloadJson(`backup-sase-portal-${localIsoDate()}.json`, { version: 2, exportedAt: new Date().toISOString(), summary: { classes: classes.length, jamaah: jamaah.length, schedules: schedules.length, attendanceSessions: attendanceSessions.length, materialCompletions: materialCompletions.length, admins: admins.length }, data: { classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory, meetings, meetingTopics, meetingTasks } })
   }
 
   const classPicker = (

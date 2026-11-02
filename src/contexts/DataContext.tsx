@@ -41,6 +41,10 @@ import {
   removeFamily,
   upsertGuardianContact,
   removeGuardianContact,
+  upsertMeeting,
+  removeMeeting,
+  setMeetingTaskDone,
+  type SaveMeetingInput,
   type ClassTransitionInput,
   type JamaahStatusChangeInput,
   type SaveFamilyInput,
@@ -100,6 +104,9 @@ interface DataContextValue extends BootstrapData {
   saveGuardianContact: (contact: GuardianContact) => Promise<void>
   deleteGuardianContact: (contactId: string) => Promise<void>
   mergeDuplicateJamaah: (input: MergeJamaahInput) => Promise<void>
+  saveMeeting: (input: SaveMeetingInput) => Promise<void>
+  deleteMeeting: (meetingId: string) => Promise<void>
+  toggleMeetingTaskDone: (taskId: string, done: boolean) => Promise<void>
   resetDemo: () => void
 }
 
@@ -119,6 +126,9 @@ const EMPTY: BootstrapData = {
   familyMembers: [],
   guardianContacts: [],
   mergeHistory: [],
+  meetings: [],
+  meetingTopics: [],
+  meetingTasks: [],
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -150,7 +160,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [] })
+        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [] })
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')
@@ -205,6 +215,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'family_members' }, scheduleReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'guardian_contacts' }, scheduleReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'jamaah_merge_history' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meetings' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_topics' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meeting_tasks' }, scheduleReload)
       .subscribe()
     return () => {
       window.clearTimeout(timer)
@@ -728,6 +741,64 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return
         }
         await updateData((current) => mergeDemoJamaah(current, input, result, user.id))
+      },
+      async saveMeeting(input) {
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengubah notulensi musyawarah.')
+        if (!input.meeting.title.trim()) throw new Error('Judul musyawarah wajib diisi.')
+        if (!input.meeting.meetingDate) throw new Error('Tanggal musyawarah wajib diisi.')
+        if (input.meeting.meetingDate > localIsoDate()) throw new Error('Tanggal musyawarah tidak boleh berada di masa depan.')
+        if (isPeriodClosed(input.meeting.meetingDate.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Notulensi musyawarah bulan itu tidak dapat diubah.')
+        if (!input.topics.length) throw new Error('Notulensi harus memuat minimal satu masalah.')
+        if (input.topics.some((topic) => !topic.problem.trim())) throw new Error('Masalah wajib diisi pada setiap bahasan.')
+        const topicIds = new Set(input.topics.map((topic) => topic.id))
+        if (input.tasks.some((task) => !topicIds.has(task.topicId))) throw new Error('Ada tugas yang bahasannya sudah dihapus. Muat ulang halaman lalu ulangi.')
+        if (input.tasks.some((task) => !task.task.trim())) throw new Error('Tugas wajib diisi pada setiap baris tindak lanjut.')
+        if (input.tasks.some((task) => !task.picJamaahId)) throw new Error('Setiap tugas wajib memiliki penanggung jawab.')
+        const knownJamaah = new Set(data.jamaah.map((item) => item.id))
+        if (input.tasks.some((task) => !knownJamaah.has(task.picJamaahId))) throw new Error('Penanggung jawab harus dipilih dari data warga.')
+
+        const saved = await upsertMeeting(input)
+        const savedTopicIds = new Set(saved.topics.map((topic) => topic.id))
+        await updateData((current) => ({
+          ...current,
+          meetings: current.meetings.some((item) => item.id === saved.meeting.id)
+            ? current.meetings.map((item) => (item.id === saved.meeting.id ? saved.meeting : item))
+            : [saved.meeting, ...current.meetings],
+          meetingTopics: [
+            ...current.meetingTopics.filter((item) => item.meetingId !== saved.meeting.id && item.meetingId !== input.meeting.id),
+            ...saved.topics,
+          ],
+          meetingTasks: [
+            ...current.meetingTasks.filter((item) => !savedTopicIds.has(item.topicId) && !topicIds.has(item.topicId)),
+            ...saved.tasks,
+          ],
+        }))
+      },
+      async deleteMeeting(meetingId) {
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menghapus notulensi musyawarah.')
+        const meeting = data.meetings.find((item) => item.id === meetingId)
+        if (!meeting) throw new Error('Notulensi tidak ditemukan.')
+        if (isPeriodClosed(meeting.meetingDate.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Notulensi musyawarah bulan itu tidak dapat dihapus.')
+        await removeMeeting(meetingId)
+        const removedTopicIds = new Set(data.meetingTopics.filter((item) => item.meetingId === meetingId).map((item) => item.id))
+        await updateData((current) => ({
+          ...current,
+          meetings: current.meetings.filter((item) => item.id !== meetingId),
+          meetingTopics: current.meetingTopics.filter((item) => item.meetingId !== meetingId),
+          meetingTasks: current.meetingTasks.filter((item) => !removedTopicIds.has(item.topicId)),
+        }))
+      },
+      // Sengaja tidak memeriksa isPeriodClosed: tugas dari musyawarah bulan lalu masih
+      // dikerjakan bulan ini, dan menutup buku bulan itu tidak boleh membekukannya.
+      async toggleMeetingTaskDone(taskId, done) {
+        if (!user) throw new Error('Sesi berakhir. Masuk kembali untuk melanjutkan.')
+        if (user.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menandai tugas musyawarah selesai.')
+        if (!data.meetingTasks.some((item) => item.id === taskId)) throw new Error('Tugas tidak ditemukan.')
+        const next = await setMeetingTaskDone(taskId, done, user.id)
+        await updateData((current) => ({
+          ...current,
+          meetingTasks: current.meetingTasks.map((item) => item.id === taskId ? { ...item, ...next } : item),
+        }))
       },
       isPeriodClosed,
       resetDemo() {

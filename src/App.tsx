@@ -21,6 +21,7 @@ const loaders = {
   followUps: () => import('./pages/FollowUpsPage'),
   jamaahArchive: () => import('./pages/JamaahArchivePage'),
   materials: () => import('./pages/MaterialsPage'),
+  meetings: () => import('./pages/MeetingsPage'),
   monthlyReport: () => import('./pages/MonthlyReportPage'),
   notFound: () => import('./pages/NotFoundPage'),
   recap: () => import('./pages/RecapPage'),
@@ -37,6 +38,7 @@ const FamilyContactsPage = lazy(() => loaders.familyContacts().then((m) => ({ de
 const FollowUpsPage = lazy(() => loaders.followUps().then((m) => ({ default: m.FollowUpsPage })))
 const JamaahArchivePage = lazy(() => loaders.jamaahArchive().then((m) => ({ default: m.JamaahArchivePage })))
 const MaterialsPage = lazy(() => loaders.materials().then((m) => ({ default: m.MaterialsPage })))
+const MeetingsPage = lazy(() => loaders.meetings().then((m) => ({ default: m.MeetingsPage })))
 const MonthlyReportPage = lazy(() => loaders.monthlyReport().then((m) => ({ default: m.MonthlyReportPage })))
 const NotFoundPage = lazy(() => loaders.notFound().then((m) => ({ default: m.NotFoundPage })))
 const RecapPage = lazy(() => loaders.recap().then((m) => ({ default: m.RecapPage })))
@@ -81,6 +83,7 @@ export default function App() {
                     <Route path="kenaikan-kelas" element={<ClassProgressionPage />} />
                     <Route path="arsip-jamaah" element={<JamaahArchivePage />} />
                     <Route path="pengaturan" element={<SettingsPage />} />
+                    <Route path="musyawarah" element={<MeetingsPage />} />
                     <Route path="aktivitas" element={<AuditPage />} />
                   </Route>
                   <Route path="*" element={<NotFoundPage />} />

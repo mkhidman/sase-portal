@@ -257,3 +257,15 @@ Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset passw
 - Admin juga dapat mengubah dan membatalkan jadwal kelas yang diampunya, selama bulan tersebut belum ditutup.
 - Halaman **Keluarga & Wali** menjadi daftar lengkap warga aktif pada kelas Admin, termasuk profil, kelas, keluarga, dan kontak.
 - Komposisi sensus pada Laporan Bulanan Admin mengikuti cakupan kelas yang diampu; laporan global tetap hanya tersedia bagi Superadmin.
+
+## Fase 23 — Musyawarah
+
+Setelah migration 001–022 aktif, jalankan `supabase/migrations/023_musyawarah.sql`.
+
+- Notulensi diisi sebagai daftar masalah, bukan karangan bebas: tiap bahasan punya kolom **Masalah**, **Solusi**, lalu baris tugas dengan penanggung jawab dan batas tanggal.
+- Penanggung jawab wajib diisi dan dipilih dari data warga, supaya tugasnya dapat ditagih kepada orang tertentu.
+- Daftar **Tugas Belum Selesai** menghimpun tugas dari seluruh musyawarah, dapat disaring per penanggung jawab dan dicentang langsung. Batas tanggal terdekat di atas, yang lewat batas ditandai terlambat, yang tanpa batas tanggal di paling bawah.
+- Menyunting notulensi tidak menghapus centang "selesai" yang dibuat setelahnya.
+- Periode yang sudah ditutup mengunci isi notulensi bulan itu, tetapi tidak mengunci pencentangan tugasnya — tugas dari musyawarah bulan lalu masih dikerjakan bulan ini.
+- Seluruh menu terbatas untuk Superadmin, dan datanya ikut masuk backup JSON, cache offline, Realtime, serta Riwayat Aktivitas.
+- Modul Notulensi lama (fase 20) sudah dihapus permanen oleh migration 022; fase ini membuat modul baru, bukan memulihkan data lama.

@@ -15,6 +15,9 @@ import type {
   JamaahStatusReason,
   JamaahMergeHistory,
   MaterialCompletion,
+  Meeting,
+  MeetingTask,
+  MeetingTopic,
   ReportingPeriod,
   ReportingPeriodStatus,
   Schedule,
@@ -55,7 +58,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (isDemoMode) return loadDemoBootstrap()
 
   const client = requireSupabase()
-  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult] = await Promise.all([
+  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult, meetingsResult, meetingTopicsResult, meetingTasksResult] = await Promise.all([
     fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
     fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
     fetchAllRows(() => client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date').order('id')),
@@ -69,6 +72,9 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('family_members').select('family_id,jamaah_id,relationship,is_primary_contact').order('family_id').order('jamaah_id')),
     fetchAllRows(() => client.from('guardian_contacts').select('id,jamaah_id,guardian_jamaah_id,full_name,relationship,phone,is_primary,notes,created_at,updated_at').order('is_primary', { ascending: false }).order('full_name').order('id')),
     fetchAllRows(() => client.from('jamaah_merge_history').select('id,primary_jamaah_id,duplicate_jamaah_id,primary_name,duplicate_name,merged_profile,duplicate_snapshot,moved_counts,family_conflict,merged_by,merged_at').order('merged_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('meetings').select('id,title,meeting_date,created_by,created_at,updated_at').order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => client.from('meeting_topics').select('id,meeting_id,sort_order,problem,solution').order('meeting_id').order('sort_order').order('id')),
+    fetchAllRows(() => client.from('meeting_tasks').select('id,topic_id,sort_order,task,pic_jamaah_id,due_date,done_at,done_by').order('topic_id').order('sort_order').order('id')),
   ])
 
   const coreResults = [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult]
@@ -82,6 +88,9 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (familyMembersResult.error && !['42P01', 'PGRST205'].includes(familyMembersResult.error.code)) throw familyMembersResult.error
   if (guardianContactsResult.error && !['42P01', 'PGRST205'].includes(guardianContactsResult.error.code)) throw guardianContactsResult.error
   if (mergeHistoryResult.error && !['42P01', 'PGRST205'].includes(mergeHistoryResult.error.code)) throw mergeHistoryResult.error
+  if (meetingsResult.error && !['42P01', 'PGRST205'].includes(meetingsResult.error.code)) throw meetingsResult.error
+  if (meetingTopicsResult.error && !['42P01', 'PGRST205'].includes(meetingTopicsResult.error.code)) throw meetingTopicsResult.error
+  if (meetingTasksResult.error && !['42P01', 'PGRST205'].includes(meetingTasksResult.error.code)) throw meetingTasksResult.error
 
   let admins: AppUser[] = []
   let auditLogs: AuditLog[] = []
@@ -277,7 +286,140 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     mergedAt: row.merged_at,
   }))
 
-  return { classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps, reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory }
+  return {
+    classes, jamaah, schedules, attendanceSessions, materialCompletions, admins, auditLogs, followUps,
+    reportingPeriods, classHistory, statusHistory, families, familyMembers, guardianContacts, mergeHistory,
+    meetings: (meetingsResult.data ?? []).map(mapMeetingRow),
+    meetingTopics: (meetingTopicsResult.data ?? []).map(mapMeetingTopicRow),
+    meetingTasks: (meetingTasksResult.data ?? []).map(mapMeetingTaskRow),
+  }
+}
+
+function mapMeetingRow(row: any): Meeting {
+  return {
+    id: row.id,
+    title: row.title,
+    meetingDate: row.meeting_date,
+    createdBy: row.created_by ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function mapMeetingTopicRow(row: any): MeetingTopic {
+  return {
+    id: row.id,
+    meetingId: row.meeting_id,
+    sortOrder: row.sort_order ?? 0,
+    problem: row.problem,
+    solution: row.solution ?? '',
+  }
+}
+
+function mapMeetingTaskRow(row: any): MeetingTask {
+  return {
+    id: row.id,
+    topicId: row.topic_id,
+    sortOrder: row.sort_order ?? 0,
+    task: row.task,
+    picJamaahId: row.pic_jamaah_id,
+    dueDate: row.due_date ?? '',
+    doneAt: row.done_at ?? null,
+    doneBy: row.done_by ?? null,
+  }
+}
+
+export interface SaveMeetingInput {
+  meeting: Meeting
+  topics: MeetingTopic[]
+  tasks: MeetingTask[]
+}
+
+/** Baris baru ditandai awalan `new-`; RPC menerima null untuk baris yang belum ada. */
+function persistedIdOrNull(id: string): string | null {
+  return id.startsWith('new-') ? null : id
+}
+
+export async function upsertMeeting(input: SaveMeetingInput): Promise<SaveMeetingInput> {
+  if (isDemoMode) {
+    const now = new Date().toISOString()
+    const topicIds = new Map(input.topics.map((topic) => [topic.id, topic.id.startsWith('new-') ? crypto.randomUUID() : topic.id]))
+    const meetingId = persistedIdOrNull(input.meeting.id) ?? crypto.randomUUID()
+    return {
+      meeting: { ...input.meeting, id: meetingId, createdAt: input.meeting.createdAt || now, updatedAt: now },
+      topics: input.topics.map((topic, index) => ({ ...topic, id: topicIds.get(topic.id)!, meetingId, sortOrder: index })),
+      tasks: input.tasks.map((task) => ({
+        ...task,
+        id: persistedIdOrNull(task.id) ?? crypto.randomUUID(),
+        topicId: topicIds.get(task.topicId) ?? task.topicId,
+      })),
+    }
+  }
+
+  const client = requireSupabase()
+  const { data: meetingId, error } = await client.rpc('save_meeting_record', {
+    target_meeting_id: persistedIdOrNull(input.meeting.id),
+    meeting_title: input.meeting.title,
+    meeting_date_value: input.meeting.meetingDate,
+    topic_items: input.topics.map((topic) => ({
+      id: persistedIdOrNull(topic.id),
+      problem: topic.problem,
+      solution: topic.solution,
+      tasks: input.tasks
+        .filter((task) => task.topicId === topic.id)
+        .map((task) => ({
+          id: persistedIdOrNull(task.id),
+          task: task.task,
+          picJamaahId: task.picJamaahId,
+          dueDate: task.dueDate || null,
+        })),
+    })),
+  })
+  if (error) throw error
+  if (typeof meetingId !== 'string') throw new Error('Notulensi tersimpan, tetapi ID notulensi tidak diterima.')
+
+  const [meetingResult, topicsResult] = await Promise.all([
+    client.from('meetings').select('id,title,meeting_date,created_by,created_at,updated_at').eq('id', meetingId).single(),
+    client.from('meeting_topics').select('id,meeting_id,sort_order,problem,solution').eq('meeting_id', meetingId).order('sort_order').order('id'),
+  ])
+  if (meetingResult.error) throw meetingResult.error
+  if (topicsResult.error) throw topicsResult.error
+  const topics = (topicsResult.data ?? []).map(mapMeetingTopicRow)
+
+  // Tugas diambil menyusul: meeting_tasks hanya menyimpan topic_id, bukan meeting_id.
+  let tasks: MeetingTask[] = []
+  if (topics.length) {
+    const tasksResult = await client
+      .from('meeting_tasks')
+      .select('id,topic_id,sort_order,task,pic_jamaah_id,due_date,done_at,done_by')
+      .in('topic_id', topics.map((topic) => topic.id))
+      .order('topic_id').order('sort_order').order('id')
+    if (tasksResult.error) throw tasksResult.error
+    tasks = (tasksResult.data ?? []).map(mapMeetingTaskRow)
+  }
+
+  return { meeting: mapMeetingRow(meetingResult.data), topics, tasks }
+}
+
+export async function removeMeeting(id: string): Promise<void> {
+  if (isDemoMode) return
+  const client = requireSupabase()
+  const { error } = await client.from('meetings').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function setMeetingTaskDone(taskId: string, done: boolean, userId: string): Promise<{ doneAt: string | null; doneBy: string | null }> {
+  const next = done ? { doneAt: new Date().toISOString(), doneBy: userId } : { doneAt: null, doneBy: null }
+  if (isDemoMode) return next
+  const client = requireSupabase()
+  const { data, error } = await client
+    .from('meeting_tasks')
+    .update({ done_at: next.doneAt, done_by: next.doneBy })
+    .eq('id', taskId)
+    .select('done_at,done_by')
+    .single()
+  if (error) throw error
+  return { doneAt: data.done_at ?? null, doneBy: data.done_by ?? null }
 }
 
 export async function persistDemo(data: BootstrapData): Promise<void> {
