@@ -1,5 +1,11 @@
 ## Belum dirilis
 
+- Menghapus dua kartu dari Dashboard: ringkasan "Kualitas data XX%" dan catatan "Ketuntasan materi tidak sama dengan kehadiran sesi". Keduanya hanya berisi keterangan, tanpa pekerjaan yang bisa ditindaklanjuti dari sana.
+- Menggantinya dengan kartu **Hasil Musyawarah Belum Selesai**: lima tugas teratas yang belum dicentang dari seluruh musyawarah, lengkap dengan penanggung jawab dan batas tanggal, dan diklik langsung menuju halaman Musyawarah. Kartu ini hanya tampil untuk Superadmin, mengikuti hak akses halamannya.
+- Urutan dan penandaan terlambatnya memakai `openMeetingTaskRows` yang sama dengan halaman Musyawarah, jadi kedua tempat tidak bisa menampilkan urutan berbeda untuk hal yang sama.
+- Halaman Kualitas Data sendiri tidak diubah dan tetap dapat dibuka dari menu Data Warga.
+- Tidak memerlukan migration Supabase baru.
+
 - Menambahkan modul Musyawarah: notulensi yang diisi sebagai daftar masalah, bukan karangan bebas. Tiap bahasan punya kolom Masalah, Solusi, lalu baris tugas dengan penanggung jawab dan batas tanggal. Modul Notulensi lama (migration 020, dihapus 022) memakai empat kotak teks bebas sehingga hasilnya tidak bisa ditagih.
 - Menghimpun seluruh tugas dari semua musyawarah pada satu daftar "Tugas Belum Selesai" yang dapat disaring per penanggung jawab dan dicentang langsung. Batas tanggal terdekat berada di urutan atas, tugas yang lewat batas ditandai terlambat, tugas tanpa batas tanggal berada paling bawah.
 - Menyimpan status selesai sebagai waktu pencentangan (`done_at`), bukan enum tiga status seperti versi lama. Satu kolom sekaligus mencatat kapan dan oleh siapa tugas dicentang.

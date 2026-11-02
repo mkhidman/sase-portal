@@ -1252,7 +1252,6 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .duplicate-comparison-grid dl div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
 .duplicate-comparison-grid dt { color: var(--muted); font-size: var(--fs-2xs); }
 .duplicate-comparison-grid dd { margin: 0; font-size: var(--fs-xs); font-weight: 700; text-align: right; }
-.dashboard-data-quality { margin-bottom: 15px; }
 .attendance-conflict-notice { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; background: var(--danger-bg); border-color: #efaaa4; color: var(--danger); }
 .attendance-conflict-notice > div { display: grid; gap: 3px; }
 .attendance-conflict-notice span { font-size: var(--fs-2xs); line-height: 1.45; }

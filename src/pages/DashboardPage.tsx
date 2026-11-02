@@ -1,4 +1,4 @@
-import { AlertTriangle, BookOpenCheck, CalendarCheck2, GraduationCap, ShieldCheck, UserRoundCheck, Users } from 'lucide-react'
+import { AlertTriangle, CalendarCheck2, GraduationCap, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { averageAttendanceRate, formatDate, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, materialProgressFor, monthEndDate, monthValue } from '../lib/utils'
 import { buildAttendanceRisks } from '../lib/followUps'
 import { buildMissedAttendance } from '../lib/missedAttendance'
-import { analyzeDataQuality } from '../lib/dataQuality'
+import { openMeetingTaskRows } from '../lib/meetingTasks'
 import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
 
 export function DashboardPage() {
@@ -24,7 +24,9 @@ export function DashboardPage() {
     attendanceSessions,
     materialCompletions,
     followUps,
-    guardianContacts,
+    meetings,
+    meetingTopics,
+    meetingTasks,
     loading,
   } = useData()
   const [selectedMonth, setSelectedMonth] = useState(monthValue())
@@ -55,11 +57,11 @@ export function DashboardPage() {
     () => buildMissedAttendance({ schedules, sessions: attendanceSessions, classIds: visibleClassIds }),
     [attendanceSessions, schedules, visibleClassIds],
   )
-  const dataQuality = useMemo(
-    () => analyzeDataQuality(visibleJamaah, classes, guardianContacts),
-    [classes, guardianContacts, visibleJamaah],
+  const jamaahNameMap = useMemo(() => new Map(jamaah.map((item) => [item.id, item.fullName])), [jamaah])
+  const openMeetingTasks = useMemo(
+    () => openMeetingTaskRows(meetings, meetingTopics, meetingTasks, localIsoDate()),
+    [meetingTasks, meetingTopics, meetings],
   )
-  const criticalDataIssues = dataQuality.issues.filter((issue) => issue.severity === 'critical').length
 
   return (
     <>
@@ -123,16 +125,6 @@ export function DashboardPage() {
         </article>
       </section>
 
-      {user?.role === 'superadmin' ? (
-        <article className="card dashboard-data-quality">
-          <div className="dashboard-help">
-            <ShieldCheck size={22} />
-            <div><strong>Kualitas data {dataQuality.completenessPercent}%</strong><p>{criticalDataIssues ? `${criticalDataIssues} temuan kritis perlu dibereskan sebelum pilot penuh.` : `${dataQuality.peopleWithIssues} warga masih memiliki data yang perlu dilengkapi.`}</p></div>
-            <button className="button outline small" type="button" onClick={() => navigate('/kualitas-data')}>Periksa data</button>
-          </div>
-        </article>
-      ) : null}
-
       <article className="card dashboard-followup">
         <div className="card-heading">
           <div><h2>Warga Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan berjalan.</p></div>
@@ -149,11 +141,25 @@ export function DashboardPage() {
         </div>
       </article>
 
-      <article className="card dashboard-help">
-        <BookOpenCheck size={22} />
-        <div><strong>Ketuntasan materi tidak sama dengan kehadiran sesi.</strong><p>Peserta yang tidak hadir tetap dapat ditandai tuntas melalui penyusulan mandiri tanpa mengubah status absensi awal.</p></div>
-        <span className="badge muted"><UserRoundCheck size={12} /> {attendanceRisks.length} perlu perhatian</span>
-      </article>
+      {user?.role === 'superadmin' ? (
+        <article className="card dashboard-followup">
+          <div className="card-heading">
+            <div><h2>Hasil Musyawarah Belum Selesai</h2><p>Tugas dari seluruh musyawarah yang belum dicentang. Batas tanggal terdekat lebih dulu.</p></div>
+            <button className="text-button" onClick={() => navigate('/musyawarah')}>Kelola semua</button>
+          </div>
+          <div className="dashboard-risk-list">
+            {openMeetingTasks.slice(0, 5).map((row) => (
+              <button type="button" key={row.task.id} onClick={() => navigate('/musyawarah')}>
+                <span><strong>{row.task.task}</strong><small>{jamaahNameMap.get(row.task.picJamaahId) ?? 'Warga tidak ditemukan'} · {row.meeting.title}</small></span>
+                {row.task.dueDate
+                  ? <span className={`badge ${row.overdue ? 'danger' : 'muted'}`}>{row.overdue ? 'Terlambat' : formatDate(row.task.dueDate)}</span>
+                  : <span className="badge muted">Tanpa batas</span>}
+              </button>
+            ))}
+            {!openMeetingTasks.length ? <div className="empty-state">Tidak ada tugas musyawarah yang menunggu.</div> : null}
+          </div>
+        </article>
+      ) : null}
     </>
   )
 }
