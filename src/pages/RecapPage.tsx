@@ -12,7 +12,7 @@ import { ATTENDANCE_LABELS } from '../lib/constants'
 import {
   attendanceCounts,
   averageAttendanceRate,
-  downloadCsv,
+  downloadSheet,
   formatDate,
   jamaahSnapshotsAsOfDate,
   materialProgressFor,
@@ -77,8 +77,8 @@ export function RecapPage() {
     }
   }
 
-  function exportSessions() {
-    downloadCsv('rekap-sesi-pengajian.csv', [
+  async function exportSessions() {
+    await downloadSheet('rekap-sesi-pengajian.xlsx', [
       ['Tanggal', 'Kelas', 'Materi', 'Hadir', 'Izin', 'Sakit', 'Alpa', 'Persentase Kehadiran'],
       ...sessions.map((session) => {
         const counts = attendanceCounts(session.statuses)
@@ -97,7 +97,7 @@ export function RecapPage() {
 
   return (
     <>
-      <PageHeader title="Rekap Keseluruhan Pengajian" description="Seluruh sesi kelas yang dapat diakses, termasuk Hasda dan ASAD." actions={<button className="button outline" onClick={exportSessions}><Download size={16} /> Ekspor Sesi CSV</button>} />
+      <PageHeader title="Rekap Keseluruhan Pengajian" description="Seluruh sesi kelas yang dapat diakses, termasuk Hasda dan ASAD." actions={<button className="button outline" onClick={() => void exportSessions()}><Download size={16} /> Ekspor Sesi Excel</button>} />
 
       <section className="stats-grid three-columns">
         <StatCard tone="sky" label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<ClipboardList size={20} />} />

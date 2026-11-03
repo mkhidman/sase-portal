@@ -16,7 +16,7 @@ const loaders = {
   audit: () => import('./pages/AuditPage'),
   census: () => import('./pages/CensusPage'),
   classProgression: () => import('./pages/ClassProgressionPage'),
-  dataQuality: () => import('./pages/DataQualityPage'),
+  duplicates: () => import('./pages/DuplicatesPage'),
   familyContacts: () => import('./pages/FamilyContactsPage'),
   followUps: () => import('./pages/FollowUpsPage'),
   jamaahArchive: () => import('./pages/JamaahArchivePage'),
@@ -33,7 +33,7 @@ const AttendancePage = lazy(() => loaders.attendance().then((m) => ({ default: m
 const AuditPage = lazy(() => loaders.audit().then((m) => ({ default: m.AuditPage })))
 const CensusPage = lazy(() => loaders.census().then((m) => ({ default: m.CensusPage })))
 const ClassProgressionPage = lazy(() => loaders.classProgression().then((m) => ({ default: m.ClassProgressionPage })))
-const DataQualityPage = lazy(() => loaders.dataQuality().then((m) => ({ default: m.DataQualityPage })))
+const DuplicatesPage = lazy(() => loaders.duplicates().then((m) => ({ default: m.DuplicatesPage })))
 const FamilyContactsPage = lazy(() => loaders.familyContacts().then((m) => ({ default: m.FamilyContactsPage })))
 const FollowUpsPage = lazy(() => loaders.followUps().then((m) => ({ default: m.FollowUpsPage })))
 const JamaahArchivePage = lazy(() => loaders.jamaahArchive().then((m) => ({ default: m.JamaahArchivePage })))
@@ -79,7 +79,7 @@ export default function App() {
                   <Route path="laporan-bulanan" element={<MonthlyReportPage />} />
                   <Route element={<SuperadminRoute />}>
                     <Route path="sensus" element={<CensusPage />} />
-                    <Route path="kualitas-data" element={<DataQualityPage />} />
+                    <Route path="data-duplikat" element={<DuplicatesPage />} />
                     <Route path="kenaikan-kelas" element={<ClassProgressionPage />} />
                     <Route path="arsip-jamaah" element={<JamaahArchivePage />} />
                     <Route path="pengaturan" element={<SettingsPage />} />

@@ -33,60 +33,12 @@ function findHeaderIndex(headers: string[], field: keyof typeof HEADER_ALIASES):
   return headers.findIndex((header) => aliases.includes(normalizeHeader(header)))
 }
 
-function detectDelimiter(text: string): ',' | ';' {
-  const firstLine = text.replace(/^\uFEFF/, '').split(/\r?\n/, 1)[0] ?? ''
-  let commas = 0
-  let semicolons = 0
-  let quoted = false
-  for (let index = 0; index < firstLine.length; index += 1) {
-    const character = firstLine[index]
-    if (character === '"') {
-      if (quoted && firstLine[index + 1] === '"') index += 1
-      else quoted = !quoted
-    } else if (!quoted && character === ',') commas += 1
-    else if (!quoted && character === ';') semicolons += 1
+function cellText(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) {
+    return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}-${String(value.getUTCDate()).padStart(2, '0')}`
   }
-  return semicolons > commas ? ';' : ','
-}
-
-function parseCsv(text: string): string[][] {
-  const clean = text.replace(/^\uFEFF/, '')
-  const delimiter = detectDelimiter(clean)
-  const rows: string[][] = []
-  let row: string[] = []
-  let cell = ''
-  let quoted = false
-
-  for (let index = 0; index < clean.length; index += 1) {
-    const character = clean[index]
-    if (character === '"') {
-      if (quoted && clean[index + 1] === '"') {
-        cell += '"'
-        index += 1
-      } else {
-        quoted = !quoted
-      }
-      continue
-    }
-    if (!quoted && character === delimiter) {
-      row.push(cell.trim())
-      cell = ''
-      continue
-    }
-    if (!quoted && (character === '\n' || character === '\r')) {
-      if (character === '\r' && clean[index + 1] === '\n') index += 1
-      row.push(cell.trim())
-      cell = ''
-      if (row.some((value) => value.length > 0)) rows.push(row)
-      row = []
-      continue
-    }
-    cell += character
-  }
-
-  row.push(cell.trim())
-  if (row.some((value) => value.length > 0)) rows.push(row)
-  return rows
+  return String(value).trim()
 }
 
 function normalizeGender(value: string): Gender | null {
@@ -141,13 +93,13 @@ function duplicateKey(name: string, birthDate: string, phone: string): string {
 }
 
 export function buildJamaahImportPreview(
-  text: string,
+  sheet: unknown[][],
   existing: Jamaah[],
   classes: StudyClass[],
   categories: CensusCategory[],
 ): JamaahImportPreview[] {
-  const rows = parseCsv(text)
-  if (rows.length < 2) throw new Error('File CSV tidak memiliki baris data.')
+  const rows = sheet.map((row) => row.map(cellText)).filter((row) => row.some((value) => value.length > 0))
+  if (rows.length < 2) throw new Error('File Excel tidak memiliki baris data.')
 
   const headers = rows[0] ?? []
   const indices = {

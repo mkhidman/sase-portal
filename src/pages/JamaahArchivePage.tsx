@@ -15,7 +15,7 @@ import { PageHeader, Person, StatCard } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { JAMAAH_DEACTIVATION_REASONS, JAMAAH_STATUS_REASON_LABELS } from '../lib/constants'
-import { downloadCsv, formatDate, formatDateTime, localIsoDate } from '../lib/utils'
+import { downloadSheet, formatDate, formatDateTime, localIsoDate } from '../lib/utils'
 import type { Jamaah, JamaahStatusHistory, JamaahStatusReason } from '../types/domain'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -154,8 +154,8 @@ export function JamaahArchivePage() {
     }
   }
 
-  function exportHistory() {
-    downloadCsv('riwayat-status-warga.csv', [
+  async function exportHistory() {
+    await downloadSheet('riwayat-status-warga.xlsx', [
       ['Tanggal Efektif', 'Nama Warga', 'Perubahan', 'Alasan', 'Kelas Terkait', 'Catatan', 'Waktu Dicatat'],
       ...statusHistory.map((item) => [
         item.effectiveDate,
@@ -176,7 +176,7 @@ export function JamaahArchivePage() {
       <PageHeader
         title="Status & Arsip Warga"
         description="Nonaktifkan warga tanpa menghapus absensi lama, simpan alasan dan tanggal efektif, lalu aktifkan kembali bila diperlukan."
-        actions={<button className="button outline" type="button" onClick={exportHistory}><Download size={16} /> Ekspor Riwayat</button>}
+        actions={<button className="button outline" type="button" onClick={() => void exportHistory()}><Download size={16} /> Ekspor Riwayat</button>}
       />
 
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
@@ -208,13 +208,21 @@ export function JamaahArchivePage() {
 
         <div className="table-wrap archive-table">
           <table role="table">
-            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori</th><th scope="col" role="columnheader">Kelas aktif/terakhir</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Perubahan terakhir</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Aksi</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori</th><th scope="col" role="columnheader">Kelas aktif/terakhir</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Perubahan terakhir</th></tr></thead>
             <tbody role="rowgroup">
               {pagination.pageItems.map((person) => {
                 const latest = latestHistory(person.id)
                 const classIds = lastKnownClasses(person)
                 return (
                   <tr role="row" key={person.id}>
+                    <td role="cell" data-label="Aksi" data-cell="full">
+                      <div className="table-actions">
+                        <button className="text-button" type="button" onClick={() => setHistoryPerson(person)}><History size={14} /> Riwayat</button>
+                        {person.active
+                          ? <button className="text-button danger-text" type="button" onClick={() => openChange(person, 'deactivate')}><UserX size={14} /> Arsipkan</button>
+                          : <button className="text-button" type="button" onClick={() => openChange(person, 'reactivate')}><RotateCcw size={14} /> Aktifkan</button>}
+                      </div>
+                    </td>
                     <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
                     <td role="cell" data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
                     <td role="cell" data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
@@ -226,14 +234,6 @@ export function JamaahArchivePage() {
                           <small>{formatDate(latest.effectiveDate)}</small>
                         </span>
                       ) : <span className="muted-copy">Belum ada riwayat</span>}
-                    </td>
-                    <td role="cell" data-label="Aksi" data-cell="full">
-                      <div className="table-actions">
-                        <button className="text-button" type="button" onClick={() => setHistoryPerson(person)}><History size={14} /> Riwayat</button>
-                        {person.active
-                          ? <button className="text-button danger-text" type="button" onClick={() => openChange(person, 'deactivate')}><UserX size={14} /> Arsipkan</button>
-                          : <button className="text-button" type="button" onClick={() => openChange(person, 'reactivate')}><RotateCcw size={14} /> Aktifkan</button>}
-                      </div>
                     </td>
                   </tr>
                 )

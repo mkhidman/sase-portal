@@ -1,5 +1,6 @@
 import { addDays, format, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
+import writeXlsxFile from 'write-excel-file/browser'
 import { MATERIAL_LABELS } from './constants.ts'
 import type { AttendanceSession, AttendanceStatus, CensusCategory, ClassMembershipHistory, Jamaah, JamaahStatusHistory, MaterialCompletion, MaterialType } from '../types/domain'
 
@@ -94,16 +95,8 @@ export function percentage(part: number, total: number): number {
   return Math.round((part / total) * 100)
 }
 
-export function downloadCsv(filename: string, rows: Array<Array<string | number>>): void {
-  const escape = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
-  const csv = `\uFEFF${rows.map((row) => row.map(escape).join(',')).join('\n')}`
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
+export async function downloadSheet(filename: string, rows: Array<Array<string | number>>): Promise<void> {
+  await writeXlsxFile(rows, { sheet: 'Data' }).toFile(filename)
 }
 
 export function downloadJson(filename: string, value: unknown): void {
@@ -258,6 +251,10 @@ export function materialProgressFor(
   )
   const done = participants.filter((person) => completed.has(person.id)).length
   return { done, total: participants.length, percent: percentage(done, participants.length) }
+}
+
+export function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T00:00:00`))
 }
 
 export function monthEndDate(month: string): string {

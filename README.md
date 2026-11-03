@@ -6,12 +6,13 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 
 - Login Superadmin dan Admin/Wali Kelas menggunakan Supabase Auth.
 - Satu Admin dapat mengampu beberapa kelas dengan pembatasan Row Level Security.
-- Data sensus dengan tanggal lahir opsional dan import massal CSV.
+- Data sensus dengan tanggal lahir opsional dan import massal Excel (.xlsx).
+- Rekap absensi per warga dapat disaring per bulan, kelas, dan status, serta diurutkan dari tanggal terlama atau terbaru.
 - Satu jamaah dapat mengikuti banyak kelas pengajian.
 - Jadwal pengajian terhubung langsung ke absensi.
 - Absensi default Alpa dan Pengajian Umum dikelompokkan berdasarkan kategori sensus.
 - Target Hasda dan ASAD per bulan beserta penyusulan mandiri.
-- Rekap seluruh sesi, persentase kehadiran, detail, edit, hapus, dan ekspor CSV.
+- Rekap seluruh sesi, persentase kehadiran, detail, edit, hapus, dan ekspor Excel.
 - Pengelolaan akun Admin dan penugasan kelas.
 - Sinkronisasi realtime antarperangkat.
 
@@ -41,7 +42,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 
 - Laporan evaluasi per kelas dan per bulan.
 - Ringkasan sesi, kehadiran, Hasda, ASAD, dan tindak lanjut terbuka.
-- Ekspor ringkasan kelas dan detail per jamaah ke CSV.
+- Ekspor ringkasan kelas dan detail per jamaah ke PDF.
 - Checklist kesiapan sebelum periode ditutup.
 - Superadmin dapat menutup atau membuka kembali periode.
 - Periode tertutup dikunci pada aplikasi dan database.
@@ -54,7 +55,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Kelas tambahan seperti Pengajian Umum, Pengajian Ibu-Ibu, Usia Istimewa, dan 5 Unsur tetap dipertahankan.
 - Kategori sensus dapat disesuaikan otomatis berdasarkan kelas tujuan.
 - Setiap perubahan menyimpan tanggal efektif, jenis perubahan, catatan, dan pengguna yang memproses.
-- Riwayat dapat dicari, difilter, dan diekspor ke CSV.
+- Riwayat dapat dicari, difilter, dan diekspor ke Excel.
 - Laporan bulanan merekonstruksi keanggotaan kelas sesuai akhir bulan agar kenaikan kelas tidak mengubah laporan lama.
 
 
@@ -97,7 +98,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 
 ## Fase 12: penggabungan data duplikat
 
-Menu **Data Jamaah → Kualitas Data** sekarang dapat menggabungkan dua data yang terdeteksi mirip. Superadmin memilih data utama, memeriksa profil akhir, lalu sistem memindahkan kelas, absensi, ketuntasan materi, tindak lanjut, kontak wali, serta histori dalam satu transaksi.
+Tombol **Data Duplikat** pada halaman Data Sensus dapat menggabungkan dua data yang terdeteksi mirip. Superadmin memilih data utama, memeriksa profil akhir, lalu sistem memindahkan kelas, absensi, ketuntasan materi, tindak lanjut, kontak wali, serta histori dalam satu transaksi.
 
 Aturan konflik utama:
 
@@ -110,9 +111,7 @@ Aturan konflik utama:
 
 ## Fase 11: pilot dan hardening
 
-- Halaman Kualitas Data untuk menemukan warga aktif tanpa kelas, kontak kosong, wali anak belum diisi, tanggal lahir kosong, ketidaksesuaian kategori/kelas, dan rekomendasi Pengajian Usia Istimewa.
 - Deteksi kandidat data duplikat dari nama, tanggal lahir, dan nomor WhatsApp tanpa menggabungkan data secara otomatis.
-- Dashboard Superadmin menampilkan indikator kelengkapan data.
 - Absensi memakai nomor revisi agar dua Admin tidak saling menimpa sesi yang sama.
 - Penyimpanan sesi dan seluruh status jamaah dilakukan dalam satu transaksi database.
 - Draft absensi langsung diamankan saat tab disembunyikan, halaman ditutup, atau filter sesi diganti.

@@ -1,5 +1,43 @@
 ## Belum dirilis
 
+- Memindahkan kolom **Aksi** ke paling kiri pada tabel Status & Arsip Warga, sebelum kolom Warga.
+- Memperbaiki penyebabnya sekalian: tabel itu dipaksa selebar 1120px padahal isinya hanya butuh 712px, sehingga 225px terakhir — tepat kolom Aksi — terdorong keluar layar pada laptop 1280px dan baru terlihat setelah digeser ke kanan.
+- Menyamakan lebar minimum empat tabel lebar lain yang bergejala sama: Keluarga & Wali (1180px, terpotong 285px), Riwayat Kenaikan & Mutasi (1120px, terpotong 225px), Laporan Bulanan (1080px, terpotong 205px), dan Anggota Kelas Asal (980px, terpotong 85px). Semuanya kini 860px, yaitu lebar isi terluas yang masih muat pada laptop 1280px bersama sidebar. Di jendela yang lebih sempit tabelnya tetap bisa digeser seperti sebelumnya.
+- Konsekuensinya baris bisa sedikit lebih tinggi karena isi kolom membungkus ke bawah, bukan mendorong tabel ke samping. Yang paling terasa di Keluarga & Wali: tinggi baris 103px menjadi 131px.
+
+- Menghapus **Daftar Temuan** pada halaman Kualitas Data beserta tujuh pemeriksaan otomatisnya (tanpa kelas, tanpa kontak, anak tanpa wali, tanggal lahir kosong, nomor terlalu pendek, kategori/kelas tidak selaras, usia 55+ di luar Pengajian Usia Istimewa), kartu ringkasan kelengkapan, dan keempat angka di atasnya. Bagian itu hanya memberi saran dan tidak pernah mengubah data; dalam pemakaian nyata tidak dipakai.
+- Sisanya — deteksi duplikat, penggabungan, dan riwayatnya — dipertahankan utuh karena itulah satu-satunya jalan menggabungkan warga yang tercatat dua kali, dan duplikat yang dibiarkan diam-diam menggelembungkan seluruh angka laporan.
+- Halaman berganti nama menjadi **Data Duplikat** (`/data-duplikat`), keluar dari menu samping, dan dibuka lewat tombol baru pada halaman Data Sensus.
+- Mengganti `src/lib/dataQuality.ts` (181 baris) dengan `src/lib/duplicates.ts` (69 baris) yang hanya berisi pencarian kandidat duplikat. Ambang kemiripan, bobot, dan alasannya tidak diubah sama sekali.
+- Tidak ada migration Supabase yang disentuh: tabel `merge_history` dan RPC `merge_jamaah_duplicates` tetap seperti semula.
+
+- Memperbaiki kartu antarbagian yang menempel tanpa sela: jarak antarblok halaman kini diatur sekali di `.app-main` lewat `gap: var(--card-gap)`, bukan `margin-bottom` yang ditulis ulang per halaman. Kualitas Data (Daftar Temuan, Potensi Data Duplikat, Riwayat Penggabungan) adalah yang paling terlihat karena ketiga kartunya tidak pernah diberi margin sama sekali.
+- Menghapus 18 aturan `margin-bottom: 15px` dan `margin-top: 15px` yang masing-masing halaman tambahkan sendiri untuk keperluan yang sama. Jaraknya sekarang ikut kerapatan halaman: 20px pada halaman lapang, 12px pada halaman kerja harian — sebelumnya 15px di mana-mana, tidak peduli kerapatannya.
+- Hasil ukur di browser untuk 15 rute: tiap halaman kini punya satu nilai jarak yang seragam. Sebelumnya campur 0px, 12px, 14px, 15px, 20px, 26px, dan 35px pada halaman yang sama.
+- Margin `.notice`, `.card-heading`, dan ringkasan di dalam modal sengaja dipertahankan: ketiganya berada di dalam kartu atau modal, bukan antarblok halaman.
+
+- Menambahkan saringan dan pengurutan pada **Rekap Absensi Warga** (tombol Absensi di Data Sensus): saring per bulan, per kelas, dan per status kehadiran, lalu urutkan dari tanggal terbaru atau terlama dengan menekan judul kolom Tanggal. Sebelumnya seluruh riwayat warga tertumpuk pada satu daftar panjang tanpa cara mempersempitnya.
+- Persentase kehadiran dan keempat angka Hadir/Izin/Sakit/Alpa pada jendela itu kini mengikuti saringan yang sedang aktif, dan keterangannya berubah menjadi "N pencatatan terpilih" supaya tidak terbaca sebagai angka seumur hidup warga.
+- Pilihan bulan dan kelas hanya memuat bulan dan kelas yang benar-benar ada pada warga tersebut, dan selalu dikosongkan ketika jendela dibuka untuk warga lain — filter warga sebelumnya akan membuat tabel warga berikutnya tampak kosong.
+- Memperbaiki kolom Status yang terpotong pada tabel itu. Tabel di dalam modal ikut memakai lebar minimum 820px milik tabel halaman penuh, padahal hanya punya empat kolom sempit.
+- Memindahkan `monthLabel` ke `src/lib/utils.ts` karena sekarang dipakai Laporan Bulanan dan Data Sensus.
+
+- Mengubah **Ringkasan Kategori Sensus** (Data Sensus) dan **Komposisi Kelas Pengajian** (Laporan Bulanan) dari daftar batang menjadi tabel: angka laki-laki, perempuan, dan total berdiri sebagai kolom yang sejajar ke bawah, batang komposisi tinggal pendamping di kolom terakhir. Bentuk lama menaruh ketiga angka pada satu teks 11px di ujung kanan tiap baris, jadi membandingkan satu kategori dengan kategori lain harus dibaca satu per satu.
+- Menaikkan ukuran teksnya dari 11px ke 13px dan menambahkan baris Total di kaki tabel.
+- Menulis angka nol apa adanya, bukan mengosongkan selnya, supaya kolom angka tetap terbaca sebagai kolom angka.
+- Menyembunyikan kolom batang pada layar di bawah 560px; angkanya tetap lengkap dan batang proporsi keseluruhan di atas tabel tetap tampil.
+- Warna hijau/biru tidak diubah — pasangan itu sudah lolos pemeriksaan keterbacaan untuk buta warna, dan angkanya tetap ditulis di sebelah batang.
+
+- Mengganti seluruh ekspor dan import CSV dengan Excel (`.xlsx`): Data Sensus, ringkasan kategori sensus, template import, Rekap Sesi, Riwayat Kenaikan & Mutasi Kelas, dan Riwayat Status Warga. File CSV membuka kolom bergabung jadi satu di Excel berlokal Indonesia karena pemisahnya koma, dan nomor WhatsApp yang berawalan nol ikut hilang.
+- Import sensus kini membaca sel apa adanya dari Excel: tanggal lahir yang diisi sebagai tanggal asli terbaca sebagai tanggal, bukan teks acak, dan sel angka atau sel kosong tidak lagi membatalkan barisnya. Penebak pemisah koma/titik koma beserta pembaca CSV manual (±70 baris) dihapus, diganti pembacaan file oleh `read-excel-file`.
+- Nomor WhatsApp yang diketik sebagai angka di Excel tetap kehilangan angka nol di depan — itu terjadi di Excel sebelum file dibaca. Isi kolom itu sebagai teks, atau perbaiki nomornya setelah import.
+- Menambahkan dependency `write-excel-file` dan `read-excel-file`. Keduanya ikut ter-bundle (bukan diunduh saat diklik) supaya ekspor tetap jalan saat aplikasi dipakai tanpa sinyal.
+- Mengganti nama `src/lib/csvImport.ts` menjadi `src/lib/sheetImport.ts` dan `downloadCsv` menjadi `downloadSheet`.
+- Menambahkan tiga tes untuk pembacaan sel Excel: kalau aturan ini rusak tidak ada error apa pun — barisnya tetap terimpor, hanya tanggal lahirnya hilang sehingga usia dan kategori sensus pada laporan ikut salah.
+- Tidak memerlukan migration Supabase baru.
+
+- Mengubah kartu **Rata-Rata Kehadiran** di Dashboard agar hanya menghitung sesi bulan yang sedang berjalan, bukan seluruh sesi yang pernah tersimpan. Angka seumur aplikasi tidak pernah bergerak dari bulan ke bulan sehingga tidak bisa dipakai menilai keadaan sekarang. Keterangan di bawahnya ikut berubah menjadi "N sesi bulan ini".
+
 - Menghapus dua kartu dari Dashboard: ringkasan "Kualitas data XX%" dan catatan "Ketuntasan materi tidak sama dengan kehadiran sesi". Keduanya hanya berisi keterangan, tanpa pekerjaan yang bisa ditindaklanjuti dari sana.
 - Menggantinya dengan kartu **Hasil Musyawarah Belum Selesai**: lima tugas teratas yang belum dicentang dari seluruh musyawarah, lengkap dengan penanggung jawab dan batas tanggal, dan diklik langsung menuju halaman Musyawarah. Kartu ini hanya tampil untuk Superadmin, mengikuti hak akses halamannya.
 - Urutan dan penandaan terlambatnya memakai `openMeetingTaskRows` yang sama dengan halaman Musyawarah, jadi kedua tempat tidak bisa menampilkan urutan berbeda untuk hal yang sama.

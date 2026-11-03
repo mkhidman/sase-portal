@@ -8,15 +8,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES, FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
-import { attendanceCounts, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { attendanceCounts, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthLabel, monthValue, percentage } from '../lib/utils'
 import { downloadMonthlyReportPdf } from '../lib/monthlyReportPdf'
 import type { AttendanceStatus, StudyClass } from '../types/domain'
 
 const MANUAL_MEMBERSHIP_CLASS = '5 Unsur'
-
-function monthLabel(month: string): string {
-  return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T00:00:00`))
-}
 
 export function MonthlyReportPage() {
   const { user } = useAuth()
@@ -290,6 +286,7 @@ export function MonthlyReportPage() {
         </div>
         <GenderComposition
           rows={classGenderSummary}
+          labelHeading="Kelas"
           totalLabel="Total keanggotaan"
           footnote={
             <>

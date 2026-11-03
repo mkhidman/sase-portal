@@ -17,7 +17,7 @@ import { usePagination } from '../hooks/usePagination'
 import { CLASS_PROGRESSION } from '../lib/constants'
 import {
   censusCategoryForClassName,
-  downloadCsv,
+  downloadSheet,
   formatDate,
   formatDateTime,
   localIsoDate,
@@ -156,8 +156,8 @@ export function ClassProgressionPage() {
 
   const historyPagination = usePagination(filteredHistory, `${historySearch}|${historyClassId}`)
 
-  function exportHistory() {
-    downloadCsv('riwayat-kenaikan-dan-mutasi-kelas.csv', [
+  async function exportHistory() {
+    await downloadSheet('riwayat-kenaikan-dan-mutasi-kelas.xlsx', [
       ['Tanggal Efektif', 'Nama Warga', 'Jenis Perubahan', 'Kelas Asal', 'Kelas Tujuan', 'Kategori Sebelumnya', 'Kategori Baru', 'Catatan', 'Dicatat Pada'],
       ...filteredHistory.map((item) => [
         item.effectiveDate,
@@ -178,7 +178,7 @@ export function ClassProgressionPage() {
       <PageHeader
         title="Kenaikan & Mutasi Kelas"
         description="Pindahkan banyak warga sekaligus, pertahankan kelas tambahan, dan simpan histori perubahan secara permanen."
-        actions={<button className="button outline" type="button" onClick={exportHistory}><Download size={16} /> Ekspor Riwayat</button>}
+        actions={<button className="button outline" type="button" onClick={() => void exportHistory()}><Download size={16} /> Ekspor Riwayat</button>}
       />
 
       {message ? <div className="inline-message page-message">{message}</div> : null}

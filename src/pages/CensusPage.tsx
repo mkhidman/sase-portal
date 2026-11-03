@@ -1,4 +1,4 @@
-import { Archive, Download, Eye, FileDown, FileSpreadsheet, Layers, Mars, Plus, Search, Upload, UsersRound, Venus } from 'lucide-react'
+import { Archive, ArrowDownNarrowWide, ArrowUpNarrowWide, Download, Eye, FileDown, FileSpreadsheet, GitMerge, Layers, Mars, Plus, Search, Upload, UsersRound, Venus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { GenderComposition } from '../components/GenderComposition'
@@ -7,10 +7,11 @@ import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
-import { ATTENDANCE_LABELS, CENSUS_CATEGORIES } from '../lib/constants'
-import { buildJamaahImportPreview, type JamaahImportPreview } from '../lib/csvImport'
-import { ageFromBirthDate, attendanceCounts, downloadCsv, formatDate, localIsoDate, materialDisplayName, percentage } from '../lib/utils'
-import type { CensusCategory, Gender, Jamaah } from '../types/domain'
+import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS, CENSUS_CATEGORIES } from '../lib/constants'
+import { readSheet } from 'read-excel-file/browser'
+import { buildJamaahImportPreview, type JamaahImportPreview } from '../lib/sheetImport'
+import { ageFromBirthDate, attendanceCounts, downloadSheet, formatDate, localIsoDate, materialDisplayName, monthLabel, percentage } from '../lib/utils'
+import type { AttendanceStatus, CensusCategory, Gender, Jamaah } from '../types/domain'
 
 const EMPTY_FORM: Jamaah = {
   id: '',
@@ -24,7 +25,7 @@ const EMPTY_FORM: Jamaah = {
 }
 
 export function CensusPage() {
-  const { jamaah, classes, attendanceSessions, saveJamaah, importJamaah } = useData()
+  const { jamaah, classes, classNameMap, attendanceSessions, saveJamaah, importJamaah } = useData()
   const [params] = useSearchParams()
   const handledEditId = useRef('')
   const [search, setSearch] = useState('')
@@ -36,6 +37,10 @@ export function CensusPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
   const [attendancePerson, setAttendancePerson] = useState<Jamaah | null>(null)
+  const [detailMonth, setDetailMonth] = useState('')
+  const [detailClassId, setDetailClassId] = useState('')
+  const [detailStatus, setDetailStatus] = useState<AttendanceStatus | ''>('')
+  const [detailOldestFirst, setDetailOldestFirst] = useState(false)
 
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<JamaahImportPreview[]>([])
@@ -80,10 +85,31 @@ export function CensusPage() {
         || second.session.savedAt.localeCompare(first.session.savedAt)
       ))
   }, [attendancePerson, attendanceSessions])
+  const personMonths = useMemo(() => [...new Set(personAttendance.map((item) => item.session.date.slice(0, 7)))], [personAttendance])
+  const personClassIds = useMemo(() => [...new Set(personAttendance.map((item) => item.session.classId))], [personAttendance])
+  const detailFiltered = Boolean(detailMonth || detailClassId || detailStatus)
+  // personAttendance sudah urut terbaru dulu, jadi urutan terlama cukup dibalik.
+  const visiblePersonAttendance = useMemo(() => {
+    const rows = personAttendance.filter(({ session, status }) => (
+      (!detailMonth || session.date.startsWith(detailMonth))
+      && (!detailClassId || session.classId === detailClassId)
+      && (!detailStatus || status === detailStatus)
+    ))
+    return detailOldestFirst ? rows.reverse() : rows
+  }, [detailClassId, detailMonth, detailOldestFirst, detailStatus, personAttendance])
   const personAttendanceCounts = attendanceCounts(Object.fromEntries(
-    personAttendance.map((item, index) => [String(index), item.status]),
+    visiblePersonAttendance.map((item, index) => [String(index), item.status]),
   ))
-  const personAttendanceRate = percentage(personAttendanceCounts.present, personAttendance.length)
+  const personAttendanceRate = percentage(personAttendanceCounts.present, visiblePersonAttendance.length)
+
+  // Filter milik warga sebelumnya tidak boleh ikut terbawa: bulan atau kelasnya
+  // belum tentu ada pada warga berikutnya, dan tabelnya akan tampak kosong.
+  useEffect(() => {
+    setDetailMonth('')
+    setDetailClassId('')
+    setDetailStatus('')
+    setDetailOldestFirst(false)
+  }, [attendancePerson])
 
   useEffect(() => {
     const editId = params.get('edit') ?? ''
@@ -124,8 +150,8 @@ export function CensusPage() {
     }
   }
 
-  function exportData() {
-    downloadCsv('data-sensus-warga.csv', [
+  async function exportData() {
+    await downloadSheet('data-sensus-warga.xlsx', [
       ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Usia', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
       ...jamaah.map((item) => [
         item.fullName,
@@ -140,16 +166,16 @@ export function CensusPage() {
     ])
   }
 
-  function exportCensusSummary() {
-    downloadCsv('ringkasan-kategori-sensus.csv', [
+  async function exportCensusSummary() {
+    await downloadSheet('ringkasan-kategori-sensus.xlsx', [
       ['Kategori Sensus', 'Laki-laki', 'Perempuan', 'Total'],
       ...censusGenderSummary.map((item) => [item.categoryName, item.male, item.female, item.total]),
       ['TOTAL', active.filter((item) => item.gender === 'Laki-laki').length, active.filter((item) => item.gender === 'Perempuan').length, active.length],
     ])
   }
 
-  function downloadTemplate() {
-    downloadCsv('template-import-sensus-warga.csv', [
+  async function downloadTemplate() {
+    await downloadSheet('template-import-sensus-warga.xlsx', [
       ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
       ['Ahmad Fauzan', 'Laki-laki', '2014-04-14', '081234567890', 'Caberawit', 'Caberawit Kelas C', 'Aktif'],
       ['Nur Aisyah', 'Perempuan', '', '081234567891', 'Remaja', 'Remaja | Pengajian Umum', 'Aktif'],
@@ -169,11 +195,11 @@ export function CensusPage() {
     setImportFileName(file.name)
     setImportError(null)
     try {
-      const text = await file.text()
-      setImportRows(buildJamaahImportPreview(text, jamaah, classes, CENSUS_CATEGORIES))
+      const sheet = await readSheet(file)
+      setImportRows(buildJamaahImportPreview(sheet, jamaah, classes, CENSUS_CATEGORIES))
     } catch (cause) {
       setImportRows([])
-      setImportError(cause instanceof Error ? cause.message : 'File CSV tidak dapat dibaca.')
+      setImportError(cause instanceof Error ? cause.message : 'File Excel tidak dapat dibaca.')
     } finally {
       event.target.value = ''
     }
@@ -206,8 +232,9 @@ export function CensusPage() {
         actions={
           <>
             <Link className="button outline" to="/arsip-jamaah"><Archive size={16} /> Status & Arsip</Link>
-            <button className="button outline" onClick={openImport}><Upload size={16} /> Import CSV</button>
-            <button className="button outline" onClick={exportData}><Download size={16} /> Ekspor CSV</button>
+            <button className="button outline" onClick={openImport}><Upload size={16} /> Import Excel</button>
+            <button className="button outline" onClick={() => void exportData()}><Download size={16} /> Ekspor Excel</button>
+            <Link className="button outline" to="/data-duplikat"><GitMerge size={16} /> Data Duplikat</Link>
             <button className="button primary" onClick={openCreate}><Plus size={16} /> Tambah Warga</button>
           </>
         }
@@ -226,9 +253,9 @@ export function CensusPage() {
         <div className="card-heading">
           <div>
             <h2>Ringkasan Kategori Sensus</h2>
-            <p>Jumlah warga aktif laki-laki dan perempuan pada setiap kategori sensus.</p>
+            <p>Jumlah warga aktif laki-laki dan perempuan pada setiap kategori sensus. Panjang batang sebanding dengan kategori terbesar.</p>
           </div>
-          <button className="button outline small" type="button" onClick={exportCensusSummary}><FileDown size={15} /> Ekspor Ringkasan</button>
+          <button className="button outline small" type="button" onClick={() => void exportCensusSummary()}><FileDown size={15} /> Ekspor Ringkasan</button>
         </div>
         <GenderComposition rows={censusGenderSummary.map((item) => ({ key: item.categoryName, label: item.categoryName, male: item.male, female: item.female, total: item.total }))} />
       </article>
@@ -298,7 +325,7 @@ export function CensusPage() {
               <div className="detail-attendance-rate">
                 <small>Persentase Kehadiran</small>
                 <strong>{personAttendanceRate}%</strong>
-                <span>{personAttendanceCounts.present} hadir dari {personAttendance.length} pencatatan</span>
+                <span>{personAttendanceCounts.present} hadir dari {visiblePersonAttendance.length} pencatatan{detailFiltered ? ' terpilih' : ''}</span>
               </div>
             </div>
             <div className="detail-counts">
@@ -307,11 +334,32 @@ export function CensusPage() {
               <span className="badge warning">Sakit {personAttendanceCounts.sick}</span>
               <span className="badge danger">Alpa {personAttendanceCounts.absent}</span>
             </div>
+            <div className="toolbar detail-filters">
+              {personMonths.length > 1 ? (
+                <select value={detailMonth} onChange={(event) => setDetailMonth(event.target.value)} aria-label="Saring bulan">
+                  <option value="">Semua bulan</option>
+                  {personMonths.map((item) => <option key={item} value={item}>{monthLabel(item)}</option>)}
+                </select>
+              ) : null}
+              {personClassIds.length > 1 ? (
+                <select value={detailClassId} onChange={(event) => setDetailClassId(event.target.value)} aria-label="Saring kelas">
+                  <option value="">Semua kelas</option>
+                  {personClassIds.map((item) => <option key={item} value={item}>{classNameMap.get(item) ?? 'Kelas'}</option>)}
+                </select>
+              ) : null}
+              <select value={detailStatus} onChange={(event) => setDetailStatus(event.target.value as AttendanceStatus | '')} aria-label="Saring status">
+                <option value="">Semua status</option>
+                {ATTENDANCE_OPTIONS.map((item) => <option key={item} value={item}>{ATTENDANCE_LABELS[item]}</option>)}
+              </select>
+              {detailFiltered ? (
+                <button className="text-button" type="button" onClick={() => { setDetailMonth(''); setDetailClassId(''); setDetailStatus('') }}>Tampilkan semua</button>
+              ) : null}
+            </div>
             <div className="table-wrap person-attendance-table">
               <table role="table">
-                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tanggal</th><th scope="col" role="columnheader">Kelas</th><th scope="col" role="columnheader">Materi</th><th scope="col" role="columnheader">Status</th></tr></thead>
+                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader" aria-sort={detailOldestFirst ? 'ascending' : 'descending'}><button className="th-sort" type="button" onClick={() => setDetailOldestFirst((value) => !value)}>Tanggal {detailOldestFirst ? <ArrowUpNarrowWide size={14} /> : <ArrowDownNarrowWide size={14} />}</button></th><th scope="col" role="columnheader">Kelas</th><th scope="col" role="columnheader">Materi</th><th scope="col" role="columnheader">Status</th></tr></thead>
                 <tbody role="rowgroup">
-                  {personAttendance.map(({ session, status }) => (
+                  {visiblePersonAttendance.map(({ session, status }) => (
                     <tr role="row" key={session.id}>
                       <td role="cell" data-label="Tanggal">{formatDate(session.date)}</td>
                       <td role="cell" data-label="Kelas">
@@ -322,7 +370,7 @@ export function CensusPage() {
                       <td role="cell" data-label="Status"><span className={`badge ${status === 'present' ? 'success' : status === 'excused' ? 'info' : status === 'sick' ? 'warning' : 'danger'}`}>{ATTENDANCE_LABELS[status]}</span></td>
                     </tr>
                   ))}
-                  {!personAttendance.length ? <tr role="row"><td role="cell" colSpan={4}><div className="empty-state">Belum ada absensi yang tercatat untuk warga ini.</div></td></tr> : null}
+                  {!visiblePersonAttendance.length ? <tr role="row"><td role="cell" colSpan={4}><div className="empty-state">{detailFiltered ? 'Tidak ada absensi yang cocok dengan saringan ini.' : 'Belum ada absensi yang tercatat untuk warga ini.'}</div></td></tr> : null}
                 </tbody>
               </table>
             </div>
@@ -346,16 +394,16 @@ export function CensusPage() {
       >
         <div className="import-intro">
           <div>
-            <strong>Gunakan format CSV agar data lama dapat dimasukkan sekaligus.</strong>
+            <strong>Gunakan format Excel (.xlsx) agar data lama dapat dimasukkan sekaligus.</strong>
             <p>Tanggal lahir boleh dikosongkan. Nama kelas yang lebih dari satu dipisahkan dengan tanda <code>|</code>. Baris duplikat tidak akan diimpor.</p>
           </div>
-          <button className="button soft" onClick={downloadTemplate}><FileDown size={16} /> Unduh Template</button>
+          <button className="button soft" onClick={() => void downloadTemplate()}><FileDown size={16} /> Unduh Template</button>
         </div>
 
-        <input ref={fileInputRef} className="visually-hidden" type="file" accept=".csv,text/csv" onChange={(event) => void readImportFile(event)} />
+        <input ref={fileInputRef} className="visually-hidden" type="file" accept=".xlsx" onChange={(event) => void readImportFile(event)} />
         <button className="import-dropzone" type="button" onClick={() => fileInputRef.current?.click()}>
           <FileSpreadsheet size={28} />
-          <span><strong>{importFileName || 'Pilih file CSV'}</strong><small>Klik untuk memilih atau mengganti file</small></span>
+          <span><strong>{importFileName || 'Pilih file Excel'}</strong><small>Klik untuk memilih atau mengganti file</small></span>
         </button>
 
         {importRows.length ? (

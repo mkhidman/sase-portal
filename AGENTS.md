@@ -16,16 +16,16 @@ Versi terakhir: **0.14.0**. Fitur dibangun bertahap (fase 1–13) dan direkam di
 
 ### Cakupan fitur utama
 
-1. **Data Warga (Sensus)** — CRUD, import massal CSV, kategori sensus (Balita, Caberawit, Pra Remaja, Remaja, Usia Nikah, Menikah, Duda & Janda), tanggal lahir opsional.
+1. **Data Warga (Sensus)** — CRUD, import massal Excel (.xlsx), kategori sensus (Balita, Caberawit, Pra Remaja, Remaja, Usia Nikah, Menikah, Duda & Janda), tanggal lahir opsional.
 2. **Kelas Pengajian** — 12 kelas (Playgroup, PAUD, Caberawit A/B/C, Pra Remaja, Remaja, Pra Nikah, Pengajian Umum, Pengajian Ibu-Ibu, Pengajian Usia Istimewa, 5 Unsur).
 3. **Jadwal & Absensi** — jadwal per kelas, absensi (Hadir/Izin/Sakit/Alpa), filter gender, materi sambung/keterangan, optimistic locking via `revision`, auto-generate rekap Pengajian Umum → Pra Remaja/Remaja/Pra Nikah (hari Senin & Rabu).
 4. **Hasda & ASAD** — target ketuntasan per bulan per warga, penyusulan manual, ringkasan per gender.
 5. **Tindak Lanjut Absensi** — deteksi risiko (<70% hadir / ≥4 Alpa / Alpa berturut), status follow-up, tombol WhatsApp, prioritas otomatis.
-6. **Laporan Bulanan** — evaluasi per kelas per bulan, ekspor CSV & **PDF** (generated di browser), penutupan periode (penguncian data).
+6. **Laporan Bulanan** — evaluasi per kelas per bulan, ekspor **PDF** (generated di browser), penutupan periode (penguncian data).
 7. **Kenaikan & Mutasi Kelas** — transisi massal dengan histori, penyesuaian kategori sensus otomatis, rekonstruksi laporan historis.
 8. **Status & Arsip Warga** — nonaktif/aktifkan dengan alasan & tanggal efektif, tanpa menghapus histori.
 9. **Keluarga & Kontak Wali** — pengelompokan keluarga, banyak kontak wali per warga, wali ditautkan ke warga lain.
-10. **Kualitas Data** — deteksi masalah (tanpa kelas, tanpa kontak, anak tanpa wali, TTL kosong, kategori/kelas tidak selaras, usia 55+ belum masuk Usia Istimewa) + deteksi kandidat duplikat.
+10. **Data Duplikat** — deteksi kandidat warga ganda dari nama, tanggal lahir, dan nomor WhatsApp. Dibuka dari tombol di Data Sensus, tidak lagi berdiri sebagai menu sendiri. (Daftar Temuan kualitas data dihapus — lihat CHANGELOG.)
 11. **Penggabungan Data Duplikat** — merge 2 warga transaksional dengan aturan konflik (absensi: Hadir>Sakit>Izin>Alpa, dst), snapshot & riwayat.
 12. **Manajemen Akun Admin** — buat/nonaktifkan Admin, reset password sementara, wajib ganti password, transfer penugasan kelas.
 
@@ -93,7 +93,7 @@ src/
   data/             demo.ts (mode demo), repository.ts (akses Supabase)
   hooks/            useNetworkStatus, usePagination, usePwaInstall
   lib/              constants, utils, offline (cache+draft), pwa (service worker),
-                    csvImport, contacts, followUps, generalAttendance, dataQuality,
+                    sheetImport, contacts, followUps, generalAttendance, dataQuality,
                     mergeJamaah, monthlyReportPdf, meetingNotePdf
   pages/            satu file per halaman (lihat daftar route di §6)
   types/domain.ts   seluruh tipe data
@@ -127,7 +127,7 @@ File akar penting: `vite.config.ts`, `vercel.json` (SPA rewrite), `.env.example`
 | `/jadwal`, `/absensi`, `/materi`, `/tindak-lanjut` | Jadwal, Absensi, Hasda & ASAD, Tindak Lanjut | Admin & Superadmin (Admin dibatasi kelas diampu) |
 | `/keluarga-wali` | Keluarga & Wali | Admin (kelas diampu) & Superadmin |
 | `/rekap`, `/laporan-bulanan` | Rekap, Laporan Bulanan | Admin (cakupan kelas) & Superadmin |
-| `/sensus`, `/kualitas-data`, `/kenaikan-kelas`, `/arsip-jamaah`, `/musyawarah`, `/pengaturan`, `/aktivitas` | Sensus, Kualitas Data, Kenaikan & Mutasi, Status & Arsip, Musyawarah, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
+| `/sensus`, `/data-duplikat`, `/kenaikan-kelas`, `/arsip-jamaah`, `/musyawarah`, `/pengaturan`, `/aktivitas` | Sensus, Data Duplikat, Kenaikan & Mutasi, Status & Arsip, Musyawarah, Pengaturan Admin, Riwayat Aktivitas | **Superadmin hanya** (`SuperadminRoute`) |
 
 ---
 
@@ -181,4 +181,4 @@ npm run preview               # pratinjau build produksi (uji PWA/offline)
 - Backup JSON bisa diunduh tapi **restore belum tersedia**.
 - Draft offline tersimpan lokal, tapi pengiriman final **butuh koneksi** (tidak ada antrean background).
 - Periode yang ditutup mengunci perubahan operasional (jadwal, absensi, follow-up, materi, status, kelas) untuk bulan itu.
-- Fitur "Penggabungan" di Kualitas Data: fase 11 hanya mendeteksi kandidat; merge penuh (fase 12) tersedia di menu Kualitas Data untuk Superadmin.
+- Penggabungan duplikat ada di `/data-duplikat`, dibuka lewat tombol "Data Duplikat" pada Data Sensus dan terbatas untuk Superadmin. Halamannya tidak ada di menu samping.

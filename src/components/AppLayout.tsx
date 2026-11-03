@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Settings,
   ShieldAlert,
-  ShieldCheck,
   Shuffle,
   UserRoundCheck,
   Users,
@@ -50,7 +49,6 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
         id: 'data-jamaah', label: 'Data Warga', icon: Database,
         items: [
           { to: '/sensus', label: 'Data Sensus', icon: Database },
-          { to: '/kualitas-data', label: 'Kualitas Data', icon: ShieldCheck },
           { to: '/arsip-jamaah', label: 'Status & Arsip', icon: Archive },
           { to: '/keluarga-wali', label: 'Keluarga & Wali', icon: ContactRound },
         ],

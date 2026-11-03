@@ -1,21 +1,15 @@
-import { AlertTriangle, CheckCircle2, CircleAlert, GitMerge, Search, ShieldCheck, UsersRound } from 'lucide-react'
+import { GitMerge } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
-import { PageHeader, Person, StatCard } from '../components/UI'
+import { PageHeader, Person } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES } from '../lib/constants'
-import { analyzeDataQuality, type DataQualityIssue, type DataQualitySeverity, type DuplicateCandidate } from '../lib/dataQuality'
+import { findDuplicateCandidates, type DuplicateCandidate } from '../lib/duplicates'
 import { ageFromBirthDate, formatDateTime } from '../lib/utils'
 import type { Jamaah } from '../types/domain'
-
-const SEVERITY_LABELS: Record<DataQualitySeverity, string> = {
-  critical: 'Kritis',
-  warning: 'Perlu diperiksa',
-  info: 'Pelengkap',
-}
 
 type MergeProfile = Pick<Jamaah, 'fullName' | 'gender' | 'birthDate' | 'phone' | 'censusCategory' | 'active'>
 
@@ -35,14 +29,12 @@ function profileFrom(person: Jamaah, other?: Jamaah): MergeProfile {
   }
 }
 
-export function DataQualityPage() {
+export function DuplicatesPage() {
   const {
     classNameMap,
-    jamaah, classes, guardianContacts, attendanceSessions, materialCompletions, followUps,
+    jamaah, guardianContacts, attendanceSessions, materialCompletions, followUps,
     classHistory, statusHistory, familyMembers, mergeHistory, mergeDuplicateJamaah,
   } = useData()
-  const [search, setSearch] = useState('')
-  const [severity, setSeverity] = useState<DataQualitySeverity | ''>('')
   const [duplicateDetail, setDuplicateDetail] = useState<DuplicateCandidate | null>(null)
   const [primaryId, setPrimaryId] = useState('')
   const [mergeProfile, setMergeProfile] = useState<MergeProfile | null>(null)
@@ -50,20 +42,10 @@ export function DataQualityPage() {
   const [savingMerge, setSavingMerge] = useState(false)
   const [mergeMessage, setMergeMessage] = useState('')
 
-  const result = useMemo(() => analyzeDataQuality(jamaah, classes, guardianContacts), [classes, guardianContacts, jamaah])
+  const duplicates = useMemo(() => findDuplicateCandidates(jamaah), [jamaah])
   const peopleById = useMemo(() => new Map(jamaah.map((person) => [person.id, person])), [jamaah])
-  const query = search.trim().toLowerCase()
-  const filteredIssues = useMemo(() => result.issues.filter((issue) => {
-    const person = peopleById.get(issue.jamaahId)
-    const text = [person?.fullName, person?.censusCategory, issue.title, issue.description].join(' ').toLowerCase()
-    return (!query || text.includes(query)) && (!severity || issue.severity === severity)
-  }), [peopleById, query, result.issues, severity])
-  const issuePagination = usePagination(filteredIssues, `${query}|${severity}`)
-  const duplicatePagination = usePagination(result.duplicates, String(result.duplicates.length))
+  const duplicatePagination = usePagination(duplicates, String(duplicates.length))
   const historyPagination = usePagination(mergeHistory, String(mergeHistory.length))
-
-  const critical = result.issues.filter((issue) => issue.severity === 'critical').length
-  const warnings = result.issues.filter((issue) => issue.severity === 'warning').length
   const selectedPeople = duplicateDetail
     ? [peopleById.get(duplicateDetail.firstJamaahId), peopleById.get(duplicateDetail.secondJamaahId)].filter(Boolean) as Jamaah[]
     : []
@@ -125,48 +107,9 @@ export function DataQualityPage() {
   return (
     <>
       <PageHeader
-        title="Kualitas Data"
-        description="Pemeriksaan otomatis untuk menemukan data sensus yang belum lengkap, tidak selaras, atau berpotensi ganda."
+        title="Data Duplikat"
+        description="Mencari warga yang kemungkinan tercatat dua kali, lalu menggabungkannya menjadi satu data beserta seluruh relasinya."
       />
-
-      <section className="stats-grid four-columns compact-stats">
-        <StatCard tone="mint" label="Kelengkapan Data" value={`${result.completenessPercent}%`} note="Warga aktif tanpa temuan" icon={<ShieldCheck size={20} />} />
-        <StatCard tone="amber" label="Temuan Kritis" value={critical} note="Menghambat proses absensi" icon={<CircleAlert size={20} />} />
-        <StatCard tone="amber" label="Perlu Diperiksa" value={warnings} note="Kontak atau klasifikasi" icon={<AlertTriangle size={20} />} />
-        <StatCard tone="violet" label="Potensi Duplikat" value={result.duplicates.length} note={`${mergeHistory.length} pernah digabung`} icon={<UsersRound size={20} />} />
-      </section>
-
-      <article className="card data-quality-summary">
-        <div className="data-quality-meter" aria-label={`Kelengkapan ${result.completenessPercent}%`}><span style={{ width: `${result.completenessPercent}%` }} /></div>
-        <div>
-          <strong>{result.peopleWithIssues ? `${result.peopleWithIssues} warga masih memiliki temuan` : 'Seluruh data aktif lolos pemeriksaan dasar'}</strong>
-          <p>Pemeriksaan tidak mengubah data secara otomatis. Penggabungan duplikat hanya berjalan setelah Superadmin memilih data utama dan mengonfirmasi hasil akhirnya.</p>
-        </div>
-      </article>
-
-      <article className="card">
-        <div className="card-heading"><div><h2>Daftar Temuan</h2><p>Prioritaskan temuan kritis sebelum aplikasi digunakan pada sesi nyata.</p></div></div>
-        <div className="toolbar">
-          <label className="search-field"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari warga atau jenis masalah…" /></label>
-          <select value={severity} onChange={(event) => setSeverity(event.target.value as DataQualitySeverity | '')}>
-            <option value="">Semua tingkat</option><option value="critical">Kritis</option><option value="warning">Perlu diperiksa</option><option value="info">Pelengkap</option>
-          </select>
-        </div>
-        <div className="quality-issue-list">
-          {issuePagination.pageItems.map((issue: DataQualityIssue) => {
-            const person = peopleById.get(issue.jamaahId)
-            if (!person) return null
-            return <div className="quality-issue-row" key={issue.id}>
-              <Person name={person.fullName} meta={personMeta(person)} />
-              <div className="quality-issue-copy"><strong>{issue.title}</strong><span>{issue.description}</span></div>
-              <span className={`badge ${issue.severity === 'critical' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info'}`}>{SEVERITY_LABELS[issue.severity]}</span>
-              <Link className="button outline small" to={`/sensus?edit=${person.id}`}>Perbaiki</Link>
-            </div>
-          })}
-          {!filteredIssues.length ? <div className="empty-state"><CheckCircle2 size={22} /> Tidak ada temuan pada filter ini.</div> : null}
-        </div>
-        <Pagination page={issuePagination.page} pageSize={issuePagination.pageSize} totalItems={filteredIssues.length} onPageChange={issuePagination.setPage} onPageSizeChange={issuePagination.setPageSize} />
-      </article>
 
       <article className="card">
         <div className="card-heading"><div><h2>Potensi Data Duplikat</h2><p>Bandingkan, pilih data utama, lalu gabungkan seluruh relasi dalam satu transaksi.</p></div></div>
@@ -182,9 +125,9 @@ export function DataQualityPage() {
               <button className="button outline small" type="button" onClick={() => setDuplicateDetail(candidate)}>Tinjau & gabungkan</button>
             </div>
           })}
-          {!result.duplicates.length ? <div className="empty-state">Tidak ditemukan kandidat duplikat.</div> : null}
+          {!duplicates.length ? <div className="empty-state">Tidak ditemukan kandidat duplikat.</div> : null}
         </div>
-        <Pagination page={duplicatePagination.page} pageSize={duplicatePagination.pageSize} totalItems={result.duplicates.length} onPageChange={duplicatePagination.setPage} onPageSizeChange={duplicatePagination.setPageSize} />
+        <Pagination page={duplicatePagination.page} pageSize={duplicatePagination.pageSize} totalItems={duplicates.length} onPageChange={duplicatePagination.setPage} onPageSizeChange={duplicatePagination.setPageSize} />
       </article>
 
       <article className="card">

@@ -235,7 +235,10 @@ a { color: inherit; }
 .topbar-user small { color: var(--muted); font-size: var(--fs-2xs); }
 .demo-pill { width: max-content; padding: 5px 8px; border-radius: var(--radius-pill); background: var(--surface-soft); color: var(--primary-dark); font-size: var(--fs-2xs); font-weight: 800; }
 
-.app-main { grid-column: 2; min-width: 0; padding: var(--space-5) var(--space-5) var(--space-7); }
+/* Jarak antarblok halaman (header, kartu, grid statistik) diatur sekali di sini.
+   Sebelumnya tiap halaman menambahkan margin-bottom sendiri, dan halaman yang
+   lupa menuliskannya membuat kartunya menempel tanpa sela. */
+.app-main { grid-column: 2; min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); padding: var(--space-5) var(--space-5) var(--space-7); }
 
 /* Halaman kerja harian (Sensus, Absensi, Jadwal, ...) merapatkan diri lewat tiga
    variabel saja. Dipetakan dari rute di AppLayout.tsx, bukan ditulis per halaman. */
@@ -246,7 +249,7 @@ a { color: inherit; }
 }
 
 /* Base UI */
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .page-header h1 { margin-bottom: 6px; font-size: var(--fs-5xl); letter-spacing: -.025em; }
 .page-header p { margin: 0; color: var(--muted); font-size: var(--fs-md); }
 .page-actions, .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -266,7 +269,7 @@ a { color: inherit; }
 .card h2 { margin-bottom: 5px; font-size: var(--fs-xl); }
 .card p { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
 .card-heading, .section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 15px; }
-.stats-grid { display: grid; gap: var(--card-gap); margin-bottom: var(--card-gap); }
+.stats-grid { display: grid; gap: var(--card-gap); }
 .three-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .four-columns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .stat-card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); }
@@ -286,6 +289,9 @@ a { color: inherit; }
 .stat-delta.down { background: var(--danger-bg); color: var(--danger); }
 .stat-delta.flat { background: var(--surface-sunken); color: var(--muted); }
 .notice { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #d9e7dc; border-radius: var(--radius-sm); background: var(--surface-sunken); color: #355343; font-size: var(--fs-sm); line-height: 1.5; }
+/* Sebagai blok halaman jaraknya sudah dari .app-main; margin bawaannya hanya
+   dipakai ketika .notice berada di dalam kartu atau modal. */
+.app-main > .notice { margin-bottom: 0; }
 .warning-notice { background: var(--warning-bg); border-color: #efd584; color: #72510b; }
 .inline-message { margin-top: 13px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--success-bg); color: var(--success); font-size: var(--fs-sm); }
 .inline-message.success { background: var(--success-bg); color: var(--success); }
@@ -305,7 +311,6 @@ a { color: inherit; }
 .badge-list { display: flex; gap: 5px; flex-wrap: wrap; }
 
 /* Census composition by gender */
-.census-composition-card, .monthly-census-composition { margin-bottom: 15px; }
 .composition { display: grid; gap: 15px; }
 .composition-split { height: 15px; display: flex; gap: 2px; overflow: hidden; border-radius: var(--radius-pill); background: var(--chart-track); }
 .composition-split > span { display: block; }
@@ -314,25 +319,30 @@ a { color: inherit; }
 .composition-legend strong { color: var(--text); font-variant-numeric: tabular-nums; }
 .composition-legend-total { margin-left: auto; }
 .composition-swatch { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 3px; }
-.composition-rows { display: grid; gap: 9px; }
-.composition-entry { display: contents; }
-.composition-group { margin-top: 6px; padding-top: 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.composition-group + .composition-row .composition-label { color: var(--muted); }
-.composition-row { display: flex; align-items: center; gap: 11px; }
-.composition-label { width: 108px; flex: 0 0 auto; color: var(--text); font-size: var(--fs-2xs); font-weight: 600; }
-.composition-track { min-width: 0; height: 11px; flex: 1 1 auto; display: flex; overflow: hidden; border-radius: var(--radius-pill); background: var(--chart-track); }
+.composition-table { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-md); -webkit-overflow-scrolling: touch; }
+.composition-table table { min-width: 0; }
+.composition-table th, .composition-table td { padding: 9px 12px; font-size: var(--fs-sm); }
+.composition-table th { white-space: nowrap; }
+.composition-label { color: var(--text); font-weight: 700; }
+.composition-number { width: 1%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.composition-number strong { font-weight: 800; }
+/* Nol ditulis, bukan dikosongkan, supaya kolomnya tetap terbaca sebagai angka. */
+.composition-zero { color: var(--muted); font-weight: 600; opacity: .75; }
+.composition-bar-heading { width: 30%; min-width: 92px; }
+.composition-bar { width: 30%; }
+.composition-group-row td { padding: 11px 12px 7px; background: var(--surface-sunken); color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.composition-total-row td { border-top: 1px solid var(--line); border-bottom: 0; background: var(--surface-raised); }
+.composition-total-row .composition-label { font-weight: 800; }
+.composition-track { min-width: 0; height: 11px; display: flex; overflow: hidden; border-radius: var(--radius-pill); background: var(--chart-track); }
 .composition-fill { min-width: 3px; height: 100%; display: flex; gap: 2px; overflow: hidden; border-radius: var(--radius-pill); }
 .composition-fill > span { display: block; }
-.composition-value { width: 132px; flex: 0 0 auto; color: var(--muted); font-size: var(--fs-2xs); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-.composition-value strong { color: var(--text); }
-.composition-value em { font-style: normal; opacity: .7; }
 .composition-footnote { margin: 0; color: var(--muted); font-size: var(--fs-2xs); line-height: 1.5; }
 
 /* Dashboard */
 .month-filter { display: grid; gap: 4px; justify-items: start; }
 .month-filter > span { color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .month-filter input { padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-sm); }
-.dashboard-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 15px; margin-bottom: 15px; align-items: start; }
+.dashboard-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 15px; align-items: start; }
 .progress-list { display: grid; gap: 12px; }
 .progress-list.two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .progress-block { padding: 13px; border: 1px solid var(--line); border-radius: var(--radius-md); }
@@ -372,6 +382,10 @@ a { color: inherit; }
 .card-heading select { width: auto; flex: 0 1 230px; min-width: 150px; }
 .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-md); -webkit-overflow-scrolling: touch; }
 table { width: 100%; min-width: 820px; border-collapse: collapse; background: var(--surface); }
+/* Lebar minimum tabel lebar: 860px, yaitu lebar isi terluas yang masih muat pada
+   laptop 1280px bersama sidebar. Angka lama (980-1180px) tidak berasal dari lebar
+   isi tabelnya dan mendorong kolom terakhir keluar layar, sehingga tombol Aksi
+   baru terlihat setelah digeser ke kanan. */
 th, td { padding: var(--cell-pad-y) 13px; border-bottom: 1px solid var(--line); text-align: left; font-size: var(--fs-sm); vertical-align: middle; }
 th { position: sticky; top: 0; z-index: 1; background: var(--surface-sunken); color: #58645c; font-size: var(--fs-xs); }
 tr:last-child td { border-bottom: 0; }
@@ -439,13 +453,19 @@ tr:last-child td { border-bottom: 0; }
 .detail-attendance-rate strong { color: var(--primary); font-size: var(--fs-4xl); line-height: 1; }
 .detail-attendance-rate span { font-size: var(--fs-2xs); }
 .person-attendance-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 14px; }
+/* Empat kolom sempit ini muat di dalam modal, jadi tidak perlu lebar minimum
+   820px seperti tabel halaman penuh yang membuat kolom Status terpotong. */
+.person-attendance-table table { min-width: 0; }
 .person-attendance-table { max-height: min(56vh, 520px); }
 .person-attendance-table td strong { display: block; }
 .generated-session-note { display: block; color: var(--primary) !important; font-size: var(--fs-2xs) !important; font-weight: 700; line-height: 1.4; }
 .detail-counts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.detail-filters { justify-content: flex-start; }
+.th-sort { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.th-sort:hover { color: var(--primary-dark); }
 .detail-list { display: grid; gap: 8px; }
 .detail-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
-.reset-card { margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.reset-card { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 
 /* Modal */
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(8, 25, 16, .5); }
@@ -497,8 +517,8 @@ tr:last-child td { border-bottom: 0; }
 }
 
 @media (max-width: 560px) {
-  .composition-label { width: 82px; }
-  .composition-value { width: 104px; }
+  .composition-table th, .composition-table td { padding: 8px; }
+  .composition-bar-heading, .composition-bar { display: none; }
 }
 
 @media (max-width: 640px) {
@@ -577,7 +597,6 @@ tr:last-child td { border-bottom: 0; }
 
 /* Fase 3: modal admin dan import sensus */
 .button.subtle { background: var(--surface-soft); color: var(--primary-dark); }
-.page-message { margin: -7px 0 15px; }
 .field { display: grid; gap: 7px; color: #4d5b52; font-size: var(--fs-sm); font-weight: 800; }
 .field > input, .field > select, .password-input input {
   width: 100%;
@@ -716,7 +735,7 @@ tr:last-child td { border-bottom: 0; }
 .topbar .install-button { min-height: 38px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--text); font-size: var(--fs-xs); font-weight: 800; }
 .topbar .install-button:hover { border-color: var(--primary); color: var(--primary-dark); }
 
-.backup-card { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; margin-top: 15px; }
+.backup-card { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; }
 .backup-copy { display: flex; align-items: center; gap: 12px; }
 .backup-copy h2 { margin-bottom: 4px; }
 .backup-icon { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-soft); color: var(--primary-dark); }
@@ -746,7 +765,6 @@ tr:last-child td { border-bottom: 0; }
 }
 
 /* Phase 5: attendance monitoring and follow-up */
-.dashboard-followup { margin-bottom: 15px; }
 .dashboard-risk-list { display: grid; gap: 8px; }
 .dashboard-risk-list > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); text-align: left; }
 .dashboard-risk-list > button:hover { border-color: #a8cbb5; background: var(--surface-sunken); }
@@ -790,7 +808,6 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 15px;
   padding: 15px 16px;
   border: 1px solid var(--line);
   border-left: 4px solid var(--primary);
@@ -812,7 +829,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .report-readiness strong { font-size: var(--fs-sm); }
 .report-readiness > div:first-child span { color: var(--muted); font-size: var(--fs-2xs); }
 .readiness-list { display: flex; gap: 6px; flex-wrap: wrap; }
-.monthly-report-table table { min-width: 1080px; }
+.monthly-report-table table { min-width: 860px; }
 .period-modal-copy { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 13px; border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--primary); }
 .period-modal-copy p { margin: 0; color: var(--muted); font-size: var(--fs-xs); line-height: 1.55; }
 .period-modal-actions { margin-top: 16px; }
@@ -828,7 +845,6 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .progression-flow {
   display: flex;
   gap: 8px;
-  margin-bottom: 15px;
   padding: 10px;
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -852,7 +868,6 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 /* --muted (4,05:1) dan --primary (4,31:1) sama-sama gagal di atas --surface-soft. */
 .progression-flow-item strong { color: var(--primary-dark); }
 .progression-stats .stat-value { font-size: clamp(var(--fs-xl), 2vw, var(--fs-4xl)); overflow-wrap: anywhere; }
-.progression-workspace { margin-bottom: 15px; }
 .progression-settings {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -903,7 +918,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .switch-card strong { font-size: var(--fs-sm); }
 .switch-card small { color: var(--muted); font-size: var(--fs-2xs); line-height: 1.45; }
 .progression-toolbar { margin-top: 4px; }
-.progression-member-table table { min-width: 980px; }
+.progression-member-table table { min-width: 860px; }
 .checkbox-column { width: 60px; }
 .row-checkbox { width: 17px; height: 17px; accent-color: var(--primary); }
 .selected-row td { background: var(--surface-sunken); }
@@ -923,8 +938,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
-.class-history-card { margin-top: 15px; }
-.history-table table { min-width: 1120px; }
+.history-table table { min-width: 860px; }
 .transition-confirmation {
   display: flex;
   align-items: center;
@@ -980,11 +994,9 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 }
 .status-readonly-field > span { color: #4d5b52; font-size: var(--fs-sm); font-weight: 800; }
 .status-readonly-field small { color: var(--muted); font-size: var(--fs-2xs); line-height: 1.4; }
-.archive-stats { margin-bottom: 15px; }
-.archive-notice { margin-bottom: 15px; }
 .archive-toolbar { align-items: stretch; }
 .archive-toolbar select { min-width: 185px; }
-.archive-table table { min-width: 1120px; }
+.archive-table table { min-width: 860px; }
 .archive-last-change { display: grid; gap: 3px; }
 .archive-last-change strong { font-size: var(--fs-xs); }
 .archive-last-change small { color: var(--muted); font-size: var(--fs-2xs); }
@@ -1050,8 +1062,6 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 }
 
 /* Fase 9: data keluarga dan kontak wali */
-.family-global-search { margin-bottom: 15px; }
-.family-section { margin-bottom: 15px; }
 .family-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .family-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
 .family-card > header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 13px; border-bottom: 1px solid var(--line); background: var(--surface); }
@@ -1066,7 +1076,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .family-members .person { min-width: 0; }
 .family-notes { padding: 0 13px 13px; color: var(--muted); font-size: var(--fs-2xs) !important; line-height: 1.5; }
 .family-empty { grid-column: 1 / -1; }
-.guardian-table table { min-width: 1180px; }
+.guardian-table table { min-width: 860px; }
 .table-subtle { margin-top: 3px; color: var(--muted); font-size: var(--fs-2xs); }
 .muted-copy { color: var(--muted); font-size: var(--fs-xs); }
 .guardian-contact-list { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -1233,16 +1243,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 }
 
 /* Fase 11: pilot & hardening */
-.data-quality-summary { display: grid; grid-template-columns: minmax(180px, .38fr) 1fr; align-items: center; gap: 18px; margin-bottom: 15px; }
-.data-quality-summary > div:last-child { min-width: 0; }
-.data-quality-summary strong { display: block; margin-bottom: 4px; font-size: var(--fs-lg); }
-.data-quality-meter { height: 13px; overflow: hidden; border-radius: var(--radius-pill); background: #e8eeea; }
-.data-quality-meter span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
-.quality-issue-list, .duplicate-list { display: grid; gap: 9px; }
-.quality-issue-row { display: grid; grid-template-columns: minmax(190px, .9fr) minmax(220px, 1.3fr) auto auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
-.quality-issue-copy { min-width: 0; display: grid; gap: 3px; }
-.quality-issue-copy strong { font-size: var(--fs-sm); }
-.quality-issue-copy span { color: var(--muted); font-size: var(--fs-2xs); line-height: 1.45; }
+.duplicate-list { display: grid; gap: 9px; }
 .duplicate-row { display: grid; grid-template-columns: minmax(280px, 1.4fr) minmax(160px, .8fr) auto auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); }
 .duplicate-people { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .duplicate-people > span { color: var(--muted); font-size: var(--fs-2xs); text-align: center; }
@@ -1263,16 +1264,13 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .attendance-mobile-save { display: none; }
 
 @media (max-width: 1120px) {
-  .quality-issue-row { grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.2fr) auto; }
-  .quality-issue-row .button { grid-column: 1 / -1; justify-self: end; }
   .duplicate-row { grid-template-columns: 1fr auto; }
   .duplicate-row .badge-list { grid-column: 1 / 2; }
 }
 
 @media (max-width: 820px) {
-  .data-quality-summary { grid-template-columns: 1fr; gap: 12px; }
-  .quality-issue-row, .duplicate-row { grid-template-columns: 1fr; align-items: start; }
-  .quality-issue-row .button, .duplicate-row .button { grid-column: auto; width: 100%; }
+  .duplicate-row { grid-template-columns: 1fr; align-items: start; }
+  .duplicate-row .button { grid-column: auto; width: 100%; }
   .duplicate-people { grid-template-columns: 1fr; }
   .duplicate-people > span { text-align: left; }
   .duplicate-comparison-grid { grid-template-columns: 1fr; }
@@ -1319,7 +1317,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 }
 
 /* Fase 13: manajemen akun Admin */
-.admin-management-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}.admin-management-stats .card{display:grid;gap:5px}.admin-management-stats span{font-size: var(--fs-sm);color:var(--muted)}.admin-management-stats strong{font-size: var(--fs-5xl)}.admin-management-stats small{color:var(--muted);line-height:1.4}.warning-card{border-color:#e7b85d;background:#fffaf0}.admin-filter-row{display:flex;gap:10px;margin-bottom:14px}.admin-filter-row input{flex:1}.admin-filter-row input,.admin-filter-row select{border:1px solid var(--line);border-radius: var(--radius-sm);background:var(--surface);padding:10px 12px}.admin-action-grid{display:flex;gap:6px;flex-wrap:wrap;min-width:290px}.muted-text{color:var(--muted);font-size: var(--fs-sm)}.badge.warning{background:var(--warning-bg);color:#815b00}.badge.danger{background:var(--danger-bg);color:#a8261c}.password-change-page{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at top right,rgba(31,111,74,.14),transparent 38%),linear-gradient(180deg,#f9fcfa,#eef5f0)}.password-change-card{width:min(480px,100%);display:grid;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius: var(--radius-xl);padding:28px;box-shadow:0 20px 60px rgba(25,55,37,.12)}.password-change-card h1{margin:0 0 7px;font-size: var(--fs-4xl)}.password-change-card p{margin:0;color:var(--muted);line-height:1.55}.password-change-icon{width:52px;height:52px;border-radius: var(--radius-md);display:grid;place-items:center;background:var(--accent);color:var(--primary)}.password-change-form{display:grid;gap:13px}
+.admin-management-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.admin-management-stats .card{display:grid;gap:5px}.admin-management-stats span{font-size: var(--fs-sm);color:var(--muted)}.admin-management-stats strong{font-size: var(--fs-5xl)}.admin-management-stats small{color:var(--muted);line-height:1.4}.warning-card{border-color:#e7b85d;background:#fffaf0}.admin-filter-row{display:flex;gap:10px;margin-bottom:14px}.admin-filter-row input{flex:1}.admin-filter-row input,.admin-filter-row select{border:1px solid var(--line);border-radius: var(--radius-sm);background:var(--surface);padding:10px 12px}.admin-action-grid{display:flex;gap:6px;flex-wrap:wrap;min-width:290px}.muted-text{color:var(--muted);font-size: var(--fs-sm)}.badge.warning{background:var(--warning-bg);color:#815b00}.badge.danger{background:var(--danger-bg);color:#a8261c}.password-change-page{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at top right,rgba(31,111,74,.14),transparent 38%),linear-gradient(180deg,#f9fcfa,#eef5f0)}.password-change-card{width:min(480px,100%);display:grid;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius: var(--radius-xl);padding:28px;box-shadow:0 20px 60px rgba(25,55,37,.12)}.password-change-card h1{margin:0 0 7px;font-size: var(--fs-4xl)}.password-change-card p{margin:0;color:var(--muted);line-height:1.55}.password-change-icon{width:52px;height:52px;border-radius: var(--radius-md);display:grid;place-items:center;background:var(--accent);color:var(--primary)}.password-change-form{display:grid;gap:13px}
 @media (max-width: 820px){.admin-management-stats{grid-template-columns:1fr}.admin-filter-row{align-items:stretch;flex-direction:column}.admin-action-grid{min-width:220px}}
 @media (max-width: 640px){.admin-action-grid{display:grid;grid-template-columns:1fr 1fr;min-width:0}.password-change-card{padding:20px;border-radius: var(--radius-lg)}.admin-filter-row input,.admin-filter-row select{min-height:44px}}
 
@@ -1598,12 +1596,12 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .mobile-more-account .button { justify-content: center; }
 
 /* Jadwal terlewat yang belum diabsen */
-.missed-attendance-card { margin-bottom: 15px; border-color: #efaaa4; }
+.missed-attendance-card { border-color: #efaaa4; }
 .missed-attendance-card .card-heading h2 { display: flex; align-items: center; gap: 7px; color: var(--danger); }
 .schedule-row.missed { border-color: #f0bcb7; background: #fffaf9; }
 .date-tile.late { background: var(--danger-bg); color: var(--danger); }
 .missed-attendance-note { margin: 11px 0 0; }
-.dashboard-missed { margin-bottom: 15px; border-color: #efaaa4; background: #fffaf9; }
+.dashboard-missed { border-color: #efaaa4; background: #fffaf9; }
 .dashboard-missed > svg { flex: 0 0 auto; color: var(--danger); }
 .dashboard-missed strong { color: var(--danger); }
 
@@ -1617,7 +1615,7 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 /* Status muat dan kegagalan memuat data secara global */
 .app-loading-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 70; height: 3px; overflow: hidden; }
 .app-loading-bar span { display: block; width: 38%; height: 100%; border-radius: var(--radius-pill); background: var(--accent-bright); animation: loadingSlide 1.1s ease-in-out infinite; }
-.app-error-banner { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; padding: 13px 14px; border: 1px solid #efaaa4; border-left: 4px solid var(--danger); border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger); }
+.app-error-banner { display: flex; align-items: center; gap: 11px; padding: 13px 14px; border: 1px solid #efaaa4; border-left: 4px solid var(--danger); border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger); }
 .app-error-banner.cache { border-color: #efd584; border-left-color: var(--warning); background: var(--warning-bg); color: #72510b; }
 .app-error-banner > svg { flex: 0 0 auto; }
 .app-error-banner > div { min-width: 0; flex: 1; display: grid; gap: 3px; }

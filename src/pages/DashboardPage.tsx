@@ -33,7 +33,8 @@ export function DashboardPage() {
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
 
-  const visibleSessions = attendanceSessions.filter((session) => visibleClassIds.has(session.classId))
+  const currentMonth = monthValue()
+  const visibleSessions = attendanceSessions.filter((session) => visibleClassIds.has(session.classId) && session.date.startsWith(currentMonth))
   const averageAttendance = averageAttendanceRate(visibleSessions)
 
   const upcomingSchedules = schedules
@@ -47,7 +48,6 @@ export function DashboardPage() {
 
   const hasda = materialProgressFor('hasda', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
   const asad = materialProgressFor('asad', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
-  const currentMonth = monthValue()
   const attendanceRisks = visibleClasses
     .flatMap((studyClass) => buildAttendanceRisks({ jamaah: visibleJamaah, sessions: attendanceSessions, followUps, classId: studyClass.id, month: currentMonth }))
     .filter((risk) => (risk.followUp?.status ?? 'pending') !== 'resolved')
@@ -86,7 +86,7 @@ export function DashboardPage() {
 
       <section className="stats-grid three-columns">
         <StatCard tone="mint" label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
-        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi tersimpan`} icon={<CalendarCheck2 size={20} />} />
+        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi bulan ini`} icon={<CalendarCheck2 size={20} />} />
         <StatCard tone="violet" label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
       </section>
 

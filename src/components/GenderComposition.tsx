@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { percentage } from '../lib/utils'
 
 export interface GenderCompositionRow {
@@ -20,10 +20,11 @@ interface GenderCompositionProps {
   rows: GenderCompositionRow[]
   /** Dibedakan karena satu warga dapat tercatat pada lebih dari satu kelas. */
   totalLabel?: string
+  labelHeading?: string
   footnote?: ReactNode
 }
 
-export function GenderComposition({ rows, totalLabel = 'Total warga aktif', footnote }: GenderCompositionProps) {
+export function GenderComposition({ rows, totalLabel = 'Total warga aktif', labelHeading = 'Kategori', footnote }: GenderCompositionProps) {
   const male = rows.reduce((sum, row) => sum + row.male, 0)
   const female = rows.reduce((sum, row) => sum + row.female, 0)
   const total = male + female
@@ -55,28 +56,53 @@ export function GenderComposition({ rows, totalLabel = 'Total warga aktif', foot
         </li>
       </ul>
 
-      <div className="composition-rows">
-        {rows.map((row, index) => (
-          <div className="composition-entry" key={row.key}>
-            {row.groupLabel && row.groupLabel !== rows[index - 1]?.groupLabel ? (
-              <div className="composition-group">{row.groupLabel}</div>
-            ) : null}
-            <div className="composition-row">
-              <span className="composition-label">{row.label}</span>
-              <span className="composition-track">
-                {row.total ? (
-                  <span className="composition-fill" style={{ width: `${percentage(row.total, largest)}%` }}>
-                    {row.male ? <span style={{ flexGrow: row.male, background: MALE }} /> : null}
-                    {row.female ? <span style={{ flexGrow: row.female, background: FEMALE }} /> : null}
-                  </span>
+      <div className="composition-table">
+        <table>
+          <thead>
+            <tr>
+              <th>{labelHeading}</th>
+              <th className="composition-number">Laki-laki</th>
+              <th className="composition-number">Perempuan</th>
+              <th className="composition-number">Total</th>
+              <th className="composition-bar-heading">Komposisi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <Fragment key={row.key}>
+                {row.groupLabel && row.groupLabel !== rows[index - 1]?.groupLabel ? (
+                  <tr className="composition-group-row">
+                    <td colSpan={5}>{row.groupLabel}</td>
+                  </tr>
                 ) : null}
-              </span>
-              <span className="composition-value">
-                {row.total ? <>L {row.male} · P {row.female} · <strong>{row.total}</strong></> : <em>Belum ada</em>}
-              </span>
-            </div>
-          </div>
-        ))}
+                <tr>
+                  <td className="composition-label">{row.label}</td>
+                  <td className="composition-number">{row.male || <span className="composition-zero">0</span>}</td>
+                  <td className="composition-number">{row.female || <span className="composition-zero">0</span>}</td>
+                  <td className="composition-number"><strong>{row.total || <span className="composition-zero">0</span>}</strong></td>
+                  {/* Bar hanya pengulangan angka di sebelahnya, jadi disembunyikan dari pembaca layar. */}
+                  <td className="composition-bar" aria-hidden="true">
+                    {row.total ? (
+                      <span className="composition-track">
+                        <span className="composition-fill" style={{ width: `${percentage(row.total, largest)}%` }}>
+                          {row.male ? <span style={{ flexGrow: row.male, background: MALE }} /> : null}
+                          {row.female ? <span style={{ flexGrow: row.female, background: FEMALE }} /> : null}
+                        </span>
+                      </span>
+                    ) : <span className="composition-zero">belum ada</span>}
+                  </td>
+                </tr>
+              </Fragment>
+            ))}
+            <tr className="composition-total-row">
+              <td className="composition-label">{totalLabel}</td>
+              <td className="composition-number">{male}</td>
+              <td className="composition-number">{female}</td>
+              <td className="composition-number"><strong>{total}</strong></td>
+              <td className="composition-bar" />
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {footnote ? <p className="composition-footnote">{footnote}</p> : null}
