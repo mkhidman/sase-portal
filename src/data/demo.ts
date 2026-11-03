@@ -96,12 +96,12 @@ function createDemoBootstrap(): BootstrapData {
     classes,
     jamaah,
     schedules: [
-      { id: 'schedule-1', date: today, classId: CLASS_IDS.cabA, materialType: 'asad', materialName: '', notes: '' },
-      { id: 'schedule-2', date: today, classId: CLASS_IDS.umum, materialType: 'hasda', materialName: '', notes: '' },
-      { id: 'schedule-3', date: addIsoDays(1), classId: CLASS_IDS.ibu, materialType: 'general', materialName: '', notes: '' },
-      { id: 'schedule-4', date: addIsoDays(3), classId: CLASS_IDS.praRemaja, materialType: 'hasda', materialName: '', notes: '' },
-      { id: 'schedule-5', date: addIsoDays(5), classId: CLASS_IDS.limaUnsur, materialType: 'asad', materialName: '', notes: '' },
-      { id: 'schedule-6', date: addIsoDays(7), classId: CLASS_IDS.cabB, materialType: 'asad', materialName: '', notes: '' },
+      { id: 'schedule-1', date: today, startTime: '19:30', endTime: '21:00', classId: CLASS_IDS.cabA, materialType: 'asad', materialName: '', notes: '' },
+      { id: 'schedule-2', date: today, startTime: '05:30', endTime: '06:30', classId: CLASS_IDS.umum, materialType: 'hasda', materialName: '', notes: '' },
+      { id: 'schedule-3', date: addIsoDays(1), startTime: '09:00', endTime: '10:30', classId: CLASS_IDS.ibu, materialType: 'general', materialName: '', notes: '' },
+      { id: 'schedule-4', date: addIsoDays(3), startTime: '16:00', endTime: '17:30', classId: CLASS_IDS.praRemaja, materialType: 'hasda', materialName: '', notes: '' },
+      { id: 'schedule-5', date: addIsoDays(5), startTime: '19:30', endTime: '21:00', classId: CLASS_IDS.limaUnsur, materialType: 'asad', materialName: '', notes: '' },
+      { id: 'schedule-6', date: addIsoDays(7), startTime: '', endTime: '', classId: CLASS_IDS.cabB, materialType: 'asad', materialName: '', notes: '' },
     ],
     attendanceSessions: [
       {
@@ -191,7 +191,7 @@ export function loadDemoBootstrap(): BootstrapData {
   try {
     const parsed = JSON.parse(stored) as BootstrapData
     const defaults = createDemoBootstrap()
-    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [], meetings: parsed.meetings ?? defaults.meetings, meetingTopics: parsed.meetingTopics ?? defaults.meetingTopics, meetingTasks: parsed.meetingTasks ?? defaults.meetingTasks }
+    return { ...parsed, schedules: (parsed.schedules ?? []).map((item) => ({ ...item, startTime: item.startTime ?? '', endTime: item.endTime ?? '', materialName: item.materialName ?? '', notes: item.notes ?? '' })), attendanceSessions: (parsed.attendanceSessions ?? []).map((item) => ({ ...item, materialName: item.materialName ?? '', notes: item.notes ?? '', revision: item.revision ?? 1, generatedFromSessionId: item.generatedFromSessionId ?? null })), admins: (parsed.admins ?? []).map((item) => ({ ...item, active: item.active ?? true, mustChangePassword: item.mustChangePassword ?? false, lastLoginAt: item.lastLoginAt ?? null })), auditLogs: parsed.auditLogs ?? [], followUps: parsed.followUps ?? [], reportingPeriods: parsed.reportingPeriods ?? [], classHistory: parsed.classHistory ?? [], statusHistory: parsed.statusHistory ?? [], families: parsed.families ?? [], familyMembers: parsed.familyMembers ?? [], guardianContacts: (parsed.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: parsed.mergeHistory ?? [], meetings: parsed.meetings ?? defaults.meetings, meetingTopics: parsed.meetingTopics ?? defaults.meetingTopics, meetingTasks: parsed.meetingTasks ?? defaults.meetingTasks }
   } catch {
     const initial = createDemoBootstrap()
     saveDemoBootstrap(initial)

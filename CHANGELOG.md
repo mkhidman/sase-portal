@@ -1,5 +1,22 @@
 ## Belum dirilis
 
+- Menambahkan tombol **Pesan WhatsApp** pada halaman Ketuntasan Hasda & ASAD. Tombol itu menyusun pesan follow-up berisi daftar bernomor warga yang belum tuntas pada bulan, materi, dan kelompok yang sedang dipilih, lengkap dengan kalimat permintaan konfirmasi dan penyusulan. Teksnya tampil di modal, boleh disunting dulu, lalu disalin satu tombol untuk ditempel ke grup.
+- Penyaringan namanya tinggal di `src/lib/followUpMessage.ts` beserta tesnya, bukan di dalam halaman. Daftar ini keluar dari aplikasi dan dibaca orang banyak: kalau penyaringnya terbalik, warga yang sudah tuntas ikut ditagih di grup, dan di layar tidak ada satu pun angka yang berubah sebagai penanda.
+- Tombolnya mati saat tidak ada yang belum tuntas. Periode yang sudah ditutup tidak mematikannya: menyusun pesan hanya membaca data, bukan mengubahnya.
+- Memakai salin-ke-papan-klip, bukan tautan `wa.me`. Tautan `wa.me` tidak bisa menyasar grup, dan daftar panjang berisiko terpotong di URL.
+
+- Mengganti daftar **Jadwal Pengajian** dengan kalender bulanan: tujuh kolom Senin-Minggu, titik berwarna per jadwal pada tiap tanggal (hijau untuk materi yang dipantau 100%, biru untuk reguler, merah untuk yang belum diabsen), dan panel samping berisi jadwal tanggal yang dipilih beserta tombol Isi Absensi, ubah, dan batalkan.
+- Menambahkan **jam mulai** dan **jam selesai** pada jadwal. Keduanya opsional: ribuan jadwal lama dibuat tanpa jam, dan memberi default `00:00` akan menampilkan jam palsu. Jadwal tanpa jam tidak menampilkan baris jam sama sekali.
+- Jam selesai yang mendahului jam mulai ditolak di dua tempat: `DataContext.saveSchedule` dan constraint `schedules_time_range_valid` pada migration `024_schedule_time_range.sql`.
+- Kalender hanya memperlihatkan satu bulan, jadi panel samping pada tanggal kosong menampilkan tiga **jadwal terdekat berikutnya** — tanpa itu jadwal yang jatuh di bulan depan tidak terlihat sama sekali, padahal daftar lama selalu menampilkannya.
+- Kartu **Belum diabsen** dipertahankan di atas kalender, tidak dilebur ke dalamnya: titik merah pada sel tanggal tidak cukup menagih absensi yang bolong.
+- `buildMonthGrid()` di `src/lib/calendar.ts` beserta tesnya. Kalender ini Senin-pertama sementara `Date.getDay()` Minggu-pertama; kalau pergeserannya salah tidak ada error apa pun — tanggalnya tetap lengkap, hanya meleset satu kolom sehingga jadwal terbaca di hari yang keliru.
+
+- Menambahkan lapisan gerak pada seluruh tampilan: isi halaman masuk bertahap (naik + memudar, judul halaman dengan blur), angka statistik dan lencana muncul dengan efek pop, stat tile terangkat saat hover, tombol mengecil sedikit saat ditekan, tombol utama dilintasi kilau saat hover, dan modal muncul dengan skala. Animasi masuk terulang tiap pindah halaman lewat `key={location.pathname}` pada `<main>`.
+- Ditulis sebagai CSS murni di `src/styles.css`, bukan memasang Magic UI. Pustaka itu mensyaratkan Tailwind v4 + `motion` (framer-motion) + komponen berbasis kelas Tailwind, sementara projek ini CSS murni tanpa Tailwind — biayanya dua dependensi baru, satu plugin build, dan penulisan ulang tiap komponen, untuk efek yang sudah bisa dilakukan CSS. Tidak ada dependensi baru; bundel CSS naik ~2 kB (gzip +0,4 kB).
+- Semua animasi masuk memakai `animation-fill-mode: both` supaya blok `prefers-reduced-motion: reduce` yang sudah ada (yang memotong durasi ke .01ms) mendudukkan elemen pada keadaan akhir, bukan menyembunyikannya pada `opacity: 0`.
+- Blur dan angkat-saat-hover sengaja tidak dipasang pada kartu berisi tabel: keduanya memaksa repaint seluruh kartu, dan kartu terbesar memuat ratusan baris. Tidak ada animasi yang berjalan menerus, supaya layar yang dibuka berjam-jam tidak menguras baterai.
+
 - Memindahkan kolom **Aksi** ke paling kiri pada tabel Status & Arsip Warga, sebelum kolom Warga.
 - Memperbaiki penyebabnya sekalian: tabel itu dipaksa selebar 1120px padahal isinya hanya butuh 712px, sehingga 225px terakhir — tepat kolom Aksi — terdorong keluar layar pada laptop 1280px dan baru terlihat setelah digeser ke kanan.
 - Menyamakan lebar minimum empat tabel lebar lain yang bergejala sama: Keluarga & Wali (1180px, terpotong 285px), Riwayat Kenaikan & Mutasi (1120px, terpotong 225px), Laporan Bulanan (1080px, terpotong 205px), dan Anggota Kelas Asal (980px, terpotong 85px). Semuanya kini 860px, yaitu lebar isi terluas yang masih muat pada laptop 1280px bersama sidebar. Di jendela yang lebih sempit tabelnya tetap bisa digeser seperti sebelumnya.

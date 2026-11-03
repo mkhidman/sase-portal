@@ -1,10 +1,22 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan satu migration berikut melalui Supabase SQL Editor:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan dua migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
+supabase/migrations/024_schedule_time_range.sql
 ```
+
+## Migration 024 (Jam mulai & jam selesai jadwal)
+
+Menambahkan kolom `start_time` dan `end_time` bertipe `time` pada tabel `schedules`.
+
+- Keduanya **nullable**. Jadwal lama tetap utuh dan tampil tanpa jam; tidak ada default yang mengarang jam `00:00`.
+- Constraint `schedules_time_range_valid` menolak jam selesai yang mendahului jam mulai. Pasangan kembarnya ada di `DataContext.saveSchedule`.
+- Tidak ada RLS atau RPC yang berubah: penyimpanan jadwal memang lewat `upsert` langsung ke tabel, dan policy 015/021 sudah mencakup kolom baru.
+- `schedules` sudah terdaftar di publication `supabase_realtime` sejak migration 002; penambahan kolom tidak perlu mendaftarkannya ulang.
+
+Migration 024 aman dijalankan berulang kali (`add column if not exists` / `drop constraint if exists`). Frontend baru tetap berjalan bila migration ini belum dijalankan — kolom jam akan selalu kosong dan penyimpanan jadwal dengan jam akan gagal, sisanya normal.
 
 ## Migration 023 (Musyawarah)
 

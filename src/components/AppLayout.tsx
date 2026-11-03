@@ -184,7 +184,9 @@ export function AppLayout() {
         </div>
         <button className="icon-button" type="button" aria-label="Keluar" title="Keluar" onClick={() => void signOut()}><LogOut size={16} /></button>
       </header>
-      <main className={`app-main ${!online ? 'with-offline-banner' : ''}`} data-density={density}>
+      {/* key per rute: memaksa <main> di-mount ulang agar animasi masuk berjalan
+          lagi di tiap halaman, bukan hanya sekali seumur sesi. */}
+      <main key={location.pathname} className={`app-main ${!online ? 'with-offline-banner' : ''}`} data-density={density}>
         {loading ? <div className="app-loading-bar" role="status" aria-label="Memuat data"><span /></div> : null}
         {error ? (
           <div className={`app-error-banner ${usingCachedData ? 'cache' : ''}`} role="alert">

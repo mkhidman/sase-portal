@@ -1,8 +1,11 @@
+import { Check, Copy, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Modal } from '../components/Modal'
 import { PageHeader, Person, ProgressBlock } from '../components/UI'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
-import { formatDate, isEligibleForMaterial, jamaahSnapshotsAsOfDate, monthEndDate, monthValue, percentage } from '../lib/utils'
+import { buildFollowUpMessage, pendingNames } from '../lib/followUpMessage'
+import { formatDate, isEligibleForMaterial, jamaahSnapshotsAsOfDate, localIsoDate, monthEndDate, monthLabel, monthValue, percentage } from '../lib/utils'
 
 const HASDA_GROUPS = ['Semua Peserta', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
 const ASAD_GROUPS = ['Semua Peserta', 'Caberawit Kelas A', 'Caberawit Kelas B', 'Caberawit Kelas C', 'Pra Remaja', 'Remaja', 'Pra Nikah', 'Menikah', 'Duda & Janda']
@@ -22,6 +25,9 @@ export function MaterialsPage() {
   const [sortMode, setSortMode] = useState<SortMode>('pending-first')
   const [workingId, setWorkingId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [draftOpen, setDraftOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [copyNote, setCopyNote] = useState<string | null>(null)
 
   const visibleClassNames = useMemo(() => new Set(visibleClasses.map((item) => item.name)), [visibleClasses])
   const groups = (materialType === 'hasda' ? HASDA_GROUPS : ASAD_GROUPS).filter(
@@ -90,6 +96,29 @@ export function MaterialsPage() {
     }
   }
 
+  // Teks dibuat sekali lalu boleh disunting di dalam modal, jadi yang disalin
+  // selalu apa yang terlihat -- bukan hasil pembuatan ulang yang mengabaikan suntingan.
+  function openDraft() {
+    setDraft(buildFollowUpMessage({
+      material: materialType === 'hasda' ? 'Hasda' : 'ASAD',
+      monthLabel: monthLabel(month),
+      groupLabel: effectiveGroup,
+      names: pendingNames(participants, completedIds),
+      generatedOn: formatDate(localIsoDate()),
+    }))
+    setCopyNote(null)
+    setDraftOpen(true)
+  }
+
+  async function copyDraft() {
+    try {
+      await navigator.clipboard.writeText(draft)
+      setCopyNote('Pesan tersalin. Buka grup WhatsApp lalu tempel.')
+    } catch {
+      setCopyNote('Browser menolak menyalin otomatis. Pilih seluruh teks di atas lalu salin manual.')
+    }
+  }
+
   return (
     <>
       <PageHeader title="Ketuntasan Hasda & ASAD" description="Ketuntasan bulanan dipantau terpisah dari status kehadiran sesi." />
@@ -139,9 +168,20 @@ export function MaterialsPage() {
             <h2>{effectiveGroup} · {MATERIAL_LABELS[materialType]}</h2>
             <p>Penyusulan mandiri tidak mengubah absensi sesi sebelumnya.</p>
           </div>
-          <div className="badge-list">
-            <span className={`badge ${pending ? 'warning' : 'success'}`}>{pending} belum tuntas</span>
-            <span className="badge muted">{completed} sudah tuntas</span>
+          <div className="completion-heading-actions">
+            <div className="badge-list">
+              <span className={`badge ${pending ? 'warning' : 'success'}`}>{pending} belum tuntas</span>
+              <span className="badge muted">{completed} sudah tuntas</span>
+            </div>
+            <button
+              className="button small outline"
+              type="button"
+              disabled={!pending}
+              title={pending ? undefined : 'Semua peserta pada kelompok ini sudah tuntas.'}
+              onClick={openDraft}
+            >
+              <MessageCircle size={15} /> Pesan WhatsApp
+            </button>
           </div>
         </div>
         <div className="completion-list">
@@ -165,6 +205,19 @@ export function MaterialsPage() {
         </div>
         {message ? <div className="inline-message error">{message}</div> : null}
       </article>
+
+      <Modal
+        open={draftOpen}
+        title="Pesan Follow Up WhatsApp"
+        onClose={() => setDraftOpen(false)}
+        footer={<><button className="button outline" type="button" onClick={() => setDraftOpen(false)}>Tutup</button><button className="button primary" type="button" onClick={() => void copyDraft()}><Copy size={15} /> Salin Pesan</button></>}
+      >
+        <p className="modal-help">Berisi {pendingNames(participants, completedIds).length} warga yang belum tuntas pada bulan, materi, dan kelompok yang sedang dipilih. Teksnya boleh disunting dulu sebelum disalin.</p>
+        <div className="form-grid one-column">
+          <label>Isi pesan<textarea rows={16} value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
+        </div>
+        {copyNote ? <p className="draft-copy-note"><Check size={14} /> {copyNote}</p> : null}
+      </Modal>
     </>
   )
 }

@@ -321,6 +321,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       async saveSchedule(input) {
         if (isPeriodClosed(input.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Buka kembali periode dari Laporan Bulanan untuk melakukan perubahan.')
         if (!visibleClasses.some((item) => item.id === input.classId)) throw new Error('Anda hanya dapat membuat jadwal untuk kelas yang diampu.')
+        if (input.startTime && input.endTime && input.endTime <= input.startTime) throw new Error('Jam selesai harus lebih akhir dari jam mulai.')
         const saved = await upsertSchedule(input)
         await updateData((current) => ({
           ...current,

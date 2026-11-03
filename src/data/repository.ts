@@ -61,7 +61,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult, meetingsResult, meetingTopicsResult, meetingTasksResult] = await Promise.all([
     fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
     fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
-    fetchAllRows(() => client.from('schedules').select('id,date,class_id,material_type,material_name,notes').order('date').order('id')),
+    fetchAllRows(() => client.from('schedules').select('id,date,start_time,end_time,class_id,material_type,material_name,notes').order('date').order('id')),
     fetchAllRows(() => client.from('attendance_sessions').select('id,date,class_id,material_type,material_name,notes,saved_at,revision,generated_from_session_id,attendance_records(jamaah_id,status)').order('date', { ascending: false }).order('id')),
     fetchAllRows(() => client.from('material_completions').select('id,month,material_type,jamaah_id,class_id,source,completed_on,source_session_id').order('id')),
     fetchAllRows(() => client.from('jamaah_follow_ups').select('id,jamaah_id,class_id,period_month,status,trigger_type,attendance_rate,absence_count,consecutive_absence,notes,next_follow_up_date,recorded_by,created_at,updated_at').order('id')),
@@ -149,9 +149,14 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     classIds: (row.jamaah_classes ?? []).map((item: { class_id: string }) => item.class_id),
   }))
 
+  // Kolom `time` Postgres kembali sebagai 'HH:MM:SS'; <input type="time"> hanya menerima 'HH:MM'.
+  const clockTime = (value: unknown): string => (typeof value === 'string' ? value.slice(0, 5) : '')
+
   const schedules: Schedule[] = (schedulesResult.data ?? []).map((row: any) => ({
     id: row.id,
     date: row.date,
+    startTime: clockTime(row.start_time),
+    endTime: clockTime(row.end_time),
     classId: row.class_id,
     materialType: row.material_type,
     materialName: row.material_name ?? '',
@@ -472,6 +477,8 @@ export async function upsertSchedule(schedule: Schedule): Promise<Schedule> {
   const payload = {
     id: schedule.id.startsWith('new-') ? undefined : schedule.id,
     date: schedule.date,
+    start_time: schedule.startTime || null,
+    end_time: schedule.endTime || null,
     class_id: schedule.classId,
     material_type: schedule.materialType,
     material_name: schedule.materialName.trim() || '',

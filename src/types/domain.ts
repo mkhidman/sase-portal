@@ -52,6 +52,9 @@ export interface Jamaah {
 export interface Schedule {
   id: string
   date: string
+  /** 'HH:MM', atau '' bila jadwal dibuat tanpa jam. */
+  startTime: string
+  endTime: string
   classId: string
   materialType: MaterialType
   materialName: string

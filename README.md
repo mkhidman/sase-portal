@@ -90,6 +90,9 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 - Materi jadwal dapat ditambah secara dinamis beserta keterangan.
 - Form absensi memiliki filter Laki-laki/Perempuan dan kolom materi sambung/keterangan.
 - Admin dapat menambahkan jadwal hanya untuk kelas yang diampunya.
+- Daftar warga yang belum tuntas Hasda/ASAD dapat dijadikan pesan follow-up siap tempel ke grup WhatsApp.
+- Jadwal ditampilkan sebagai kalender bulanan: tiap tanggal menunjukkan titik per jadwal, dan memilih tanggal membuka daftar jadwal hari itu di panel samping.
+- Jadwal dapat diisi jam mulai dan jam selesai. Keduanya opsional; jadwal lama yang dibuat sebelum kolom ini ada tetap tampil tanpa jam.
 - Jadwal dapat diubah dan dibatalkan, termasuk jadwal yang sudah lewat agar tidak terus muncul sebagai belum diabsen.
 - Ambang Tindak Lanjut menggunakan minimal 4 kali Alpa.
 - Laporan Bulanan dapat diunduh sebagai PDF rapi.
