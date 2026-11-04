@@ -1,11 +1,25 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan dua migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan tiga migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
 supabase/migrations/024_schedule_time_range.sql
+supabase/migrations/025_meeting_topic_wording.sql
 ```
+
+## Migration 025 (Istilah Bahasan & Keputusan)
+
+Membuat ulang RPC `save_meeting_record` dengan **dua pesan galat** yang berubah mengikuti istilah baru di antarmuka:
+
+- `Notulensi harus memuat minimal satu masalah.` menjadi `Notulensi harus memuat minimal satu bahasan.`
+- `Masalah wajib diisi pada setiap bahasan.` menjadi `Setiap bahasan wajib diisi keterangannya.`
+
+Selebihnya isi fungsinya identik dengan migration 023. Kolom `problem` dan `solution` **tidak** diganti nama: identifier internal memang tetap Inggris di projek ini, dan mengganti nama kolom berarti menyentuh tabel, RPC, serta seluruh pemetaan di `repository.ts` untuk hasil yang tidak terlihat sedikit pun di layar.
+
+Pesan di RPC wajib sama persis dengan yang ada di `DataContext.saveMeeting`. Kalau berbeda, pengguna melihat dua kalimat berlainan untuk kesalahan yang sama, tergantung validasi mana yang kebetulan menangkapnya lebih dulu.
+
+Migration 025 aman dijalankan berulang kali (`create or replace`). Tidak ada tabel, kolom, RLS, atau data yang berubah. Frontend baru tetap berjalan bila migration ini belum dijalankan — hanya saja pesan galat dari server masih memakai kata "masalah" sementara layarnya sudah berkata "bahasan".
 
 ## Migration 024 (Jam mulai & jam selesai jadwal)
 
@@ -22,7 +36,7 @@ Migration 024 aman dijalankan berulang kali (`add column if not exists` / `drop 
 
 Membuat modul Musyawarah yang baru. Tabelnya memakai nama baru dan **tidak** memulihkan data notulensi lama — isi tabel lama sudah hilang permanen sejak migration 022.
 
-- Tabel `meetings` (judul, tanggal), `meeting_topics` (masalah dan solusinya, milik satu musyawarah), dan `meeting_tasks` (tugas, penanggung jawab, batas tanggal, waktu selesai).
+- Tabel `meetings` (judul, tanggal), `meeting_topics` (bahasan dan keputusannya, milik satu musyawarah), dan `meeting_tasks` (tugas, penanggung jawab, batas tanggal, waktu selesai).
 - Ketiganya didaftarkan ke publication `supabase_realtime`.
 - RLS: seluruh pengguna terautentikasi dapat membaca; hanya Superadmin yang dapat menulis.
 - RPC `save_meeting_record(uuid, text, date, jsonb)` menyimpan satu notulensi beserta bahasan dan tugasnya dalam satu transaksi. Baris yang sudah ada diperbarui, bukan dihapus lalu disisipkan ulang, agar centang `done_at` tidak ikut terhapus setiap kali notulensi disunting.

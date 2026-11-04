@@ -11,7 +11,7 @@ function musyawarah(id: string, meetingDate: string): Meeting {
 }
 
 function bahasan(id: string, meetingId: string, sortOrder = 0): MeetingTopic {
-  return { id, meetingId, sortOrder, problem: `Masalah ${id}`, solution: 'Solusi' }
+  return { id, meetingId, sortOrder, problem: `Bahasan ${id}`, solution: 'Keputusan' }
 }
 
 function tugas(over: Partial<MeetingTask> & { id: string; topicId: string }): MeetingTask {

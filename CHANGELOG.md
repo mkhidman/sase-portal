@@ -1,5 +1,10 @@
 ## Belum dirilis
 
+- Mengganti istilah **Masalah** dan **Solusi** pada Musyawarah menjadi **Bahasan** dan **Keputusan**. Yang dibahas dalam musyawarah tidak selalu masalah — bisa penjadwalan, rencana kegiatan, atau pengumuman — dan menamainya "masalah" memaksa penulis notulensi membingkai ulang hal yang bukan masalah.
+- Ikut berubah: judul bagian ("Bahasan yang dibahas"), tombol "Tambah Bahasan", penomoran kartu ("Bahasan 1"), hitungan pada daftar notulensi ("2 bahasan · 2 dari 3 tugas selesai"), kalimat kosong ("Keputusan belum dicatat.", "Bahasan ini belum punya tugas."), deskripsi halaman, kalimat konfirmasi hapus, dan placeholder kedua kolom.
+- Dua pesan galat ikut disesuaikan di **dua tempat sekaligus**: `DataContext.saveMeeting` dan RPC `save_meeting_record` lewat migration `025_meeting_topic_wording.sql`. Kalau hanya satu yang diganti, pengguna melihat dua kalimat berlainan untuk kesalahan yang sama, tergantung validasi mana yang kebetulan menangkapnya lebih dulu.
+- Kolom `problem` dan `solution` di database **tidak** diganti nama. Identifier internal memang tetap Inggris di projek ini, dan mengganti nama kolom berarti menyentuh tabel, RPC, serta seluruh pemetaan di `repository.ts` untuk hasil yang tidak terlihat sedikit pun di layar.
+
 - Menambahkan tombol **Pesan WhatsApp** pada halaman Ketuntasan Hasda & ASAD. Tombol itu menyusun pesan follow-up berisi daftar bernomor warga yang belum tuntas pada bulan, materi, dan kelompok yang sedang dipilih, lengkap dengan kalimat permintaan konfirmasi dan penyusulan. Teksnya tampil di modal, boleh disunting dulu, lalu disalin satu tombol untuk ditempel ke grup.
 - Penyaringan namanya tinggal di `src/lib/followUpMessage.ts` beserta tesnya, bukan di dalam halaman. Daftar ini keluar dari aplikasi dan dibaca orang banyak: kalau penyaringnya terbalik, warga yang sudah tuntas ikut ditagih di grup, dan di layar tidak ada satu pun angka yang berubah sebagai penanda.
 - Tombolnya mati saat tidak ada yang belum tuntas. Periode yang sudah ditutup tidak mematikannya: menyusun pesan hanya membaca data, bukan mengubahnya.

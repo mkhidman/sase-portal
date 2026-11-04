@@ -168,7 +168,7 @@ export function MeetingsPage() {
     const summary = meetingSummary(meeting.id, meetingTopics, meetingTasks)
     const approved = await confirm({
       title: 'Hapus notulensi musyawarah?',
-      description: `${meeting.title} (${formatDate(meeting.meetingDate)}) beserta ${summary.topicCount} masalah dan ${summary.taskCount} tugas akan hilang permanen, termasuk tugas yang belum selesai.`,
+      description: `${meeting.title} (${formatDate(meeting.meetingDate)}) beserta ${summary.topicCount} bahasan dan ${summary.taskCount} tugas akan hilang permanen, termasuk tugas yang belum selesai.`,
       confirmLabel: 'Hapus Notulensi',
       tone: 'danger',
     })
@@ -195,7 +195,7 @@ export function MeetingsPage() {
     <>
       <PageHeader
         title="Musyawarah"
-        description="Setiap bahasan dicatat sebagai masalah, solusinya, dan tugas siapa. Tugas dari seluruh musyawarah terhimpun di satu daftar agar bisa ditagih."
+        description="Tiap bahasan dicatat beserta keputusannya dan tugas siapa. Tugas dari seluruh musyawarah terhimpun di satu daftar agar bisa ditagih."
         actions={<button className="button primary" onClick={openCreate}><Plus size={16} /> Tambah Notulensi</button>}
       />
 
@@ -259,7 +259,7 @@ export function MeetingsPage() {
                 <header>
                   <div>
                     <strong>{meeting.title}</strong>
-                    <small>{formatDate(meeting.meetingDate)} · {summary.topicCount} masalah · {summary.doneCount} dari {summary.taskCount} tugas selesai</small>
+                    <small>{formatDate(meeting.meetingDate)} · {summary.topicCount} bahasan · {summary.doneCount} dari {summary.taskCount} tugas selesai</small>
                   </div>
                   <div className="meeting-card-actions">
                     {closed ? <span className="badge muted">Periode ditutup</span> : null}
@@ -273,7 +273,7 @@ export function MeetingsPage() {
                     return (
                       <div className="meeting-topic" key={topic.id}>
                         <p className="meeting-problem">{topic.problem}</p>
-                        <p className="meeting-solution">{topic.solution || 'Solusi belum dicatat.'}</p>
+                        <p className="meeting-solution">{topic.solution || 'Keputusan belum dicatat.'}</p>
                         {tasks.length ? (
                           <ul className="meeting-task-list">
                             {tasks.map((task) => (
@@ -289,7 +289,7 @@ export function MeetingsPage() {
                               </li>
                             ))}
                           </ul>
-                        ) : <p className="muted-copy">Belum ada tugas untuk masalah ini.</p>}
+                        ) : <p className="muted-copy">Belum ada tugas untuk bahasan ini.</p>}
                       </div>
                     )
                   })}
@@ -302,7 +302,7 @@ export function MeetingsPage() {
             <EmptyState
               icon={<ClipboardList size={20} />}
               title="Belum ada notulensi musyawarah"
-              description="Catat masalah yang dibahas, solusinya, dan tugas siapa supaya hasil musyawarah bisa ditagih pada pertemuan berikutnya."
+              description="Catat apa yang dibahas, keputusannya, dan tugas siapa supaya hasil musyawarah bisa ditagih pada pertemuan berikutnya."
               action={<button className="button primary" type="button" onClick={openCreate}><Plus size={16} /> Tambah Notulensi</button>}
             />
           ) : null}
@@ -322,18 +322,18 @@ export function MeetingsPage() {
         </div>
         {headerPeriodClosed ? <div className="form-error">Periode {header.meetingDate.slice(0, 7)} sudah ditutup. Buka kembali periode dari Laporan Bulanan untuk menyimpan notulensi bulan itu.</div> : null}
 
-        <div className="family-member-heading"><div><strong>Masalah yang dibahas</strong><small>{topicDrafts.length} masalah</small></div><button className="button soft" type="button" onClick={() => setTopicDrafts([...topicDrafts, newTopicDraft()])}><Plus size={15} /> Tambah Masalah</button></div>
+        <div className="family-member-heading"><div><strong>Bahasan yang dibahas</strong><small>{topicDrafts.length} bahasan</small></div><button className="button soft" type="button" onClick={() => setTopicDrafts([...topicDrafts, newTopicDraft()])}><Plus size={15} /> Tambah Bahasan</button></div>
 
         <div className="topic-draft-list">
           {topicDrafts.map((topic, index) => (
             <section className="topic-draft" key={topic.id}>
               <header>
-                <strong>Masalah {index + 1}</strong>
-                {topicDrafts.length > 1 ? <button className="icon-button danger-icon" type="button" aria-label={`Hapus masalah ${index + 1}`} onClick={() => setTopicDrafts(topicDrafts.filter((item) => item.id !== topic.id))}><X size={15} /></button> : null}
+                <strong>Bahasan {index + 1}</strong>
+                {topicDrafts.length > 1 ? <button className="icon-button danger-icon" type="button" aria-label={`Hapus bahasan ${index + 1}`} onClick={() => setTopicDrafts(topicDrafts.filter((item) => item.id !== topic.id))}><X size={15} /></button> : null}
               </header>
               <div className="form-grid one-column">
-                <label>Masalah *<textarea rows={2} value={topic.problem} onChange={(event) => updateTopic(topic.id, { problem: event.target.value })} placeholder="Apa yang menjadi masalah" /></label>
-                <label>Solusi<textarea rows={2} value={topic.solution} onChange={(event) => updateTopic(topic.id, { solution: event.target.value })} placeholder="Keputusan musyawarah atas masalah ini" /></label>
+                <label>Bahasan *<textarea rows={2} value={topic.problem} onChange={(event) => updateTopic(topic.id, { problem: event.target.value })} placeholder="Apa yang dibahas" /></label>
+                <label>Keputusan<textarea rows={2} value={topic.solution} onChange={(event) => updateTopic(topic.id, { solution: event.target.value })} placeholder="Keputusan musyawarah atas bahasan ini" /></label>
               </div>
               <div className="task-draft-head"><strong>Tugas</strong><button className="button soft small" type="button" onClick={() => updateTopic(topic.id, { tasks: [...topic.tasks, newTaskDraft()] })}><Plus size={14} /> Tambah Tugas</button></div>
               {topic.tasks.map((task) => (
@@ -347,7 +347,7 @@ export function MeetingsPage() {
                   <button className="icon-button danger-icon" type="button" aria-label="Hapus tugas" onClick={() => updateTopic(topic.id, { tasks: topic.tasks.filter((item) => item.id !== task.id) })}><X size={15} /></button>
                 </div>
               ))}
-              {!topic.tasks.length ? <p className="muted-copy">Masalah ini belum punya tugas.</p> : null}
+              {!topic.tasks.length ? <p className="muted-copy">Bahasan ini belum punya tugas.</p> : null}
             </section>
           ))}
         </div>

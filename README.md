@@ -264,7 +264,7 @@ Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset passw
 
 Setelah migration 001–022 aktif, jalankan `supabase/migrations/023_musyawarah.sql`.
 
-- Notulensi diisi sebagai daftar masalah, bukan karangan bebas: tiap bahasan punya kolom **Masalah**, **Solusi**, lalu baris tugas dengan penanggung jawab dan batas tanggal.
+- Notulensi diisi sebagai daftar bahasan, bukan karangan bebas: tiap bahasan punya kolom **Bahasan**, **Keputusan**, lalu baris tugas dengan penanggung jawab dan batas tanggal.
 - Penanggung jawab wajib diisi dan dipilih dari data warga, supaya tugasnya dapat ditagih kepada orang tertentu.
 - Daftar **Tugas Belum Selesai** menghimpun tugas dari seluruh musyawarah, dapat disaring per penanggung jawab dan dicentang langsung. Batas tanggal terdekat di atas, yang lewat batas ditandai terlambat, yang tanpa batas tanggal di paling bawah.
 - Menyunting notulensi tidak menghapus centang "selesai" yang dibuat setelahnya.
