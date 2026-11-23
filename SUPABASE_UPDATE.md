@@ -1,13 +1,28 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan empat migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan lima migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
 supabase/migrations/024_schedule_time_range.sql
 supabase/migrations/025_meeting_topic_wording.sql
 supabase/migrations/026_akses_wali.sql
+supabase/migrations/027_wali_token_tanpa_pgcrypto.sql
 ```
+
+## Migration 027 (Perbaikan pembuat token wali)
+
+**Wajib dijalankan bila 026 sudah terpasang.** Tanpa migration ini, tombol Aktifkan Akses selalu gagal dengan:
+
+```json
+{"code":"42883","message":"function gen_random_bytes(integer) does not exist"}
+```
+
+`pgcrypto` memang aktif, tetapi Supabase memasangnya di schema `extensions`, sementara fungsi ini memakai `set search_path = public` demi keamanan. `gen_random_uuid()` pada migration 001 lolos karena itu fungsi bawaan inti Postgres, bukan milik pgcrypto — itu sebabnya kekeliruan ini tidak muncul di migration mana pun sebelumnya.
+
+Token kini disusun dari dua `gen_random_uuid()`: 64 digit heksadesimal (~244 bit), sudah aman untuk URL tanpa dibersihkan. Dipilih daripada menambahkan `extensions` ke `search_path` supaya tidak ada asumsi tentang di schema mana sebuah ekstensi kebetulan dipasang.
+
+Hanya badan fungsi `set_wali_access` yang berubah (`create or replace`). Tabel, RLS, dan `wali_attendance` tidak tersentuh. Tautan yang sudah dibuat sebelum migration ini tetap berlaku — tidak ada yang pernah berhasil dibuat, karena fungsinya memang selalu gagal.
 
 ## Migration 026 (Akses Wali)
 

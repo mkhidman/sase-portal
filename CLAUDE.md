@@ -61,12 +61,14 @@ pages/  →  DataContext / AuthContext  →  data/repository.ts  →  Supabase R
 
 Checklist minimum (urut):
 
-1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `026_akses_wali.sql`).
+1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `027_wali_token_tanpa_pgcrypto.sql`).
 2. Daftarkan tabel ke publication `supabase_realtime` di migration tersebut.
 3. Tambah tipe di `src/types/domain.ts` (semua tipe domain terpusat di sini).
 4. Tambah koleksi ke `BootstrapData` + query di `loadBootstrap` + fungsi mutasi di `repository.ts` (dua cabang: Supabase & demo).
 5. Sambungkan di `DataContext` (state + fungsi mutasi + update cache offline).
 6. Update `README.md` dan `CHANGELOG.md`; catat instruksi deploy migration di `SUPABASE_UPDATE.md`.
+
+Ekstensi Postgres (pgcrypto dkk.) dipasang Supabase di schema `extensions`. RPC di projek ini memakai `set search_path = public`, jadi fungsi ekstensi **tidak terlihat** dari dalamnya — pakai fungsi bawaan inti Postgres, atau sebut schema-nya secara eksplisit. `gen_random_uuid()` aman karena itu bawaan inti, `gen_random_bytes()` tidak.
 
 Edge Functions di-deploy terpisah: `supabase functions deploy <nama> --no-verify-jwt` (`invite-admin`, `manage-admin`).
 
