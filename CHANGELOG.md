@@ -1,6 +1,7 @@
 ## Belum dirilis
 
 - Memperbaiki tombol **Aktifkan Akses Wali** yang selalu gagal dengan `42883 function gen_random_bytes(integer) does not exist` (migration `027_wali_token_tanpa_pgcrypto.sql`). `pgcrypto` aktif, tetapi Supabase memasangnya di schema `extensions`, sementara fungsinya memakai `set search_path = public`. Token kini disusun dari dua `gen_random_uuid()` — fungsi bawaan inti Postgres, jadi tidak ada lagi asumsi tentang di schema mana sebuah ekstensi dipasang.
+- Tautan wali kini tampil di modal **Tautan Akses Wali** begitu dibuat: alamat lengkapnya terbaca, ada tombol Salin dan Kirim via WhatsApp, plus peringatan bahwa tautan itu adalah kuncinya. Sebelumnya tautannya hanya hidup di dalam tombol WhatsApp di kolom Aksi — tidak ada cara mengambil alamat mentahnya, dan tombolnya terdorong keluar batas tabel.
 - Klik yang gagal pada dua tombol wali tidak lagi senyap. Keduanya ditekan dari dalam tabel panjang sementara `InlineMessage` ada di puncak halaman; aksi lain di halaman itu selalu lewat modal yang menutup, jadi pandangan kembali ke atas dengan sendirinya.
 
 - Menambahkan **Akses Wali**: orang tua membuka absensi tanggungannya sendiri lewat tautan rahasia di `/wali/<token>`, tanpa akun dan tanpa login. Satu wali cukup satu tautan walaupun anaknya tiga. Tombolnya ada di kolom Aksi halaman Keluarga & Wali, dan hanya muncul pada warga yang memang tercatat sebagai wali warga lain.

@@ -1843,3 +1843,4 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .wali-row small { color: var(--muted); font-size: var(--fs-2xs); }
 .wali-footer { display: flex; align-items: flex-start; gap: 7px; padding: 0 2px; color: var(--muted); font-size: var(--fs-2xs); line-height: 1.55; }
 .wali-footer svg { flex-shrink: 0; margin-top: 2px; }
+.wali-link { display: block; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--text); font-size: var(--fs-2xs); line-height: 1.6; word-break: break-all; }

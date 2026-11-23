@@ -1,4 +1,5 @@
 import {
+  Copy,
   ExternalLink,
   House,
   KeyRound,
@@ -18,7 +19,7 @@ import { Modal } from '../components/Modal'
 import { useConfirm } from '../components/useConfirm'
 import { Pagination } from '../components/Pagination'
 import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
-import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
+import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
@@ -95,7 +96,7 @@ export function FamilyContactsPage() {
   const [message, setMessage] = useState<Feedback | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const { confirm, dialog: confirmDialog } = useConfirm()
-  const [waliShare, setWaliShare] = useState<{ jamaahId: string; url: string } | null>(null)
+  const [waliShare, setWaliShare] = useState<{ waliName: string; link: string; waUrl: string } | null>(null)
 
   const pageJamaah = useMemo(() => canManage ? jamaah : visibleJamaah, [canManage, jamaah, visibleJamaah])
   const visibleIds = useMemo(() => new Set(pageJamaah.map((item) => item.id)), [pageJamaah])
@@ -203,8 +204,9 @@ export function FamilyContactsPage() {
   // Dua tombol wali ditekan dari dalam tabel yang panjang, sementara InlineMessage
   // ada di puncak halaman. Aksi lain di sini selalu lewat modal yang menutup, jadi
   // pandangan kembali ke atas dengan sendirinya -- dua ini tidak, dan kegagalannya
-  // jadi senyap total.
-  function announce(feedback: Feedback) {
+  // jadi senyap total. Hanya kegagalan yang digulung: pada keberhasilan, tombol
+  // tautannya justru baru muncul di baris itu dan menggulung ke atas menyembunyikannya.
+  function announceFailure(feedback: Feedback) {
     setMessage(feedback)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -218,12 +220,21 @@ export function FamilyContactsPage() {
       const link = buildWaliLink(window.location.origin, token)
       const message = buildWaliInviteMessage({ waliName: person.fullName, link })
       setWaliShare({
-        jamaahId: person.id,
-        url: waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` : link,
+        waliName: person.fullName,
+        link,
+        waUrl: waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` : '',
       })
-      announce(feedbackOk(`Tautan baru untuk ${person.fullName} siap dikirim. Tautan lama otomatis tidak berlaku.`))
     } catch (cause) {
-      announce(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
+      announceFailure(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
+    }
+  }
+
+  async function copyWaliLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link)
+      setMessage(feedbackOk('Tautan wali disalin ke papan klip.'))
+    } catch {
+      announceFailure(feedbackError(`Papan klip tidak dapat diakses. Tautannya: ${link}`))
     }
   }
 
@@ -237,10 +248,9 @@ export function FamilyContactsPage() {
     if (!approved) return
     try {
       await setWaliAccess(person.id, false)
-      setWaliShare((current) => current?.jamaahId === person.id ? null : current)
-      announce(feedbackOk('Akses wali dicabut.'))
+      setMessage(feedbackOk('Akses wali dicabut.'))
     } catch (cause) {
-      announce(feedbackFrom(cause, 'Gagal mencabut akses wali.'))
+      announceFailure(feedbackFrom(cause, 'Gagal mencabut akses wali.'))
     }
   }
 
@@ -424,7 +434,7 @@ export function FamilyContactsPage() {
                       const resolved = resolvedGuardian(contact)
                       return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
                     })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}{waliShare?.jamaahId === person.id ? <a className="button primary small" href={waliShare.url} target="_blank" rel="noreferrer"><MessageCircle size={14} /> Kirim Tautan <ExternalLink size={11} /></a> : null}</div></td>
+                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}</div></td>
                   </tr>
                 )
               })}
@@ -434,6 +444,19 @@ export function FamilyContactsPage() {
         </div>
         <Pagination page={contactPagination.page} pageSize={contactPagination.pageSize} totalItems={contactRows.length} onPageChange={contactPagination.setPage} onPageSizeChange={contactPagination.setPageSize} />
       </article>
+
+      <Modal
+        open={Boolean(waliShare)}
+        title="Tautan Akses Wali"
+        onClose={() => setWaliShare(null)}
+        footer={<><button className="button outline" onClick={() => setWaliShare(null)}>Tutup</button><button className="button soft" onClick={() => void copyWaliLink(waliShare?.link ?? '')}><Copy size={16} /> Salin Tautan</button>{waliShare?.waUrl ? <a className="button primary" href={waliShare.waUrl} target="_blank" rel="noreferrer"><MessageCircle size={16} /> Kirim via WhatsApp <ExternalLink size={12} /></a> : null}</>}
+      >
+        <div className="form-grid one-column">
+          <p>Tautan untuk <strong>{waliShare?.waliName}</strong>. Tautan lama otomatis tidak berlaku.</p>
+          <code className="wali-link">{waliShare?.link}</code>
+          <InlineMessage value={feedbackInfo('Tautan ini adalah kuncinya: siapa pun yang menerimanya dapat melihat absensi keluarga tersebut. Pakai tombol Cabut bila tautannya tersebar.')} />
+        </div>
+      </Modal>
 
       <Modal
         open={familyOpen}

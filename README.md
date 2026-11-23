@@ -280,6 +280,7 @@ Setelah migration 001–025 aktif, jalankan `supabase/migrations/026_akses_wali.
 - Orang tua melihat absensi tanggungannya sendiri lewat tautan rahasia `/wali/<token>`, **tanpa akun dan tanpa login**.
 - Tanggungan diambil dari kontak wali (`guardian_contacts.guardian_jamaah_id`), bukan dari tabel Keluarga. Satu wali cukup satu tautan walaupun anaknya tiga, dan dirinya sendiri ikut ditampilkan.
 - Tombol **Aktifkan Akses**, **Tautan Baru**, dan **Cabut** ada di kolom Aksi halaman Keluarga & Wali, hanya untuk Superadmin dan hanya pada warga yang tercatat sebagai wali warga lain.
+- Begitu diaktifkan, modal **Tautan Akses Wali** menampilkan alamat lengkapnya dengan tombol Salin dan Kirim via WhatsApp.
 - Tautan dikirim lewat tombol WhatsApp yang sudah memakai nomor wali. Token tidak pernah ikut bootstrap, jadi mengirim ulang berarti membuat tautan baru dan mematikan tautan lama.
 - Halaman wali menampilkan **tiga bulan terakhir** dan hanya anggota aktif. Halaman ini tidak memuat bootstrap dan tidak membuka kanal Realtime.
 - Tautan adalah kuncinya: siapa pun yang menerima tautannya dapat melihat data keluarga itu. Pakai tombol Cabut bila tautan tersebar.
