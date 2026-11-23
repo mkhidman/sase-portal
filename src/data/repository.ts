@@ -22,7 +22,9 @@ import type {
   ReportingPeriodStatus,
   Schedule,
   StudyClass,
+  WaliView,
 } from '../types/domain'
+import { buildWaliView, waliWindowStart } from '../lib/wali'
 import { loadDemoBootstrap, saveDemoBootstrap } from './demo'
 
 function requireSupabase() {
@@ -58,7 +60,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (isDemoMode) return loadDemoBootstrap()
 
   const client = requireSupabase()
-  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult, meetingsResult, meetingTopicsResult, meetingTasksResult] = await Promise.all([
+  const [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult, followUpsResult, periodsResult, classHistoryResult, statusHistoryResult, familiesResult, familyMembersResult, guardianContactsResult, mergeHistoryResult, meetingsResult, meetingTopicsResult, meetingTasksResult, waliAccessResult] = await Promise.all([
     fetchAllRows(() => client.from('study_classes').select('id,name,active').order('sort_order').order('id')),
     fetchAllRows(() => client.from('jamaah').select('id,full_name,gender,birth_date,phone,census_category,active,jamaah_classes(class_id)').order('full_name').order('id')),
     fetchAllRows(() => client.from('schedules').select('id,date,start_time,end_time,class_id,material_type,material_name,notes').order('date').order('id')),
@@ -75,6 +77,8 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('meetings').select('id,title,meeting_date,created_by,created_at,updated_at').order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
     fetchAllRows(() => client.from('meeting_topics').select('id,meeting_id,sort_order,problem,solution').order('meeting_id').order('sort_order').order('id')),
     fetchAllRows(() => client.from('meeting_tasks').select('id,topic_id,sort_order,task,pic_jamaah_id,due_date,done_at,done_by').order('topic_id').order('sort_order').order('id')),
+    // Hanya id-nya. Token tautan wali sengaja tidak pernah ikut bootstrap supaya tidak mengendap di cache offline admin.
+    fetchAllRows(() => client.from('wali_access').select('jamaah_id').order('jamaah_id')),
   ])
 
   const coreResults = [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult]
@@ -91,6 +95,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (meetingsResult.error && !['42P01', 'PGRST205'].includes(meetingsResult.error.code)) throw meetingsResult.error
   if (meetingTopicsResult.error && !['42P01', 'PGRST205'].includes(meetingTopicsResult.error.code)) throw meetingTopicsResult.error
   if (meetingTasksResult.error && !['42P01', 'PGRST205'].includes(meetingTasksResult.error.code)) throw meetingTasksResult.error
+  if (waliAccessResult.error && !['42P01', 'PGRST205'].includes(waliAccessResult.error.code)) throw waliAccessResult.error
 
   let admins: AppUser[] = []
   let auditLogs: AuditLog[] = []
@@ -297,6 +302,7 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     meetings: (meetingsResult.data ?? []).map(mapMeetingRow),
     meetingTopics: (meetingTopicsResult.data ?? []).map(mapMeetingTopicRow),
     meetingTasks: (meetingTasksResult.data ?? []).map(mapMeetingTaskRow),
+    waliAccessIds: (waliAccessResult.data ?? []).map((row: any) => row.jamaah_id as string),
   }
 }
 
@@ -904,4 +910,35 @@ export async function mergeJamaahDuplicates(input: MergeJamaahInput): Promise<Me
     duplicateJamaahId: String(result.duplicateJamaahId),
     familyConflict: Boolean(result.familyConflict),
   }
+}
+
+export async function setWaliAccess(jamaahId: string, enabled: boolean): Promise<string | null> {
+  // Token demo sengaja mudah ditebak: mode demo tidak punya backend, dan yang wajib
+  // ditiru di sini aturan siapa yang boleh tampil, bukan cara membuat token.
+  if (isDemoMode) return enabled ? `demo-${jamaahId}` : null
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('set_wali_access', { target_jamaah_id: jamaahId, enable: enabled })
+  if (error) throw error
+  return (data as string | null) ?? null
+}
+
+/** Dipanggil dari halaman publik tanpa sesi login, jadi tidak boleh menyentuh loadBootstrap. */
+export async function fetchWaliView(token: string): Promise<WaliView | null> {
+  if (isDemoMode) {
+    const guardianId = token.startsWith('demo-') ? token.slice('demo-'.length) : ''
+    const demo = loadDemoBootstrap()
+    if (!guardianId || !demo.waliAccessIds.includes(guardianId)) return null
+    return buildWaliView({
+      guardianId,
+      jamaah: demo.jamaah,
+      guardianContacts: demo.guardianContacts,
+      classes: demo.classes,
+      sessions: demo.attendanceSessions,
+      since: waliWindowStart(new Date()),
+    })
+  }
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('wali_attendance', { access_token: token })
+  if (error) throw error
+  return (data as WaliView | null) ?? null
 }

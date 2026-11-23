@@ -45,7 +45,7 @@ pages/  →  DataContext / AuthContext  →  data/repository.ts  →  Supabase R
 ## Invarian yang harus dijaga
 
 - **Validasi ganda.** Setiap aturan bisnis hidup di dua tempat: frontend (DataContext) dan database (RPC security definer + RLS). Jangan menghapus salah satunya "karena redundan".
-- **Mutasi multi-tabel wajib lewat RPC**, bukan beberapa query dari client. RPC yang ada: `save_jamaah_record`, `bulk_import_jamaah`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `record_current_login`, `complete_password_change`.
+- **Mutasi multi-tabel wajib lewat RPC**, bukan beberapa query dari client. RPC yang ada: `save_jamaah_record`, `bulk_import_jamaah`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `record_current_login`, `complete_password_change`, `save_meeting_record`, `set_wali_access`, `wali_attendance`.
 - **Perubahan aturan harus disalin ke jalur demo.** Logika merge/simpan versi client ada di `src/lib/` (`mergeJamaah.ts`, dsb.). Mengubah RPC tanpa mengubah pasangan demo-nya membuat dua mode berperilaku berbeda.
 - **Laporan historis memakai snapshot, bukan data terkini.** `jamaahSnapshotsAsOfDate()` (`src/lib/utils.ts`) memutar mundur `class_membership_history` + `jamaah_status_history` untuk merekonstruksi kelas, kategori sensus, dan status aktif pada tanggal tertentu. Laporan bulanan/rekap yang membaca `jamaah` langsung akan berubah retroaktif setiap kali ada kenaikan kelas atau pengarsipan — itu bug.
 - **Nilai turunan bersama disediakan DataContext, bukan dibangun ulang per halaman.** `classNameMap` (id kelas ke nama) sudah ada di context. Jangan menulis `new Map(classes.map(...))` lagi di halaman.
@@ -54,13 +54,14 @@ pages/  →  DataContext / AuthContext  →  data/repository.ts  →  Supabase R
 - **Absensi memakai optimistic locking.** `saveAttendance` selalu mengirim `expectedRevision`; database melempar `ATTENDANCE_CONFLICT` jika `revision` sudah berubah. Jangan menyimpan tanpa revision.
 - **Pengajian Umum memicu rekap otomatis.** Kelas dengan nama `GENERAL_ATTENDANCE_CLASS_NAME` (`src/lib/generalAttendance.ts`) membuat sesi turunan untuk Pra Remaja/Remaja/Pra Nikah **hanya hari Senin & Rabu** (`isGeneralAttendanceBreakdownDay`). Sesi turunan ditandai `generatedFromSessionId` dan read-only.
 - **Periode tertutup mengunci bulan itu** (jadwal, absensi, follow-up, materi, status, kelas). Cek `isPeriodClosed(month)` sebelum mutasi operasional.
+- **Halaman wali (`/wali/:token`) tidak boleh menyentuh `loadBootstrap` atau `useData`.** Halaman itu dibuka orang tua tanpa akun; lewat bootstrap, satu kunjungan mengunduh 16 tabel penuh ke HP orang luar dan mengendapkannya di cache offline. Datanya hanya dari RPC `wali_attendance`, dan tokennya tidak pernah ikut bootstrap.
 - **Tanggal internal `YYYY-MM-DD`** via `localIsoDate()`. Tanggal lahir dan tanggal efektif tidak boleh di masa depan.
 
 ## Menambah fitur yang menyentuh tabel
 
 Checklist minimum (urut):
 
-1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `022_drop_meeting_notes.sql`).
+1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `026_akses_wali.sql`).
 2. Daftarkan tabel ke publication `supabase_realtime` di migration tersebut.
 3. Tambah tipe di `src/types/domain.ts` (semua tipe domain terpusat di sini).
 4. Tambah koleksi ke `BootstrapData` + query di `loadBootstrap` + fungsi mutasi di `repository.ts` (dua cabang: Supabase & demo).
@@ -85,4 +86,4 @@ CSS murni di `src/styles.css` (tanpa Tailwind/CSS-in-JS). Arrow function compone
 
 ## Kondisi saat ini
 
-Backup JSON bisa diunduh tetapi restore belum ada. Modul Notulensi Musyawarah sudah dihapus (migration 022).
+Backup JSON bisa diunduh tetapi restore belum ada. Akses Wali sudah ada (tautan tanpa akun); ketuntasan materi belum ikut ditampilkan di halaman itu. Modul Notulensi Musyawarah sudah dihapus (migration 022).

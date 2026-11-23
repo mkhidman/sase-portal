@@ -41,6 +41,7 @@ import {
   removeFamily,
   upsertGuardianContact,
   removeGuardianContact,
+  setWaliAccess as setWaliAccessRecord,
   upsertMeeting,
   removeMeeting,
   setMeetingTaskDone,
@@ -103,6 +104,8 @@ interface DataContextValue extends BootstrapData {
   deleteFamily: (familyId: string) => Promise<void>
   saveGuardianContact: (contact: GuardianContact) => Promise<void>
   deleteGuardianContact: (contactId: string) => Promise<void>
+  /** Mengembalikan token tautan wali saat diaktifkan, atau null saat dicabut. */
+  setWaliAccess: (jamaahId: string, enabled: boolean) => Promise<string | null>
   mergeDuplicateJamaah: (input: MergeJamaahInput) => Promise<void>
   saveMeeting: (input: SaveMeetingInput) => Promise<void>
   deleteMeeting: (meetingId: string) => Promise<void>
@@ -129,6 +132,7 @@ const EMPTY: BootstrapData = {
   meetings: [],
   meetingTopics: [],
   meetingTasks: [],
+  waliAccessIds: [],
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -160,7 +164,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [] })
+        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [], waliAccessIds: cached.data.waliAccessIds ?? [] })
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')
@@ -727,6 +731,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
           ...current,
           guardianContacts: current.guardianContacts.filter((item) => item.id !== contactId),
         }))
+      },
+      async setWaliAccess(jamaahId, enabled) {
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengatur akses wali.')
+        if (!data.jamaah.some((item) => item.id === jamaahId)) throw new Error('Data warga tidak ditemukan.')
+        const isGuardian = data.guardianContacts.some((item) => item.guardianJamaahId === jamaahId && item.jamaahId !== jamaahId)
+        if (enabled && !isGuardian) throw new Error('Warga ini belum tercatat sebagai wali siapa pun.')
+        const token = await setWaliAccessRecord(jamaahId, enabled)
+        await updateData((current) => ({
+          ...current,
+          waliAccessIds: enabled
+            ? [...current.waliAccessIds.filter((id) => id !== jamaahId), jamaahId]
+            : current.waliAccessIds.filter((id) => id !== jamaahId),
+        }))
+        return token
       },
       async mergeDuplicateJamaah(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menggabungkan data warga.')

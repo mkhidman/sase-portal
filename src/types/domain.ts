@@ -250,4 +250,25 @@ export interface BootstrapData {
   meetings: Meeting[]
   meetingTopics: MeetingTopic[]
   meetingTasks: MeetingTask[]
+  /** Id warga yang tautan wali-nya sedang aktif. Tokennya sendiri tidak pernah ikut bootstrap. */
+  waliAccessIds: string[]
+}
+
+export interface WaliAttendanceRecord {
+  tanggal: string
+  materiTipe: MaterialType
+  materiNama: string
+  status: AttendanceStatus
+}
+
+export interface WaliMember {
+  nama: string
+  kelas: string
+  absensi: WaliAttendanceRecord[]
+}
+
+export interface WaliView {
+  wali: string
+  sejak: string
+  anggota: WaliMember[]
 }

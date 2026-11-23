@@ -27,6 +27,7 @@ const loaders = {
   recap: () => import('./pages/RecapPage'),
   schedules: () => import('./pages/SchedulesPage'),
   settings: () => import('./pages/SettingsPage'),
+  wali: () => import('./pages/WaliPage'),
 }
 
 const AttendancePage = lazy(() => loaders.attendance().then((m) => ({ default: m.AttendancePage })))
@@ -44,6 +45,7 @@ const NotFoundPage = lazy(() => loaders.notFound().then((m) => ({ default: m.Not
 const RecapPage = lazy(() => loaders.recap().then((m) => ({ default: m.RecapPage })))
 const SchedulesPage = lazy(() => loaders.schedules().then((m) => ({ default: m.SchedulesPage })))
 const SettingsPage = lazy(() => loaders.settings().then((m) => ({ default: m.SettingsPage })))
+const WaliPage = lazy(() => loaders.wali().then((m) => ({ default: m.WaliPage })))
 
 // Setelah tampilan pertama selesai, seluruh halaman diunduh diam-diam supaya service worker
 // menyimpannya. Tanpa ini, halaman yang belum pernah dibuka akan gagal saat perangkat offline.
@@ -65,6 +67,9 @@ export default function App() {
           <Suspense fallback={<div className="loading-screen">Memuat halaman…</div>}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              {/* Dibuka orang tua tanpa akun. Sengaja di luar ProtectedRoute dan tidak memakai useData,
+                  supaya kunjungannya tidak menarik bootstrap maupun membuka kanal realtime. */}
+              <Route path="/wali/:token" element={<WaliPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="ganti-password" element={<PasswordChangePage />} />
                 <Route element={<PasswordReadyRoute />}>

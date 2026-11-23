@@ -271,3 +271,15 @@ Setelah migration 001–022 aktif, jalankan `supabase/migrations/023_musyawarah.
 - Periode yang sudah ditutup mengunci isi notulensi bulan itu, tetapi tidak mengunci pencentangan tugasnya — tugas dari musyawarah bulan lalu masih dikerjakan bulan ini.
 - Seluruh menu terbatas untuk Superadmin, dan datanya ikut masuk backup JSON, cache offline, Realtime, serta Riwayat Aktivitas.
 - Modul Notulensi lama (fase 20) sudah dihapus permanen oleh migration 022; fase ini membuat modul baru, bukan memulihkan data lama.
+
+
+## Fase 26 — Akses Wali
+
+Setelah migration 001–025 aktif, jalankan `supabase/migrations/026_akses_wali.sql`.
+
+- Orang tua melihat absensi tanggungannya sendiri lewat tautan rahasia `/wali/<token>`, **tanpa akun dan tanpa login**.
+- Tanggungan diambil dari kontak wali (`guardian_contacts.guardian_jamaah_id`), bukan dari tabel Keluarga. Satu wali cukup satu tautan walaupun anaknya tiga, dan dirinya sendiri ikut ditampilkan.
+- Tombol **Aktifkan Akses**, **Tautan Baru**, dan **Cabut** ada di kolom Aksi halaman Keluarga & Wali, hanya untuk Superadmin dan hanya pada warga yang tercatat sebagai wali warga lain.
+- Tautan dikirim lewat tombol WhatsApp yang sudah memakai nomor wali. Token tidak pernah ikut bootstrap, jadi mengirim ulang berarti membuat tautan baru dan mematikan tautan lama.
+- Halaman wali menampilkan **tiga bulan terakhir** dan hanya anggota aktif. Halaman ini tidak memuat bootstrap dan tidak membuka kanal Realtime.
+- Tautan adalah kuncinya: siapa pun yang menerima tautannya dapat melihat data keluarga itu. Pakai tombol Cabut bila tautan tersebar.

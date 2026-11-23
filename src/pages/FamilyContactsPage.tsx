@@ -1,7 +1,9 @@
 import {
   ExternalLink,
   House,
+  KeyRound,
   Link2,
+  Link2Off,
   MessageCircle,
   Pencil,
   Plus,
@@ -22,6 +24,7 @@ import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { preferredContactForJamaah } from '../lib/contacts'
 import { normalizeWhatsappNumber } from '../lib/followUps'
+import { buildWaliInviteMessage, buildWaliLink } from '../lib/wali'
 import { ageFromBirthDate, formatDate } from '../lib/utils'
 import type {
   Family,
@@ -76,6 +79,8 @@ export function FamilyContactsPage() {
     deleteFamily,
     saveGuardianContact,
     deleteGuardianContact,
+    waliAccessIds,
+    setWaliAccess,
   } = useData()
   const canManage = user?.role === 'superadmin'
   const [search, setSearch] = useState('')
@@ -90,6 +95,7 @@ export function FamilyContactsPage() {
   const [message, setMessage] = useState<Feedback | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const { confirm, dialog: confirmDialog } = useConfirm()
+  const [waliShare, setWaliShare] = useState<{ jamaahId: string; url: string } | null>(null)
 
   const pageJamaah = useMemo(() => canManage ? jamaah : visibleJamaah, [canManage, jamaah, visibleJamaah])
   const visibleIds = useMemo(() => new Set(pageJamaah.map((item) => item.id)), [pageJamaah])
@@ -191,6 +197,41 @@ export function FamilyContactsPage() {
       setMessage(feedbackOk('Data keluarga berhasil dihapus.'))
     } catch (cause) {
       setMessage(feedbackFrom(cause, 'Gagal menghapus data keluarga.'))
+    }
+  }
+
+  // Token tidak pernah ikut bootstrap, jadi tidak ada salinan yang bisa dikirim ulang:
+  // setiap pengiriman membuat tautan baru dan mematikan tautan sebelumnya.
+  async function shareWaliAccess(person: Jamaah, waNumber: string) {
+    try {
+      const token = await setWaliAccess(person.id, true)
+      if (!token) throw new Error('Tautan wali gagal dibuat.')
+      const link = buildWaliLink(window.location.origin, token)
+      const message = buildWaliInviteMessage({ waliName: person.fullName, link })
+      setWaliShare({
+        jamaahId: person.id,
+        url: waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` : link,
+      })
+      setMessage(feedbackOk(`Tautan baru untuk ${person.fullName} siap dikirim. Tautan lama otomatis tidak berlaku.`))
+    } catch (cause) {
+      setMessage(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
+    }
+  }
+
+  async function revokeWaliAccess(person: Jamaah) {
+    const approved = await confirm({
+      title: `Cabut akses wali ${person.fullName}?`,
+      description: 'Tautan yang sudah dikirim akan langsung berhenti berfungsi. Akses dapat diaktifkan lagi kapan saja dengan tautan baru.',
+      confirmLabel: 'Cabut Akses',
+      tone: 'danger',
+    })
+    if (!approved) return
+    try {
+      await setWaliAccess(person.id, false)
+      setWaliShare((current) => current?.jamaahId === person.id ? null : current)
+      setMessage(feedbackOk('Akses wali dicabut.'))
+    } catch (cause) {
+      setMessage(feedbackFrom(cause, 'Gagal mencabut akses wali.'))
     }
   }
 
@@ -360,6 +401,8 @@ export function FamilyContactsPage() {
                 const contacts = guardianContacts.filter((item) => item.jamaahId === person.id).sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
                 const preferred = preferredContactForJamaah(person, guardianContacts, jamaah)
                 const waNumber = preferred ? normalizeWhatsappNumber(preferred.phone) : ''
+                const isGuardian = guardianContacts.some((item) => item.guardianJamaahId === person.id && item.jamaahId !== person.id)
+                const hasWaliAccess = waliAccessIds.includes(person.id)
                 const age = ageFromBirthDate(person.birthDate)
                 const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
@@ -372,7 +415,7 @@ export function FamilyContactsPage() {
                       const resolved = resolvedGuardian(contact)
                       return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
                     })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}</div></td>
+                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}{waliShare?.jamaahId === person.id ? <a className="button primary small" href={waliShare.url} target="_blank" rel="noreferrer"><MessageCircle size={14} /> Kirim Tautan <ExternalLink size={11} /></a> : null}</div></td>
                   </tr>
                 )
               })}

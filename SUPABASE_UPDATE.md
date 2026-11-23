@@ -1,12 +1,23 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan tiga migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan empat migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
 supabase/migrations/024_schedule_time_range.sql
 supabase/migrations/025_meeting_topic_wording.sql
+supabase/migrations/026_akses_wali.sql
 ```
+
+## Migration 026 (Akses Wali)
+
+Membuat tabel `wali_access` dan dua RPC: `set_wali_access` (Superadmin) dan `wali_attendance` (dapat dipanggil `anon`).
+
+- `wali_attendance` adalah **satu-satunya** fungsi di projek ini yang diberi `grant execute ... to anon`. Itu memang disengaja: halaman `/wali/<token>` dibuka orang tua tanpa akun. Fungsinya mengembalikan `null` untuk token yang tidak dikenal, dan datanya dibatasi tiga bulan terakhir serta hanya warga aktif.
+- Token ditaruh di tabel terpisah, **bukan** kolom baru di `jamaah`. Pemicu audit pada migration 013 menyimpan `to_jsonb(new)` seluruh baris dan `merge_jamaah_duplicates` menyimpan `select *` sebagai `duplicate_snapshot`; kolom di `jamaah` berarti token ikut terbawa ke `audit_logs` dan backup JSON.
+- `wali_access` **tidak** didaftarkan ke publication `supabase_realtime`. Tidak ada klien yang berlangganan tabel ini, dan menyiarkan baris berisi token tidak ada gunanya.
+- RLS tabelnya hanya mengizinkan `select` oleh Superadmin; tidak ada policy tulis sama sekali, karena seluruh perubahan lewat `set_wali_access`.
+- Migration ini aman dijalankan berulang (`create table if not exists` + `create or replace`). Frontend baru tetap berjalan bila migration ini belum dijalankan: query `wali_access` di `loadBootstrap` menoleransi kode `42P01`/`PGRST205`, jadi tombol Akses Wali hanya gagal saat ditekan.
 
 ## Migration 025 (Istilah Bahasan & Keputusan)
 
