@@ -200,6 +200,15 @@ export function FamilyContactsPage() {
     }
   }
 
+  // Dua tombol wali ditekan dari dalam tabel yang panjang, sementara InlineMessage
+  // ada di puncak halaman. Aksi lain di sini selalu lewat modal yang menutup, jadi
+  // pandangan kembali ke atas dengan sendirinya -- dua ini tidak, dan kegagalannya
+  // jadi senyap total.
+  function announce(feedback: Feedback) {
+    setMessage(feedback)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   // Token tidak pernah ikut bootstrap, jadi tidak ada salinan yang bisa dikirim ulang:
   // setiap pengiriman membuat tautan baru dan mematikan tautan sebelumnya.
   async function shareWaliAccess(person: Jamaah, waNumber: string) {
@@ -212,9 +221,9 @@ export function FamilyContactsPage() {
         jamaahId: person.id,
         url: waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` : link,
       })
-      setMessage(feedbackOk(`Tautan baru untuk ${person.fullName} siap dikirim. Tautan lama otomatis tidak berlaku.`))
+      announce(feedbackOk(`Tautan baru untuk ${person.fullName} siap dikirim. Tautan lama otomatis tidak berlaku.`))
     } catch (cause) {
-      setMessage(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
+      announce(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
     }
   }
 
@@ -229,9 +238,9 @@ export function FamilyContactsPage() {
     try {
       await setWaliAccess(person.id, false)
       setWaliShare((current) => current?.jamaahId === person.id ? null : current)
-      setMessage(feedbackOk('Akses wali dicabut.'))
+      announce(feedbackOk('Akses wali dicabut.'))
     } catch (cause) {
-      setMessage(feedbackFrom(cause, 'Gagal mencabut akses wali.'))
+      announce(feedbackFrom(cause, 'Gagal mencabut akses wali.'))
     }
   }
 
