@@ -27,7 +27,6 @@ export function DashboardPage() {
     meetings,
     meetingTopics,
     meetingTasks,
-    loading,
   } = useData()
   const [selectedMonth, setSelectedMonth] = useState(monthValue())
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
@@ -70,8 +69,6 @@ export function DashboardPage() {
         description="Ringkasan operasional kelas, kehadiran, dan target materi."
         actions={<button className="button primary" onClick={() => navigate('/absensi')}>Isi Absensi</button>}
       />
-
-      {loading ? <div className="notice">Memuat data…</div> : null}
 
       {missedAttendance.length ? (
         <article className="card dashboard-help dashboard-missed">

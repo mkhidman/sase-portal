@@ -1,6 +1,7 @@
 ## Belum dirilis
 
 - Garis hijau pemuatan di puncak halaman tidak lagi menyala untuk penyegaran latar. Aplikasi berlangganan Realtime pada 20 tabel, termasuk `audit_logs` yang terisi trigger pada hampir setiap penyimpanan — jadi satu klik Simpan oleh admin mana pun membuat garis itu lewat di layar semua orang yang sedang membuka aplikasi, dan sekali lagi di layar orang yang menyimpannya.
+- Membuang kotak **"Memuat data…"** di bawah judul Dashboard. Itu penanda kedua untuk hal yang sama dengan bar hijau di puncak layar, hanya ada di satu halaman dari lima belas, dan karena ia menempati ruang di dalam halaman, isi Dashboard tersentak turun lalu naik lagi setiap kali data selesai dimuat.
 - Penyegaran dari Realtime kini memakai `reload({ silent: true })`: datanya tetap diperbarui, hanya indikatornya yang diam. Bar tetap menyala untuk hal yang memang ditunggu — pemuatan pertama, tombol "Coba lagi", dan penyegaran setelah kembali online.
 
 - Membubarkan **topbar** dan mengembalikan isinya ke dasar sidebar: status koneksi, waktu sinkron terakhir, tombol pasang aplikasi, penanda mode demo, profil, dan tombol keluar. Baris selebar layar itu memakan 60px tinggi ditambah jarak di **setiap** halaman untuk empat hal yang jarang disentuh, sementara sidebar punya ruang kosong menganggur di bawah menunya. Topbar itu sendiri lahir dari re-skin sebelumnya, bukan dari kebutuhan: isinya memang berasal dari dasar sidebar.
