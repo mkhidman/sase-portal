@@ -166,24 +166,23 @@ export function AppLayout() {
             )
           })}
         </nav>
+        {/* Dasar sidebar, hanya desktop. Di bawah 820px sidebar tidak dipakai dan
+            isinya sudah tersedia lewat banner offline serta MobileMoreMenu. */}
+        <div className="sidebar-foot">
+          <div className={`connection-card ${online ? 'online' : 'offline'}`}>
+            {online ? <Wifi size={16} /> : <WifiOff size={16} />}
+            <span><strong>{online ? (usingCachedData ? 'Menggunakan cache' : 'Terhubung') : 'Tidak ada koneksi'}</strong><small>{lastSyncedAt ? `Sinkron terakhir ${formatDateTime(lastSyncedAt)}` : 'Belum pernah sinkron'}</small></span>
+            {online && usingCachedData ? <button type="button" onClick={() => void reload()}>Ulangi</button> : null}
+          </div>
+          {isDemo ? <span className="demo-pill">Mode demo</span> : null}
+          {canInstall ? <button className="install-button" type="button" onClick={() => void install()}><Download size={16} /> Pasang di perangkat</button> : null}
+          <div className="sidebar-user">
+            <span className="avatar">{initials(user?.name ?? '')}</span>
+            <span><strong>{user?.name}</strong><small>{user?.role === 'superadmin' ? 'Akses seluruh kelas' : `${user?.assignedClassIds.length ?? 0} kelas diampu`}</small></span>
+            <button className="icon-button" type="button" aria-label="Keluar" title="Keluar" onClick={() => void signOut()}><LogOut size={16} /></button>
+          </div>
+        </div>
       </aside>
-      {/* Topbar hanya desktop. Di bawah 820px isinya sudah tersedia lewat
-          banner offline dan MobileMoreMenu, jadi .topbar disembunyikan. */}
-      <header className="topbar">
-        <div className={`connection-card ${online ? 'online' : 'offline'}`}>
-          {online ? <Wifi size={16} /> : <WifiOff size={16} />}
-          <span><strong>{online ? (usingCachedData ? 'Menggunakan cache' : 'Terhubung') : 'Tidak ada koneksi'}</strong><small>{lastSyncedAt ? `Sinkron terakhir ${formatDateTime(lastSyncedAt)}` : 'Belum pernah sinkron'}</small></span>
-          {online && usingCachedData ? <button type="button" onClick={() => void reload()}>Ulangi</button> : null}
-        </div>
-        <span className="topbar-spacer" />
-        {isDemo ? <span className="demo-pill">Mode demo</span> : null}
-        {canInstall ? <button className="install-button" type="button" onClick={() => void install()}><Download size={16} /> Pasang di perangkat</button> : null}
-        <div className="topbar-user">
-          <span className="avatar">{initials(user?.name ?? '')}</span>
-          <span><strong>{user?.name}</strong><small>{user?.role === 'superadmin' ? 'Akses seluruh kelas' : `${user?.assignedClassIds.length ?? 0} kelas diampu`}</small></span>
-        </div>
-        <button className="icon-button" type="button" aria-label="Keluar" title="Keluar" onClick={() => void signOut()}><LogOut size={16} /></button>
-      </header>
       {/* key per rute: memaksa <main> di-mount ulang agar animasi masuk berjalan
           lagi di tiap halaman, bukan hanya sekali seumur sesi. */}
       <main key={location.pathname} className={`app-main ${!online ? 'with-offline-banner' : ''}`} data-density={density}>

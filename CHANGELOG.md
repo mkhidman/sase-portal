@@ -1,5 +1,10 @@
 ## Belum dirilis
 
+- Membubarkan **topbar** dan mengembalikan isinya ke dasar sidebar: status koneksi, waktu sinkron terakhir, tombol pasang aplikasi, penanda mode demo, profil, dan tombol keluar. Baris selebar layar itu memakan 60px tinggi ditambah jarak di **setiap** halaman untuk empat hal yang jarang disentuh, sementara sidebar punya ruang kosong menganggur di bawah menunya. Topbar itu sendiri lahir dari re-skin sebelumnya, bukan dari kebutuhan: isinya memang berasal dari dasar sidebar.
+- Tombol keluar kini menempel di baris profil, bukan berdiri sendiri, dan nama yang terlalu panjang dipotong elipsis — sidebar menyusut jadi 228px pada layar 845px.
+- **Hanya daftar menu yang menggulung**, bukan seluruh sidebar. Tanpa itu, membuka grup menu pada layar pendek mendorong blok akun keluar dari pandangan dan tombol keluar jadi tidak terjangkau tanpa menggulung.
+- Tidak ada yang berubah di bawah 820px: sidebar memang tidak dipakai di sana, dan isinya sudah tersedia lewat banner offline serta menu Lainnya.
+
 - Halaman wali kini dibuka dengan **rekap per orang**: satu bar bertumpuk Hadir/Izin/Sakit/Alpa beserta angka dan persentasenya, menggantikan daftar tanggal yang langsung mengular begitu halaman dibuka. Pada rentang enam bulan, daftar lamanya bisa puluhan baris sebelum orang tua sampai ke satu angka yang dicarinya.
 - Daftar tanggalnya **dilipat per bulan, bukan dihapus** (`<details>` bawaan, tanpa JavaScript tambahan). Angka rekap tidak bisa dipakai orang tua untuk menanyakan ketidakhadiran tertentu ke pengurus, dan halaman ini satu-satunya tempat data itu terlihat. Ringkasan tiap bulan ada di judul lipatannya: "4 pengajian · 3 hadir · 1 izin".
 - Memakai `.composition-split` dan `.composition-legend` yang sudah dipakai komposisi gender, bukan komponen grafik baru, dan hitungannya memakai `attendanceCounts()` yang sudah ada. Menyalin penghitung status ke halaman ini berarti dua halaman bisa menampilkan angka berbeda untuk absensi yang sama.
