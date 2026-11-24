@@ -295,3 +295,12 @@ Setelah migration 001-027 aktif, jalankan `supabase/migrations/028_wali_rentang_
 - Pilihan rentangnya juga tampil di modal **Tautan Akses Wali** begitu tautan dibuat, lengkap dengan pratinjau bulan yang akan terlihat.
 - Semua rentang dipotong per **bulan penuh**, jadi bulan tertua tidak lagi tampil separuh seperti pada batas 3 bulan versi sebelumnya.
 - Rentangnya ikut bootstrap, tokennya tetap tidak. Tautan yang dibuat sebelum migration ini tetap berjalan dengan bawaan 3 bulan terakhir.
+
+## Fase 28 — Rekap grafik di halaman wali
+
+Tidak ada migration baru; seluruh perubahan di sisi tampilan.
+
+- Tiap anggota keluarga dibuka dengan **bar bertumpuk Hadir/Izin/Sakit/Alpa** beserta angka dan persentasenya, bukan daftar tanggal.
+- Daftar tanggal per bulan tetap ada, **terlipat** di balik judul bulannya yang sudah memuat ringkasan ("4 pengajian · 3 hadir · 1 izin"). Orang tua tetap bisa menanyakan ketidakhadiran pada tanggal tertentu.
+- Grafiknya memakai `.composition-split` yang sudah dipakai komposisi gender dan `attendanceCounts()` dari `src/lib/utils.ts`, jadi tidak ada penghitung status kedua di projek ini.
+- Nama dan angka selalu ikut ditulis di legenda: empat bidang warna saja tidak terbedakan pada layar monokrom maupun bagi pengguna buta warna.

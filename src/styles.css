@@ -64,6 +64,8 @@
      mirip sebagai bidang isian dan tidak terbedakan pada buta warna deutan. */
   --chart-series-1: #1f8a5a;
   --chart-series-2: #2c61a4;
+  --chart-series-3: #c9800d;
+  --chart-series-4: #8c2c23;
   --chart-track: #e8eeea;
 
   /* Bayangan berjenjang menggantikan border sebagai pemisah kartu. */
@@ -1836,8 +1838,12 @@ textarea:focus { border-color: #79a98d; box-shadow: 0 0 0 3px rgba(31,111,74,.1)
 .wali-header { display: flex; align-items: center; gap: 13px; padding: 4px 2px 6px; }
 .wali-header div { display: grid; gap: 3px; }
 .wali-header small { color: var(--muted); font-size: var(--fs-sm); }
-.wali-month { margin-top: 14px; }
-.wali-month h3 { margin-bottom: 7px; font-size: var(--fs-sm); font-weight: 800; color: var(--muted); }
+.wali-breakdown { margin-top: 13px; }
+.wali-month { margin-top: 12px; }
+.wali-month > summary { padding: 6px 0; cursor: pointer; font-size: var(--fs-sm); }
+.wali-month > summary strong { font-weight: 800; }
+.wali-month > summary small { color: var(--muted); font-size: var(--fs-2xs); }
+.wali-month > summary small::before { content: ' · '; }
 .wali-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
 .wali-row span:first-child { display: grid; gap: 2px; min-width: 0; }
 .wali-row small { color: var(--muted); font-size: var(--fs-2xs); }

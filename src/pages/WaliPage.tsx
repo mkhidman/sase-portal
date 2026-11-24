@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { CalendarDays, Link2Off, Users } from 'lucide-react'
 import { fetchWaliView } from '../data/repository'
-import { ATTENDANCE_LABELS } from '../lib/constants'
-import { formatDate, materialDisplayName, monthLabel, percentage } from '../lib/utils'
+import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS } from '../lib/constants'
+import { attendanceCounts, formatDate, materialDisplayName, monthLabel, percentage } from '../lib/utils'
 import { waliRangeLabel } from '../lib/wali'
 import type { WaliAttendanceRecord, WaliMember, WaliView } from '../types/domain'
 
@@ -12,6 +12,24 @@ const STATUS_TONE: Record<string, string> = {
   excused: 'info',
   sick: 'warning',
   absent: 'danger',
+}
+
+// Bukan token status (--warning dan --danger terlalu mirip sebagai bidang isian dan tidak
+// terbedakan pada buta warna deutan). Empat bidang warna juga tidak pernah berdiri sendiri:
+// angka dan namanya selalu ikut ditulis di legenda.
+const STATUS_COLOR: Record<string, string> = {
+  present: 'var(--chart-series-1)',
+  excused: 'var(--chart-series-2)',
+  sick: 'var(--chart-series-3)',
+  absent: 'var(--chart-series-4)',
+}
+
+function countsOf(records: WaliAttendanceRecord[]) {
+  return attendanceCounts(Object.fromEntries(records.map((record, index) => [String(index), record.status])))
+}
+
+function statusSummary(counts: Record<string, number>): string {
+  return ATTENDANCE_OPTIONS.filter((status) => counts[status]).map((status) => `${counts[status]} ${ATTENDANCE_LABELS[status].toLowerCase()}`).join(' · ')
 }
 
 function byMonth(records: WaliAttendanceRecord[]): [string, WaliAttendanceRecord[]][] {
@@ -24,7 +42,8 @@ function byMonth(records: WaliAttendanceRecord[]): [string, WaliAttendanceRecord
 }
 
 function MemberCard({ member, rangeLabel }: { member: WaliMember; rangeLabel: string }) {
-  const hadir = member.absensi.filter((item) => item.status === 'present').length
+  const counts = countsOf(member.absensi)
+  const total = member.absensi.length
   const months = byMonth(member.absensi)
 
   return (
@@ -37,13 +56,41 @@ function MemberCard({ member, rangeLabel }: { member: WaliMember; rangeLabel: st
         {/* Nada sengaja netral: di aplikasi ini warna persentase berasal dari tingkat risiko
             (hitungan alpa), bukan dari angka persennya. Mewarnai di sini akan jadi definisi
             kedua tentang "kehadiran buruk" yang bisa berbeda dari halaman Tindak Lanjut. */}
-        {member.absensi.length ? (
-          <span className="badge muted">{percentage(hadir, member.absensi.length)}% hadir</span>
-        ) : null}
+        {total ? <span className="badge muted">{percentage(counts.present, total)}% hadir</span> : null}
       </div>
-      {months.length ? months.map(([month, records]) => (
-        <div className="wali-month" key={month}>
-          <h3>{monthLabel(month)}</h3>
+      {total ? (
+        <div className="composition wali-breakdown">
+          <div className="composition-split" role="img" aria-label={`${total} pengajian: ${statusSummary(counts)}.`}>
+            {ATTENDANCE_OPTIONS.map((status) => counts[status]
+              ? <span key={status} style={{ flexGrow: counts[status], background: STATUS_COLOR[status] }} />
+              : null)}
+          </div>
+          <ul className="composition-legend">
+            {ATTENDANCE_OPTIONS.map((status) => (
+              <li key={status}>
+                <span className="composition-swatch" style={{ background: STATUS_COLOR[status] }} />
+                {ATTENDANCE_LABELS[status]} <strong>{counts[status]} · {percentage(counts[status], total)}%</strong>
+              </li>
+            ))}
+            <li className="composition-legend-total">Total pengajian <strong>{total}</strong></li>
+          </ul>
+        </div>
+      ) : (
+        <div className="empty-state">
+          <span className="empty-state-icon"><CalendarDays size={20} /></span>
+          <strong>Belum ada catatan absensi</strong>
+          <p>Belum ada pengajian yang tercatat untuk {member.nama}{rangeLabel ? ` pada ${rangeLabel}` : ''}.</p>
+        </div>
+      )}
+      {/* Tanggalnya dilipat, bukan dibuang: angka rekap tidak bisa dipakai orang tua untuk
+          menanyakan ketidakhadiran tertentu ke pengurus, dan di sinilah satu-satunya tempat
+          data itu terlihat. */}
+      {months.map(([month, records]) => (
+        <details className="wali-month" key={month}>
+          <summary>
+            <strong>{monthLabel(month)}</strong>
+            <small>{records.length} pengajian · {statusSummary(countsOf(records))}</small>
+          </summary>
           {records.map((record) => (
             <div className="wali-row" key={`${record.tanggal}-${record.materiTipe}-${record.materiNama}`}>
               <span>
@@ -53,14 +100,8 @@ function MemberCard({ member, rangeLabel }: { member: WaliMember; rangeLabel: st
               <span className={`badge ${STATUS_TONE[record.status] ?? 'muted'}`}>{ATTENDANCE_LABELS[record.status]}</span>
             </div>
           ))}
-        </div>
-      )) : (
-        <div className="empty-state">
-          <span className="empty-state-icon"><CalendarDays size={20} /></span>
-          <strong>Belum ada catatan absensi</strong>
-          <p>Belum ada pengajian yang tercatat untuk {member.nama}{rangeLabel ? ` pada ${rangeLabel}` : ''}.</p>
-        </div>
-      )}
+        </details>
+      ))}
     </section>
   )
 }
