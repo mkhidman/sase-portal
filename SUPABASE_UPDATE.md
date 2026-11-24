@@ -1,6 +1,6 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan lima migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan enam migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
@@ -8,7 +8,19 @@ supabase/migrations/024_schedule_time_range.sql
 supabase/migrations/025_meeting_topic_wording.sql
 supabase/migrations/026_akses_wali.sql
 supabase/migrations/027_wali_token_tanpa_pgcrypto.sql
+supabase/migrations/028_wali_rentang_tampilan.sql
 ```
+
+## Migration 028 (Rentang tampilan Akses Wali)
+
+Menambah tiga kolom pada `wali_access` (`window_preset`, `from_month`, `to_month`), RPC baru `set_wali_window`, dan membuat ulang `wali_attendance` agar batas tanggalnya dibaca dari baris itu.
+
+- **Aman dijalankan walau tautan sudah tersebar.** Kolomnya `add column if not exists` dengan bawaan `'3-bulan'`, jadi setiap tautan yang sudah ada tetap menampilkan tiga bulan terakhir seperti sebelumnya. Token tidak disentuh sama sekali.
+- `set_wali_window` **tidak memutar token**: mengubah rentang tidak mematikan tautan yang sudah dikirim ke orang tua. Hanya `set_wali_access` (tombol Tautan Baru) yang memutar token, dan fungsi itu tidak diubah di migration ini.
+- Batas tanggalnya kini selalu **bulan penuh**. Versi 026 memakai `current_date - interval '3 months'`, yang memotong bulan tertua di tengah; halaman wali mengelompokkan absensi per bulan, jadi bulan separuh itu terbaca seperti absensi yang hilang.
+- Aturan rentangnya **wajib sama** dengan `waliWindowRange()` di `src/lib/wali.ts`. Kalau hanya satu yang diubah, mode demo dan Supabase menampilkan periode yang berbeda tanpa satu pun error.
+- Frontend baru tetap berjalan bila migration ini belum dijalankan: query `wali_access` menoleransi `42703`, jadi daftar tautannya hanya tampil kosong sampai migration-nya masuk.
+- `wali_access` tetap **tidak** didaftarkan ke publication `supabase_realtime`.
 
 ## Migration 027 (Perbaikan pembuat token wali)
 

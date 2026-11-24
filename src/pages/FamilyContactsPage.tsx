@@ -1,4 +1,5 @@
 import {
+  CalendarCog,
   Copy,
   ExternalLink,
   House,
@@ -25,7 +26,7 @@ import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { preferredContactForJamaah } from '../lib/contacts'
 import { normalizeWhatsappNumber } from '../lib/followUps'
-import { buildWaliInviteMessage, buildWaliLink } from '../lib/wali'
+import { buildWaliInviteMessage, buildWaliLink, waliRangeLabel, waliWindowRange, WALI_WINDOW_DEFAULT, WALI_WINDOW_OPTIONS, type WaliWindow } from '../lib/wali'
 import { ageFromBirthDate, formatDate } from '../lib/utils'
 import type {
   Family,
@@ -80,8 +81,9 @@ export function FamilyContactsPage() {
     deleteFamily,
     saveGuardianContact,
     deleteGuardianContact,
-    waliAccessIds,
+    waliAccess,
     setWaliAccess,
+    setWaliWindow,
   } = useData()
   const canManage = user?.role === 'superadmin'
   const [search, setSearch] = useState('')
@@ -96,7 +98,11 @@ export function FamilyContactsPage() {
   const [message, setMessage] = useState<Feedback | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const { confirm, dialog: confirmDialog } = useConfirm()
-  const [waliShare, setWaliShare] = useState<{ waliName: string; link: string; waUrl: string } | null>(null)
+  const [waliShare, setWaliShare] = useState<{ jamaahId: string; waliName: string; link: string; waUrl: string } | null>(null)
+  const [windowDraft, setWindowDraft] = useState<WaliWindow>(WALI_WINDOW_DEFAULT)
+  const [windowMessage, setWindowMessage] = useState<Feedback | null>(null)
+  const windowRange = waliWindowRange(windowDraft)
+  const windowPreview = waliRangeLabel(windowRange.since, windowRange.until)
 
   const pageJamaah = useMemo(() => canManage ? jamaah : visibleJamaah, [canManage, jamaah, visibleJamaah])
   const visibleIds = useMemo(() => new Set(pageJamaah.map((item) => item.id)), [pageJamaah])
@@ -219,13 +225,31 @@ export function FamilyContactsPage() {
       if (!token) throw new Error('Tautan wali gagal dibuat.')
       const link = buildWaliLink(window.location.origin, token)
       const message = buildWaliInviteMessage({ waliName: person.fullName, link })
-      setWaliShare({
-        waliName: person.fullName,
+      openWaliModal(person, {
         link,
         waUrl: waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` : '',
       })
     } catch (cause) {
       announceFailure(feedbackFrom(cause, 'Gagal membuat tautan wali.'))
+    }
+  }
+
+  function openWaliModal(person: Jamaah, sharing: { link: string; waUrl: string } = { link: '', waUrl: '' }) {
+    const current = waliAccess.find((item) => item.jamaahId === person.id)
+    setWindowDraft(current ? { windowPreset: current.windowPreset, fromMonth: current.fromMonth, toMonth: current.toMonth } : WALI_WINDOW_DEFAULT)
+    setWindowMessage(null)
+    setWaliShare({ jamaahId: person.id, waliName: person.fullName, ...sharing })
+  }
+
+  // Modal tidak ditutup setelah menyimpan: tokennya tidak pernah ikut bootstrap, jadi
+  // tautan yang sedang tampil tidak bisa ditampilkan lagi tanpa memutar token baru.
+  async function saveWaliWindow() {
+    if (!waliShare) return
+    try {
+      await setWaliWindow(waliShare.jamaahId, windowDraft)
+      setWindowMessage(feedbackOk('Rentang disimpan. Wali melihat perubahannya saat membuka tautannya lagi.'))
+    } catch (cause) {
+      setWindowMessage(feedbackFrom(cause, 'Gagal menyimpan rentang.'))
     }
   }
 
@@ -421,7 +445,7 @@ export function FamilyContactsPage() {
                 const preferred = preferredContactForJamaah(person, guardianContacts, jamaah)
                 const waNumber = preferred ? normalizeWhatsappNumber(preferred.phone) : ''
                 const isGuardian = guardianContacts.some((item) => item.guardianJamaahId === person.id && item.jamaahId !== person.id)
-                const hasWaliAccess = waliAccessIds.includes(person.id)
+                const hasWaliAccess = waliAccess.some((item) => item.jamaahId === person.id)
                 const age = ageFromBirthDate(person.birthDate)
                 const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
@@ -434,7 +458,7 @@ export function FamilyContactsPage() {
                       const resolved = resolvedGuardian(contact)
                       return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
                     })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}</div></td>
+                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button soft small" onClick={() => openWaliModal(person)}><CalendarCog size={14} /> Rentang</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}</div></td>
                   </tr>
                 )
               })}
@@ -447,14 +471,31 @@ export function FamilyContactsPage() {
 
       <Modal
         open={Boolean(waliShare)}
-        title="Tautan Akses Wali"
+        title={waliShare?.link ? 'Tautan Akses Wali' : 'Rentang Absensi Wali'}
         onClose={() => setWaliShare(null)}
-        footer={<><button className="button outline" onClick={() => setWaliShare(null)}>Tutup</button><button className="button soft" onClick={() => void copyWaliLink(waliShare?.link ?? '')}><Copy size={16} /> Salin Tautan</button>{waliShare?.waUrl ? <a className="button primary" href={waliShare.waUrl} target="_blank" rel="noreferrer"><MessageCircle size={16} /> Kirim via WhatsApp <ExternalLink size={12} /></a> : null}</>}
+        footer={<><button className="button outline" onClick={() => setWaliShare(null)}>Tutup</button><button className={waliShare?.link ? 'button soft' : 'button primary'} onClick={() => void saveWaliWindow()}><CalendarCog size={16} /> Simpan Rentang</button>{waliShare?.link ? <button className="button soft" onClick={() => void copyWaliLink(waliShare.link)}><Copy size={16} /> Salin Tautan</button> : null}{waliShare?.waUrl ? <a className="button primary" href={waliShare.waUrl} target="_blank" rel="noreferrer"><MessageCircle size={16} /> Kirim via WhatsApp <ExternalLink size={12} /></a> : null}</>}
       >
         <div className="form-grid one-column">
-          <p>Tautan untuk <strong>{waliShare?.waliName}</strong>. Tautan lama otomatis tidak berlaku.</p>
-          <code className="wali-link">{waliShare?.link}</code>
-          <InlineMessage value={feedbackInfo('Tautan ini adalah kuncinya: siapa pun yang menerimanya dapat melihat absensi keluarga tersebut. Pakai tombol Cabut bila tautannya tersebar.')} />
+          {waliShare?.link ? (
+            <>
+              <p>Tautan untuk <strong>{waliShare.waliName}</strong>. Tautan lama otomatis tidak berlaku.</p>
+              <code className="wali-link">{waliShare.link}</code>
+              <InlineMessage value={feedbackInfo('Tautan ini adalah kuncinya: siapa pun yang menerimanya dapat melihat absensi keluarga tersebut. Pakai tombol Cabut bila tautannya tersebar.')} />
+            </>
+          ) : <p>Rentang absensi yang dilihat <strong>{waliShare?.waliName}</strong>. Tautan yang sudah dikirim tetap berlaku.</p>}
+          <label>Rentang yang ditampilkan
+            <select value={windowDraft.windowPreset} onChange={(event) => setWindowDraft({ ...windowDraft, windowPreset: event.target.value as WaliWindow['windowPreset'] })}>
+              {WALI_WINDOW_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <small>Pilihan selain Rentang sendiri ikut berjalan tiap bulan, jadi tidak perlu diperbarui.</small>
+          </label>
+          {windowDraft.windowPreset === 'custom' ? (
+            <div className="form-grid">
+              <label>Dari bulan *<input type="month" value={windowDraft.fromMonth} onChange={(event) => setWindowDraft({ ...windowDraft, fromMonth: event.target.value })} /></label>
+              <label>Sampai bulan *<input type="month" value={windowDraft.toMonth} onChange={(event) => setWindowDraft({ ...windowDraft, toMonth: event.target.value })} /></label>
+            </div>
+          ) : null}
+          <InlineMessage value={windowMessage ?? feedbackInfo(`Yang terlihat wali: ${windowPreview}.`)} />
         </div>
       </Modal>
 

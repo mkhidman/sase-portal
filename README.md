@@ -282,5 +282,16 @@ Setelah migration 001–025 aktif, jalankan `supabase/migrations/026_akses_wali.
 - Tombol **Aktifkan Akses**, **Tautan Baru**, dan **Cabut** ada di kolom Aksi halaman Keluarga & Wali, hanya untuk Superadmin dan hanya pada warga yang tercatat sebagai wali warga lain.
 - Begitu diaktifkan, modal **Tautan Akses Wali** menampilkan alamat lengkapnya dengan tombol Salin dan Kirim via WhatsApp.
 - Tautan dikirim lewat tombol WhatsApp yang sudah memakai nomor wali. Token tidak pernah ikut bootstrap, jadi mengirim ulang berarti membuat tautan baru dan mematikan tautan lama.
-- Halaman wali menampilkan **tiga bulan terakhir** dan hanya anggota aktif. Halaman ini tidak memuat bootstrap dan tidak membuka kanal Realtime.
+- Halaman wali hanya menampilkan anggota aktif, tidak memuat bootstrap, dan tidak membuka kanal Realtime.
 - Tautan adalah kuncinya: siapa pun yang menerima tautannya dapat melihat data keluarga itu. Pakai tombol Cabut bila tautan tersebar.
+
+## Fase 27 — Rentang tampilan Akses Wali
+
+Setelah migration 001-027 aktif, jalankan `supabase/migrations/028_wali_rentang_tampilan.sql`.
+
+- Rentang absensi yang dilihat wali dapat diatur **per tautan**: Bulan ini, Bulan lalu, 3 bulan terakhir (bawaan), 6 bulan terakhir, atau Rentang sendiri (bulan awal sampai bulan akhir).
+- Empat pilihan pertama **ikut berjalan tiap bulan**. Tautan ber-"Bulan lalu" yang dikirim bulan Oktober menampilkan September, dan pada Desember menampilkan November dengan sendirinya — tidak ada yang perlu diperbarui.
+- Tombol **Rentang** di kolom Aksi halaman Keluarga & Wali mengubah rentang tautan yang sudah tersebar **tanpa mematikannya**. Orang tua melihat perubahannya saat membuka tautan itu lagi.
+- Pilihan rentangnya juga tampil di modal **Tautan Akses Wali** begitu tautan dibuat, lengkap dengan pratinjau bulan yang akan terlihat.
+- Semua rentang dipotong per **bulan penuh**, jadi bulan tertua tidak lagi tampil separuh seperti pada batas 3 bulan versi sebelumnya.
+- Rentangnya ikut bootstrap, tokennya tetap tidak. Tautan yang dibuat sebelum migration ini tetap berjalan dengan bawaan 3 bulan terakhir.

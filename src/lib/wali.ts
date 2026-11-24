@@ -1,4 +1,6 @@
-import type { AttendanceSession, GuardianContact, Jamaah, StudyClass, WaliMember, WaliView } from '../types/domain'
+// Ekstensi .ts eksplisit: berkas ini ikut dimuat penjalan tes bawaan Node, yang tidak menebak ekstensi.
+import { monthEndDate, monthLabel, monthValue } from './utils.ts'
+import type { AttendanceSession, GuardianContact, Jamaah, StudyClass, WaliAccess, WaliMember, WaliView } from '../types/domain'
 
 /**
  * Tautan wali dibuka tanpa login. Penyusunan daftarnya tinggal di sini supaya
@@ -8,14 +10,54 @@ import type { AttendanceSession, GuardianContact, Jamaah, StudyClass, WaliMember
  * layar admin tidak ada satu pun yang berubah sebagai penanda.
  */
 
-export const WALI_WINDOW_MONTHS = 3
+export type WaliWindow = Pick<WaliAccess, 'windowPreset' | 'fromMonth' | 'toMonth'>
 
-/** Awal jendela tampilan, mengikuti batas 3 bulan di RPC. */
-export function waliWindowStart(today: Date): string {
-  const start = new Date(today.getFullYear(), today.getMonth() - WALI_WINDOW_MONTHS, today.getDate())
-  const month = String(start.getMonth() + 1).padStart(2, '0')
-  const day = String(start.getDate()).padStart(2, '0')
-  return `${start.getFullYear()}-${month}-${day}`
+export const WALI_WINDOW_DEFAULT: WaliWindow = { windowPreset: '3-bulan', fromMonth: '', toMonth: '' }
+
+export const WALI_WINDOW_OPTIONS: { value: WaliAccess['windowPreset']; label: string }[] = [
+  { value: 'bulan-ini', label: 'Bulan ini' },
+  { value: 'bulan-lalu', label: 'Bulan lalu' },
+  { value: '3-bulan', label: '3 bulan terakhir' },
+  { value: '6-bulan', label: '6 bulan terakhir' },
+  { value: 'custom', label: 'Rentang sendiri' },
+]
+
+function monthSpan(from: string, to: string): { since: string; until: string } {
+  return { since: `${from}-01`, until: monthEndDate(to) }
+}
+
+/**
+ * Rentang tanggal yang dilihat wali, dibatasi per bulan penuh supaya bulan tertua
+ * tidak tampil separuh. Dicerminkan RPC wali_attendance: mengubah salah satunya saja
+ * membuat halaman wali dan jalur demo menampilkan periode yang berbeda.
+ */
+export function waliWindowRange(window: WaliWindow, today = new Date()): { since: string; until: string } {
+  const monthsBack = (count: number) => monthValue(new Date(today.getFullYear(), today.getMonth() - count, 1))
+  const thisMonth = monthValue(today)
+  switch (window.windowPreset) {
+    case 'bulan-ini':
+      return monthSpan(thisMonth, thisMonth)
+    case 'bulan-lalu':
+      return monthSpan(monthsBack(1), monthsBack(1))
+    case '6-bulan':
+      return monthSpan(monthsBack(5), thisMonth)
+    case 'custom':
+      // Rentang setengah terisi jatuh ke bawaan: lebih baik tiga bulan daripada seluruh riwayat.
+      if (window.fromMonth && window.toMonth) {
+        return window.fromMonth <= window.toMonth
+          ? monthSpan(window.fromMonth, window.toMonth)
+          : monthSpan(window.toMonth, window.fromMonth)
+      }
+  }
+  return monthSpan(monthsBack(2), thisMonth)
+}
+
+/** Nama rentang untuk dibaca manusia, disusun dari tanggalnya supaya halaman wali tidak perlu tahu presetnya. */
+export function waliRangeLabel(since: string, until: string): string {
+  if (!since || !until) return ''
+  const from = since.slice(0, 7)
+  const to = until.slice(0, 7)
+  return from === to ? monthLabel(from) : `${monthLabel(from)} - ${monthLabel(to)}`
 }
 
 /** Warga yang menjadi tanggungan wali ini: dirinya sendiri lebih dulu, lalu warga aktif yang walinya dia. */
@@ -44,6 +86,7 @@ export function buildWaliView(input: {
   classes: StudyClass[]
   sessions: AttendanceSession[]
   since: string
+  until: string
 }): WaliView | null {
   const guardian = input.jamaah.find((person) => person.id === input.guardianId)
   if (!guardian) return null
@@ -51,7 +94,7 @@ export function buildWaliView(input: {
 
   const classNames = new Map(input.classes.map((item) => [item.id, item.name]))
   const relevant = input.sessions
-    .filter((session) => session.date >= input.since)
+    .filter((session) => session.date >= input.since && session.date <= input.until)
     .sort((left, right) => right.date.localeCompare(left.date))
 
   const anggota: WaliMember[] = members.map((person) => ({
@@ -65,7 +108,7 @@ export function buildWaliView(input: {
     }),
   }))
 
-  return { wali: guardian.fullName, sejak: input.since, anggota }
+  return { wali: guardian.fullName, sejak: input.since, sampai: input.until, anggota }
 }
 
 export function buildWaliLink(origin: string, token: string): string {

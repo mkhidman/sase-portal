@@ -4,6 +4,7 @@ import { CalendarDays, Link2Off, Users } from 'lucide-react'
 import { fetchWaliView } from '../data/repository'
 import { ATTENDANCE_LABELS } from '../lib/constants'
 import { formatDate, materialDisplayName, monthLabel, percentage } from '../lib/utils'
+import { waliRangeLabel } from '../lib/wali'
 import type { WaliAttendanceRecord, WaliMember, WaliView } from '../types/domain'
 
 const STATUS_TONE: Record<string, string> = {
@@ -22,7 +23,7 @@ function byMonth(records: WaliAttendanceRecord[]): [string, WaliAttendanceRecord
   return [...groups.entries()].sort((left, right) => right[0].localeCompare(left[0]))
 }
 
-function MemberCard({ member }: { member: WaliMember }) {
+function MemberCard({ member, rangeLabel }: { member: WaliMember; rangeLabel: string }) {
   const hadir = member.absensi.filter((item) => item.status === 'present').length
   const months = byMonth(member.absensi)
 
@@ -57,7 +58,7 @@ function MemberCard({ member }: { member: WaliMember }) {
         <div className="empty-state">
           <span className="empty-state-icon"><CalendarDays size={20} /></span>
           <strong>Belum ada catatan absensi</strong>
-          <p>Belum ada pengajian yang tercatat untuk {member.nama} dalam tiga bulan terakhir.</p>
+          <p>Belum ada pengajian yang tercatat untuk {member.nama}{rangeLabel ? ` pada ${rangeLabel}` : ''}.</p>
         </div>
       )}
     </section>
@@ -103,16 +104,19 @@ export function WaliPage() {
     )
   }
 
+  // sampai bisa kosong bila migration rentang belum dijalankan; label jatuh ke tanggal mulai.
+  const rangeLabel = view.sampai ? waliRangeLabel(view.sejak, view.sampai) : `sejak ${formatDate(view.sejak)}`
+
   return (
     <main className="wali-page">
       <header className="wali-header">
         <span className="brand-mark">SP</span>
         <div>
           <strong>Absensi Keluarga</strong>
-          <small>{view.wali} · {view.anggota.length} orang · sejak {formatDate(view.sejak)}</small>
+          <small>{view.wali} · {view.anggota.length} orang{rangeLabel ? ` · ${rangeLabel}` : ''}</small>
         </div>
       </header>
-      {view.anggota.map((member, index) => <MemberCard key={`${index}-${member.nama}`} member={member} />)}
+      {view.anggota.map((member, index) => <MemberCard key={`${index}-${member.nama}`} member={member} rangeLabel={rangeLabel} />)}
       <footer className="wali-footer">
         <Users size={14} /> Halaman ini hanya menampilkan anggota keluarga Anda. Hubungi pengurus bila ada data yang keliru.
       </footer>

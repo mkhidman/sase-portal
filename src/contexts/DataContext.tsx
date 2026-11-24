@@ -42,6 +42,7 @@ import {
   upsertGuardianContact,
   removeGuardianContact,
   setWaliAccess as setWaliAccessRecord,
+  setWaliWindow as setWaliWindowRecord,
   upsertMeeting,
   removeMeeting,
   setMeetingTaskDone,
@@ -60,6 +61,7 @@ import { censusCategoryForClassName, isEligibleForMaterial, isMandatoryMaterial,
 import { buildGeneralAttendanceBreakdown, GENERAL_ATTENDANCE_CLASS_NAME } from '../lib/generalAttendance'
 import { loadBootstrapCache, saveBootstrapCache, sweepStaleAttendanceDrafts, type OfflineCacheStatus } from '../lib/offline'
 import { mergeDemoJamaah } from '../lib/mergeJamaah'
+import { WALI_WINDOW_DEFAULT, type WaliWindow } from '../lib/wali'
 
 interface SaveAttendanceInput {
   id?: string
@@ -106,6 +108,8 @@ interface DataContextValue extends BootstrapData {
   deleteGuardianContact: (contactId: string) => Promise<void>
   /** Mengembalikan token tautan wali saat diaktifkan, atau null saat dicabut. */
   setWaliAccess: (jamaahId: string, enabled: boolean) => Promise<string | null>
+  /** Mengubah rentang absensi yang dilihat wali tanpa mengganti tokennya. */
+  setWaliWindow: (jamaahId: string, window: WaliWindow) => Promise<void>
   mergeDuplicateJamaah: (input: MergeJamaahInput) => Promise<void>
   saveMeeting: (input: SaveMeetingInput) => Promise<void>
   deleteMeeting: (meetingId: string) => Promise<void>
@@ -132,7 +136,7 @@ const EMPTY: BootstrapData = {
   meetings: [],
   meetingTopics: [],
   meetingTasks: [],
-  waliAccessIds: [],
+  waliAccess: [],
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -164,7 +168,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [], waliAccessIds: cached.data.waliAccessIds ?? [] })
+        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [], waliAccess: cached.data.waliAccess ?? [] })
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')
@@ -738,13 +742,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const isGuardian = data.guardianContacts.some((item) => item.guardianJamaahId === jamaahId && item.jamaahId !== jamaahId)
         if (enabled && !isGuardian) throw new Error('Warga ini belum tercatat sebagai wali siapa pun.')
         const token = await setWaliAccessRecord(jamaahId, enabled)
+        await updateData((current) => {
+          const others = current.waliAccess.filter((item) => item.jamaahId !== jamaahId)
+          if (!enabled) return { ...current, waliAccess: others }
+          // Tautan baru memutar token, tetapi rentang yang sudah dipilih dipertahankan -- sama seperti
+          // on conflict do update di set_wali_access, yang juga tidak menyentuh kolom rentang.
+          const existing = current.waliAccess.find((item) => item.jamaahId === jamaahId)
+          return { ...current, waliAccess: [...others, existing ?? { jamaahId, ...WALI_WINDOW_DEFAULT }] }
+        })
+        return token
+      },
+      async setWaliWindow(jamaahId, window) {
+        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengatur akses wali.')
+        if (!data.waliAccess.some((item) => item.jamaahId === jamaahId)) throw new Error('Warga ini belum punya tautan wali yang aktif.')
+        if (window.windowPreset === 'custom' && (!window.fromMonth || !window.toMonth)) throw new Error('Rentang sendiri butuh bulan awal dan bulan akhir.')
+        await setWaliWindowRecord(jamaahId, window)
         await updateData((current) => ({
           ...current,
-          waliAccessIds: enabled
-            ? [...current.waliAccessIds.filter((id) => id !== jamaahId), jamaahId]
-            : current.waliAccessIds.filter((id) => id !== jamaahId),
+          waliAccess: current.waliAccess.map((item) => item.jamaahId === jamaahId ? { ...item, ...window } : item),
         }))
-        return token
       },
       async mergeDuplicateJamaah(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat menggabungkan data warga.')

@@ -38,14 +38,14 @@ pages/  →  DataContext / AuthContext  →  data/repository.ts  →  Supabase R
 - **`src/data/repository.ts`** (≈870 baris) adalah **satu-satunya** lapisan akses data. Tiap fungsi bercabang di `isDemoMode` lebih dulu. Jangan pernah memanggil `supabase` langsung dari page atau context.
 - **`src/contexts/DataContext.tsx`** (≈740 baris) memegang seluruh state aplikasi (`BootstrapData`, 16+ koleksi) dan semua fungsi mutasi. Pola tiap mutasi: validasi aturan bisnis → panggil repository → update state lokal → `saveBootstrapCache`/`persistDemo`. Page tidak pernah menyimpan salinan data server.
 - **Bootstrap sekali per sesi**: `loadBootstrap(user)` menarik semua tabel paralel dengan `fetchAllRows` (pagination 500 baris). Reload penuh hanya terjadi saat mount, kembali online, atau event Supabase Realtime. Tidak ada fetch per-halaman.
-- **Kompatibilitas skema**: hasil query yang gagal dengan kode `42P01`/`PGRST205` (tabel belum ada) sengaja diabaikan agar instance yang belum menjalankan migration terbaru tetap jalan. Pertahankan pola ini saat menambah tabel baru.
+- **Kompatibilitas skema**: hasil query yang gagal dengan kode `42P01`/`PGRST205` (tabel belum ada) sengaja diabaikan agar instance yang belum menjalankan migration terbaru tetap jalan. Pertahankan pola ini saat menambah tabel baru. Query `wali_access` juga menoleransi `42703` (kolom rentang belum ada).
 - **Routing** (`src/App.tsx`): semua halaman kecuali Login/Dashboard di-`lazy()`, lalu **di-prefetch diam-diam 2,5 detik setelah render pertama** — ini disengaja supaya service worker menyimpan seluruh chunk untuk mode offline. Menambah halaman berarti menambah entri di objek `loaders`, bukan sekadar `lazy()` inline.
 - Guard bersarang: `ProtectedRoute` → `PasswordReadyRoute` (paksa ganti password sementara) → `AppLayout` → `SuperadminRoute` untuk menu khusus Superadmin.
 
 ## Invarian yang harus dijaga
 
 - **Validasi ganda.** Setiap aturan bisnis hidup di dua tempat: frontend (DataContext) dan database (RPC security definer + RLS). Jangan menghapus salah satunya "karena redundan".
-- **Mutasi multi-tabel wajib lewat RPC**, bukan beberapa query dari client. RPC yang ada: `save_jamaah_record`, `bulk_import_jamaah`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `record_current_login`, `complete_password_change`, `save_meeting_record`, `set_wali_access`, `wali_attendance`.
+- **Mutasi multi-tabel wajib lewat RPC**, bukan beberapa query dari client. RPC yang ada: `save_jamaah_record`, `bulk_import_jamaah`, `save_attendance_session_complete`, `save_family_record`, `save_linked_guardian_contact`, `bulk_transition_jamaah_classes`, `change_jamaah_active_status`, `merge_jamaah_duplicates`, `record_current_login`, `complete_password_change`, `save_meeting_record`, `set_wali_access`, `set_wali_window`, `wali_attendance`.
 - **Perubahan aturan harus disalin ke jalur demo.** Logika merge/simpan versi client ada di `src/lib/` (`mergeJamaah.ts`, dsb.). Mengubah RPC tanpa mengubah pasangan demo-nya membuat dua mode berperilaku berbeda.
 - **Laporan historis memakai snapshot, bukan data terkini.** `jamaahSnapshotsAsOfDate()` (`src/lib/utils.ts`) memutar mundur `class_membership_history` + `jamaah_status_history` untuk merekonstruksi kelas, kategori sensus, dan status aktif pada tanggal tertentu. Laporan bulanan/rekap yang membaca `jamaah` langsung akan berubah retroaktif setiap kali ada kenaikan kelas atau pengarsipan — itu bug.
 - **Nilai turunan bersama disediakan DataContext, bukan dibangun ulang per halaman.** `classNameMap` (id kelas ke nama) sudah ada di context. Jangan menulis `new Map(classes.map(...))` lagi di halaman.
@@ -61,7 +61,7 @@ pages/  →  DataContext / AuthContext  →  data/repository.ts  →  Supabase R
 
 Checklist minimum (urut):
 
-1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `027_wali_token_tanpa_pgcrypto.sql`).
+1. Migration baru `supabase/migrations/0NN_*.sql` — **jangan mengedit migration lama yang sudah ter-deploy**; nomor berurutan (saat ini sampai `028_wali_rentang_tampilan.sql`).
 2. Daftarkan tabel ke publication `supabase_realtime` di migration tersebut.
 3. Tambah tipe di `src/types/domain.ts` (semua tipe domain terpusat di sini).
 4. Tambah koleksi ke `BootstrapData` + query di `loadBootstrap` + fungsi mutasi di `repository.ts` (dua cabang: Supabase & demo).
@@ -88,4 +88,4 @@ CSS murni di `src/styles.css` (tanpa Tailwind/CSS-in-JS). Arrow function compone
 
 ## Kondisi saat ini
 
-Backup JSON bisa diunduh tetapi restore belum ada. Akses Wali sudah ada (tautan tanpa akun); ketuntasan materi belum ikut ditampilkan di halaman itu. Modul Notulensi Musyawarah sudah dihapus (migration 022).
+Backup JSON bisa diunduh tetapi restore belum ada. Akses Wali sudah ada (tautan tanpa akun) dengan rentang tampilan yang dapat diatur per tautan; ketuntasan materi belum ikut ditampilkan di halaman itu. Modul Notulensi Musyawarah sudah dihapus (migration 022).

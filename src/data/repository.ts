@@ -22,9 +22,10 @@ import type {
   ReportingPeriodStatus,
   Schedule,
   StudyClass,
+  WaliAccess,
   WaliView,
 } from '../types/domain'
-import { buildWaliView, waliWindowStart } from '../lib/wali'
+import { buildWaliView, waliWindowRange, type WaliWindow } from '../lib/wali'
 import { loadDemoBootstrap, saveDemoBootstrap } from './demo'
 
 function requireSupabase() {
@@ -77,8 +78,8 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     fetchAllRows(() => client.from('meetings').select('id,title,meeting_date,created_by,created_at,updated_at').order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).order('id')),
     fetchAllRows(() => client.from('meeting_topics').select('id,meeting_id,sort_order,problem,solution').order('meeting_id').order('sort_order').order('id')),
     fetchAllRows(() => client.from('meeting_tasks').select('id,topic_id,sort_order,task,pic_jamaah_id,due_date,done_at,done_by').order('topic_id').order('sort_order').order('id')),
-    // Hanya id-nya. Token tautan wali sengaja tidak pernah ikut bootstrap supaya tidak mengendap di cache offline admin.
-    fetchAllRows(() => client.from('wali_access').select('jamaah_id').order('jamaah_id')),
+    // Rentang tampilannya ikut, tokennya sengaja tidak pernah ikut bootstrap supaya tidak mengendap di cache offline admin.
+    fetchAllRows(() => client.from('wali_access').select('jamaah_id, window_preset, from_month, to_month').order('jamaah_id')),
   ])
 
   const coreResults = [classesResult, jamaahResult, schedulesResult, sessionsResult, completionsResult]
@@ -95,7 +96,8 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
   if (meetingsResult.error && !['42P01', 'PGRST205'].includes(meetingsResult.error.code)) throw meetingsResult.error
   if (meetingTopicsResult.error && !['42P01', 'PGRST205'].includes(meetingTopicsResult.error.code)) throw meetingTopicsResult.error
   if (meetingTasksResult.error && !['42P01', 'PGRST205'].includes(meetingTasksResult.error.code)) throw meetingTasksResult.error
-  if (waliAccessResult.error && !['42P01', 'PGRST205'].includes(waliAccessResult.error.code)) throw waliAccessResult.error
+  // 42703: kolom rentang belum ada (migration 028 belum dijalankan). Dibiarkan kosong, sama seperti tabel yang belum ada.
+  if (waliAccessResult.error && !['42P01', 'PGRST205', '42703'].includes(waliAccessResult.error.code)) throw waliAccessResult.error
 
   let admins: AppUser[] = []
   let auditLogs: AuditLog[] = []
@@ -302,7 +304,12 @@ export async function loadBootstrap(user: AppUser): Promise<BootstrapData> {
     meetings: (meetingsResult.data ?? []).map(mapMeetingRow),
     meetingTopics: (meetingTopicsResult.data ?? []).map(mapMeetingTopicRow),
     meetingTasks: (meetingTasksResult.data ?? []).map(mapMeetingTaskRow),
-    waliAccessIds: (waliAccessResult.data ?? []).map((row: any) => row.jamaah_id as string),
+    waliAccess: (waliAccessResult.data ?? []).map((row: any): WaliAccess => ({
+      jamaahId: row.jamaah_id as string,
+      windowPreset: (row.window_preset ?? '3-bulan') as WaliAccess['windowPreset'],
+      fromMonth: row.from_month ?? '',
+      toMonth: row.to_month ?? '',
+    })),
   }
 }
 
@@ -922,19 +929,34 @@ export async function setWaliAccess(jamaahId: string, enabled: boolean): Promise
   return (data as string | null) ?? null
 }
 
+export async function setWaliWindow(jamaahId: string, window: WaliWindow): Promise<void> {
+  if (isDemoMode) return
+  const client = requireSupabase()
+  const { error } = await client.rpc('set_wali_window', {
+    target_jamaah_id: jamaahId,
+    new_preset: window.windowPreset,
+    new_from_month: window.windowPreset === 'custom' ? window.fromMonth : null,
+    new_to_month: window.windowPreset === 'custom' ? window.toMonth : null,
+  })
+  if (error) throw error
+}
+
 /** Dipanggil dari halaman publik tanpa sesi login, jadi tidak boleh menyentuh loadBootstrap. */
 export async function fetchWaliView(token: string): Promise<WaliView | null> {
   if (isDemoMode) {
     const guardianId = token.startsWith('demo-') ? token.slice('demo-'.length) : ''
     const demo = loadDemoBootstrap()
-    if (!guardianId || !demo.waliAccessIds.includes(guardianId)) return null
+    const access = guardianId ? demo.waliAccess.find((item) => item.jamaahId === guardianId) : undefined
+    if (!access) return null
+    const { since, until } = waliWindowRange(access)
     return buildWaliView({
       guardianId,
       jamaah: demo.jamaah,
       guardianContacts: demo.guardianContacts,
       classes: demo.classes,
       sessions: demo.attendanceSessions,
-      since: waliWindowStart(new Date()),
+      since,
+      until,
     })
   }
   const client = requireSupabase()

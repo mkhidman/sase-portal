@@ -3,7 +3,7 @@
 // angka yang berubah di layar admin.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildWaliInviteMessage, buildWaliLink, buildWaliView, dependantsOfGuardian, waliWindowStart } from './wali.ts'
+import { buildWaliInviteMessage, buildWaliLink, buildWaliView, dependantsOfGuardian, waliRangeLabel, waliWindowRange } from './wali.ts'
 import type { AttendanceSession, GuardianContact, Jamaah, StudyClass } from '../types/domain.ts'
 
 const person = (id: string, fullName: string, active = true, classIds: string[] = ['k1']): Jamaah => ({
@@ -48,7 +48,7 @@ test('hanya wali dan tanggungan aktifnya yang muncul', () => {
 
 test('wali yang tidak dikenal tidak mendapat daftar apa pun', () => {
   assert.deepEqual(dependantsOfGuardian('entah-siapa', jamaah, guardianContacts), [])
-  assert.equal(buildWaliView({ guardianId: 'entah-siapa', jamaah, guardianContacts, classes, sessions: [], since: '2026-01-01' }), null)
+  assert.equal(buildWaliView({ guardianId: 'entah-siapa', jamaah, guardianContacts, classes, sessions: [], since: '2026-01-01', until: '2026-03-31' }), null)
 })
 
 test('absensi dibatasi jendela tanggal dan hanya memuat orang yang tercatat di sesi itu', () => {
@@ -57,7 +57,7 @@ test('absensi dibatasi jendela tanggal dan hanya memuat orang yang tercatat di s
     session('s-baru', '2026-02-10', { 'anak-1': 'absent', 'orang-lain': 'present' }),
     session('s-terbaru', '2026-03-05', { 'anak-1': 'present', 'anak-2': 'sick' }),
   ]
-  const view = buildWaliView({ guardianId: 'wali', jamaah, guardianContacts, classes, sessions, since: '2026-01-01' })
+  const view = buildWaliView({ guardianId: 'wali', jamaah, guardianContacts, classes, sessions, since: '2026-01-01', until: '2026-03-31' })
   assert.ok(view)
   assert.equal(view.wali, 'Bapak Hendra')
 
@@ -76,8 +76,43 @@ test('absensi dibatasi jendela tanggal dan hanya memuat orang yang tercatat di s
   assert.equal(JSON.stringify(view).includes('Dewi'), false)
 })
 
-test('jendela tampilan mundur tiga bulan', () => {
-  assert.equal(waliWindowStart(new Date(2026, 10, 23)), '2026-08-23')
+test('sesi sesudah batas akhir tidak ikut tampil', () => {
+  const sessions = [
+    session('s-dalam', '2026-02-10', { 'anak-1': 'present' }),
+    session('s-sesudah', '2026-04-02', { 'anak-1': 'absent' }),
+  ]
+  const view = buildWaliView({ guardianId: 'wali', jamaah, guardianContacts, classes, sessions, since: '2026-01-01', until: '2026-03-31' })
+  assert.ok(view)
+  assert.deepEqual(view.anggota.find((item) => item.nama === 'Budi')?.absensi.map((item) => item.tanggal), ['2026-02-10'])
+})
+
+test('tiap pilihan rentang memberi batas bulan penuh', () => {
+  // 23 November 2026. Bulan di JS 0-based: 10 = November.
+  const today = new Date(2026, 10, 23)
+  assert.deepEqual(waliWindowRange({ windowPreset: 'bulan-ini', fromMonth: '', toMonth: '' }, today), { since: '2026-11-01', until: '2026-11-30' })
+  assert.deepEqual(waliWindowRange({ windowPreset: 'bulan-lalu', fromMonth: '', toMonth: '' }, today), { since: '2026-10-01', until: '2026-10-31' })
+  assert.deepEqual(waliWindowRange({ windowPreset: '3-bulan', fromMonth: '', toMonth: '' }, today), { since: '2026-09-01', until: '2026-11-30' })
+  assert.deepEqual(waliWindowRange({ windowPreset: '6-bulan', fromMonth: '', toMonth: '' }, today), { since: '2026-06-01', until: '2026-11-30' })
+})
+
+test('bulan lalu menyeberang tahun dan bulan pendek', () => {
+  assert.deepEqual(waliWindowRange({ windowPreset: 'bulan-lalu', fromMonth: '', toMonth: '' }, new Date(2026, 0, 5)), { since: '2025-12-01', until: '2025-12-31' })
+  // Februari 2028 kabisat: batas akhirnya 29, bukan 28 atau 31.
+  assert.deepEqual(waliWindowRange({ windowPreset: 'bulan-ini', fromMonth: '', toMonth: '' }, new Date(2028, 1, 10)), { since: '2028-02-01', until: '2028-02-29' })
+})
+
+test('rentang sendiri dipakai apa adanya, yang terbalik dibetulkan, yang separuh jatuh ke bawaan', () => {
+  const today = new Date(2026, 10, 23)
+  assert.deepEqual(waliWindowRange({ windowPreset: 'custom', fromMonth: '2026-02', toMonth: '2026-04' }, today), { since: '2026-02-01', until: '2026-04-30' })
+  assert.deepEqual(waliWindowRange({ windowPreset: 'custom', fromMonth: '2026-04', toMonth: '2026-02' }, today), { since: '2026-02-01', until: '2026-04-30' })
+  // Tanpa jatuh ke bawaan, rentang separuh terisi membuka seluruh riwayat absensi ke orang luar.
+  assert.deepEqual(waliWindowRange({ windowPreset: 'custom', fromMonth: '2026-04', toMonth: '' }, today), { since: '2026-09-01', until: '2026-11-30' })
+})
+
+test('nama rentang menyebut satu bulan atau dua ujungnya', () => {
+  assert.equal(waliRangeLabel('2026-10-01', '2026-10-31'), 'Oktober 2026')
+  assert.equal(waliRangeLabel('2026-09-01', '2026-11-30'), 'September 2026 - November 2026')
+  assert.equal(waliRangeLabel('', ''), '')
 })
 
 test('pesan undangan memuat tautan dan nama wali', () => {

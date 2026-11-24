@@ -250,8 +250,18 @@ export interface BootstrapData {
   meetings: Meeting[]
   meetingTopics: MeetingTopic[]
   meetingTasks: MeetingTask[]
-  /** Id warga yang tautan wali-nya sedang aktif. Tokennya sendiri tidak pernah ikut bootstrap. */
-  waliAccessIds: string[]
+  /** Warga yang tautan wali-nya sedang aktif beserta rentang tampilannya. Tokennya sendiri tidak pernah ikut bootstrap. */
+  waliAccess: WaliAccess[]
+}
+
+export type WaliWindowPreset = 'bulan-ini' | 'bulan-lalu' | '3-bulan' | '6-bulan' | 'custom'
+
+export interface WaliAccess {
+  jamaahId: string
+  windowPreset: WaliWindowPreset
+  /** Hanya dipakai saat windowPreset 'custom'; format YYYY-MM. */
+  fromMonth: string
+  toMonth: string
 }
 
 export interface WaliAttendanceRecord {
@@ -270,5 +280,6 @@ export interface WaliMember {
 export interface WaliView {
   wali: string
   sejak: string
+  sampai: string
   anggota: WaliMember[]
 }
