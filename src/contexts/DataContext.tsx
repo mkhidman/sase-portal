@@ -83,7 +83,8 @@ interface DataContextValue extends BootstrapData {
   classNameMap: Map<string, string>
   visibleClasses: StudyClass[]
   visibleJamaah: Jamaah[]
-  reload: () => Promise<void>
+  /** `silent` menyegarkan data tanpa menyalakan bar pemuatan — untuk penyegaran latar yang tidak ditunggu siapa pun. */
+  reload: (options?: { silent?: boolean }) => Promise<void>
   saveJamaah: (jamaah: Jamaah) => Promise<void>
   importJamaah: (jamaah: Jamaah[]) => Promise<number>
   saveSchedule: (schedule: Schedule) => Promise<void>
@@ -150,14 +151,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [offlineCacheStatus, setOfflineCacheStatus] = useState<OfflineCacheStatus>('ok')
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (options?: { silent?: boolean }) => {
     if (!user) {
       setData(EMPTY)
       setUsingCachedData(false)
       setLastSyncedAt(null)
       return
     }
-    setLoading(true)
+    const silent = options?.silent === true
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const loaded = await loadBootstrap(user)
@@ -176,7 +178,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setError(cause instanceof Error ? cause.message : 'Gagal mengambil data.')
       }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [user])
 
@@ -200,9 +202,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (isDemoMode || !supabase || !user) return
     const realtimeClient = supabase
     let timer: number | undefined
+    // Diam-diam: perubahan ini datang dari admin lain, bukan dari sesuatu yang
+    // pengguna di layar ini sedang tunggu. Salah satu tabel yang didengarkan adalah
+    // audit_logs, yang terisi trigger pada hampir setiap penyimpanan -- dengan bar
+    // pemuatan menyala, satu klik Simpan siapa pun membuat garis itu lewat di layar
+    // semua orang, berkali-kali sehari.
     const scheduleReload = () => {
       window.clearTimeout(timer)
-      timer = window.setTimeout(() => void reload(), 350)
+      timer = window.setTimeout(() => void reload({ silent: true }), 350)
     }
     const channel = realtimeClient
       .channel(`sensus-jamaah-live-${user.id}`)

@@ -1,5 +1,8 @@
 ## Belum dirilis
 
+- Garis hijau pemuatan di puncak halaman tidak lagi menyala untuk penyegaran latar. Aplikasi berlangganan Realtime pada 20 tabel, termasuk `audit_logs` yang terisi trigger pada hampir setiap penyimpanan — jadi satu klik Simpan oleh admin mana pun membuat garis itu lewat di layar semua orang yang sedang membuka aplikasi, dan sekali lagi di layar orang yang menyimpannya.
+- Penyegaran dari Realtime kini memakai `reload({ silent: true })`: datanya tetap diperbarui, hanya indikatornya yang diam. Bar tetap menyala untuk hal yang memang ditunggu — pemuatan pertama, tombol "Coba lagi", dan penyegaran setelah kembali online.
+
 - Membubarkan **topbar** dan mengembalikan isinya ke dasar sidebar: status koneksi, waktu sinkron terakhir, tombol pasang aplikasi, penanda mode demo, profil, dan tombol keluar. Baris selebar layar itu memakan 60px tinggi ditambah jarak di **setiap** halaman untuk empat hal yang jarang disentuh, sementara sidebar punya ruang kosong menganggur di bawah menunya. Topbar itu sendiri lahir dari re-skin sebelumnya, bukan dari kebutuhan: isinya memang berasal dari dasar sidebar.
 - Tombol keluar kini menempel di baris profil, bukan berdiri sendiri, dan nama yang terlalu panjang dipotong elipsis — sidebar menyusut jadi 228px pada layar 845px.
 - **Hanya daftar menu yang menggulung**, bukan seluruh sidebar. Tanpa itu, membuka grup menu pada layar pendek mendorong blok akun keluar dari pandangan dan tombol keluar jadi tidak terjangkau tanpa menggulung.
