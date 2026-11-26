@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const loaded = await loadSupabaseUser(data.session.user.id)
           setUser(loaded)
-          await supabase?.rpc('record_current_login')
+          void supabase?.rpc('record_current_login')
         } catch {
           await supabase?.auth.signOut()
           setUser(null)
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void loadSupabaseUser(session.user.id)
         .then(async (loaded) => {
           setUser(loaded)
-          await supabase?.rpc('record_current_login')
+          void supabase?.rpc('record_current_login')
         })
         .catch(async () => {
           await supabase?.auth.signOut()
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const loaded = await loadSupabaseUser(data.user.id)
           setUser(loaded)
-          await supabase.rpc('record_current_login')
+          void supabase.rpc('record_current_login')
         } catch (cause) {
           await supabase.auth.signOut()
           throw cause

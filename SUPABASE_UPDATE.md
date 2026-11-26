@@ -1,6 +1,6 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan enam migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan tujuh migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
@@ -9,7 +9,22 @@ supabase/migrations/025_meeting_topic_wording.sql
 supabase/migrations/026_akses_wali.sql
 supabase/migrations/027_wali_token_tanpa_pgcrypto.sql
 supabase/migrations/028_wali_rentang_tampilan.sql
+supabase/migrations/029_rls_sekali_per_statement.sql
 ```
+
+## Migration 029 (Policy baca sekali per statement)
+
+Membuat ulang policy `select` pada tabel yang ikut bootstrap, menambah fungsi `managed_class_ids()`, dan menambah indeks `attendance_records(jamaah_id)`. **Tidak ada tabel, kolom, atau aturan akses yang berubah** — hanya bentuk ekspresinya.
+
+Alasannya: helper RLS yang ada (`is_superadmin`, `can_manage_class`, `jamaah_in_managed_class`, `jamaah_in_managed_attendance_history`, `family_in_managed_class`) semuanya `stable` tetapi berparameter, sehingga Postgres memanggilnya untuk **setiap baris**. Satu baris `attendance_records` memicu satu subquery ke `attendance_sessions` plus satu lookup ke `profiles`; policy `jamaah` memanggil tiga helper bersarang per warga. Pada bootstrap yang menarik seluruh tabel, biayanya jumlah baris dikali kedalaman helper.
+
+Bentuk penggantinya memakai subquery tanpa acuan ke baris luar, yang direncanakan sebagai InitPlan: dihitung sekali per statement, lalu dipakai sebagai hash.
+
+- **Jalankan di dalam transaksi uji lebih dulu.** Tempel seluruh isi berkas di SQL Editor dibungkus `begin;` … `rollback;` untuk memastikan semuanya ter-parse di instance ini, lalu jalankan ulang tanpa pembungkus itu. Satu policy yang gagal di tengah berkas akan meninggalkan sebagian tabel tanpa policy `select` — artinya tabel itu terbaca kosong oleh semua Admin.
+- **Verifikasi dengan akun Admin, bukan Superadmin.** Superadmin lolos lewat cabang pertama setiap policy, jadi pengujiannya tidak membuktikan apa pun tentang cabang kelas. Bandingkan jumlah baris yang terlihat sebelum dan sesudah: jumlah warga, jadwal, sesi absensi, keluarga, dan tindak lanjut harus sama persis.
+- Nama policy-nya **sengaja dipertahankan** seperti aslinya (termasuk yang janggal seperti `merge history managed by superadmin` untuk policy `select`). Policy pada satu tabel bersifat OR; membuat policy baru dengan nama baru tanpa menghapus yang lama berarti bentuk lamanya tetap dievaluasi dan tidak ada yang lebih cepat.
+- Policy **tulis** tidak disentuh, dan helper lamanya tidak dihapus karena masih dipakai policy tulis serta beberapa RPC.
+- Tabel kecil yang dipakai `is_account_active(auth.uid())` (`study_classes`, `reporting_periods`) dibiarkan apa adanya: barisnya terlalu sedikit untuk terasa.
 
 ## Migration 028 (Rentang tampilan Akses Wali)
 

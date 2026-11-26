@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   AttendanceSession,
   AttendanceStatus,
@@ -142,6 +142,9 @@ const EMPTY: BootstrapData = {
 
 const DataContext = createContext<DataContextValue | null>(null)
 
+/** Cache bisa ditulis versi aplikasi yang lebih tua, jadi koleksi yang baru belum tentu ada. */
+const fromCache = (cached: BootstrapData): BootstrapData => ({ ...cached, admins: (cached.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.auditLogs ?? [], followUps: cached.followUps ?? [], reportingPeriods: cached.reportingPeriods ?? [], classHistory: cached.classHistory ?? [], statusHistory: cached.statusHistory ?? [], families: cached.families ?? [], familyMembers: cached.familyMembers ?? [], guardianContacts: (cached.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.mergeHistory ?? [], meetings: cached.meetings ?? [], meetingTopics: cached.meetingTopics ?? [], meetingTasks: cached.meetingTasks ?? [], waliAccess: cached.waliAccess ?? [] })
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [data, setData] = useState<BootstrapData>(EMPTY)
@@ -150,6 +153,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [usingCachedData, setUsingCachedData] = useState(false)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [offlineCacheStatus, setOfflineCacheStatus] = useState<OfflineCacheStatus>('ok')
+  const firstPaintDone = useRef(false)
 
   const reload = useCallback(async (options?: { silent?: boolean }) => {
     if (!user) {
@@ -161,6 +165,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const silent = options?.silent === true
     if (!silent) setLoading(true)
     setError(null)
+    // Cache dipakai sebagai tampilan pertama, bukan hanya cadangan saat gagal: tanpa ini
+    // seluruh halaman tampil kosong sampai 17 tabel selesai diunduh. usingCachedData
+    // sengaja tidak dinyalakan -- flag itu berarti "pengambilan gagal", dan tombol Ulangi
+    // yang mengikutinya tidak ada gunanya selama pengambilan masih jalan.
+    if (!silent && !firstPaintDone.current) {
+      firstPaintDone.current = true
+      const cached = loadBootstrapCache(user.id)
+      if (cached) {
+        setData(fromCache(cached.data))
+        setLastSyncedAt(cached.cachedAt)
+      }
+    }
     try {
       const loaded = await loadBootstrap(user)
       setData(loaded)
@@ -170,7 +186,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       const cached = loadBootstrapCache(user.id)
       if (cached) {
-        setData({ ...cached.data, admins: (cached.data.admins ?? []).map((admin) => ({ ...admin, active: admin.active ?? true, mustChangePassword: admin.mustChangePassword ?? false, lastLoginAt: admin.lastLoginAt ?? null })), auditLogs: cached.data.auditLogs ?? [], followUps: cached.data.followUps ?? [], reportingPeriods: cached.data.reportingPeriods ?? [], classHistory: cached.data.classHistory ?? [], statusHistory: cached.data.statusHistory ?? [], families: cached.data.families ?? [], familyMembers: cached.data.familyMembers ?? [], guardianContacts: (cached.data.guardianContacts ?? []).map((item) => ({ ...item, guardianJamaahId: item.guardianJamaahId ?? null })), mergeHistory: cached.data.mergeHistory ?? [], meetings: cached.data.meetings ?? [], meetingTopics: cached.data.meetingTopics ?? [], meetingTasks: cached.data.meetingTasks ?? [], waliAccess: cached.data.waliAccess ?? [] })
+        setData(fromCache(cached.data))
         setUsingCachedData(true)
         setLastSyncedAt(cached.cachedAt)
         setError('Koneksi tidak tersedia. Menampilkan data terakhir yang tersimpan di perangkat.')

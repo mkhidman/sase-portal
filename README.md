@@ -200,6 +200,7 @@ Folder hasil build berada di `dist/`.
 - Service worker hanya didaftarkan pada production build, bukan saat `npm run dev`.
 - Uji instalasi PWA melalui `npm run build` lalu `npm run preview`, atau setelah deploy melalui HTTPS.
 - Data terakhir dapat dibaca saat offline setelah aplikasi pernah berhasil dimuat oleh akun tersebut.
+- Cache itu juga menjadi **tampilan pertama saat online**: isi halaman langsung terisi dari data terakhir, lalu diperbarui diam-diam setelah bootstrap selesai. Sebelumnya cache hanya dipakai bila pengambilan gagal, jadi pembukaan pertama selalu menampilkan halaman kosong selama seluruh tabel diunduh.
 - Draft absensi disimpan lokal, tetapi tombol Simpan Absensi membutuhkan koneksi untuk mengirim ke Supabase.
 - Cache lokal menggunakan kunci berbeda untuk setiap user agar data Superadmin tidak tampil pada akun Admin di perangkat yang sama.
 
