@@ -763,10 +763,15 @@ tr:last-child td { border-bottom: 0; }
 
 /* Phase 5: attendance monitoring and follow-up */
 .dashboard-risk-list { display: grid; gap: 8px; }
-.dashboard-risk-list > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); text-align: left; }
-.dashboard-risk-list > button:hover { border-color: #b8c4d4; background: var(--surface-sunken); }
-.dashboard-risk-list > button > span:first-child { min-width: 0; display: grid; gap: 3px; }
+.dashboard-risk-list > button, .dashboard-risk-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); text-align: left; }
+.dashboard-risk-list > button:hover, .dashboard-risk-row:hover { border-color: #b8c4d4; background: var(--surface-sunken); }
+.dashboard-risk-list > button > span:first-child, .dashboard-risk-row > span:first-child { min-width: 0; display: grid; gap: 3px; }
 .dashboard-risk-list strong { font-size: var(--fs-sm); }
+.dashboard-risk-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+/* Lencana Alpa ikut blok nama, jadi panjang nama tidak lagi menggesernya. */
+.dashboard-risk-meta { min-width: 0; display: flex; align-items: center; gap: 7px; }
+.dashboard-risk-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.dashboard-risk-actions a { text-decoration: none; }
 .dashboard-risk-list small { overflow: hidden; color: var(--muted); font-size: var(--fs-2xs); text-overflow: ellipsis; white-space: nowrap; }
 .followup-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-bottom: 12px; }
 .followup-search { margin-bottom: 13px; }
@@ -774,7 +779,7 @@ tr:last-child td { border-bottom: 0; }
 .followup-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--line); border-left: 4px solid #d9b44a; border-radius: var(--radius-md); background: var(--surface); }
 .followup-card.priority { border-left-color: #c4483f; }
 .followup-main { min-width: 0; display: grid; gap: 10px; }
-.followup-metrics { display: grid; grid-template-columns: repeat(4, minmax(65px, 1fr)); gap: 7px; }
+.followup-metrics { display: grid; grid-template-columns: repeat(3, minmax(65px, 1fr)); gap: 7px; }
 .followup-metrics > span { padding: 8px 9px; display: grid; gap: 3px; border-radius: var(--radius-sm); background: var(--surface-sunken); }
 .followup-metrics small { color: var(--muted); font-size: var(--fs-2xs); }
 .followup-metrics strong { font-size: var(--fs-lg); }
@@ -787,6 +792,10 @@ textarea { width: 100%; padding: 10px 11px; border: 1px solid var(--line); borde
 textarea:focus { border-color: #8ea0b7; box-shadow: 0 0 0 3px rgba(26, 111, 213,.1); }
 
 @media (max-width: 820px) {
+  /* Dua tombol memakan ~160px; di layar sempit nama tidak kebagian ruang,
+     jadi aksinya turun ke baris sendiri. */
+  .dashboard-risk-row { grid-template-columns: minmax(0, 1fr); row-gap: 9px; }
+  .dashboard-risk-actions { justify-content: flex-start; }
   .followup-filters { grid-template-columns: 1fr; }
   .followup-card { grid-template-columns: 1fr; }
   .followup-actions { flex-direction: row; flex-wrap: wrap; }

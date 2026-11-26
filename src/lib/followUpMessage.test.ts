@@ -3,7 +3,7 @@
 // warga yang sudah tuntas ikut ditagih di depan orang banyak.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildFollowUpMessage, pendingNames } from './followUpMessage.ts'
+import { buildAbsenceInquiryMessage, buildFollowUpMessage, pendingNames } from './followUpMessage.ts'
 
 const participants = [
   { id: 'c', fullName: 'Citra' },
@@ -35,4 +35,31 @@ test('buildFollowUpMessage menomori daftar dan menyebut jumlahnya', () => {
   assert.match(message, /^2\. Citra$/m)
   assert.match(message, /segera minta disusulkan/)
   assert.match(message, /_Data per 03 November 2026 - SASE Portal_/)
+})
+
+test('buildAbsenceInquiryMessage menyebut jumlah alpa beserta sisa beruntunnya', () => {
+  const message = buildAbsenceInquiryMessage({
+    jamaahName: 'Ahmad',
+    className: 'Pra Remaja',
+    monthLabel: 'November 2026',
+    absentCount: 5,
+    consecutiveAbsence: 4,
+    toGuardian: true,
+  })
+  assert.match(message, /Bapak\/Ibu wali dari \*Ahmad\*/)
+  assert.match(message, /\*Alpa 5 kali\*, 4 di antaranya berturut-turut/)
+  assert.match(message, /kelas \*Pra Remaja\* bulan November 2026/)
+})
+
+test('buildAbsenceInquiryMessage tidak pernah mengirim "Alpa 0 kali"', () => {
+  const message = buildAbsenceInquiryMessage({
+    jamaahName: 'Budi',
+    className: 'Remaja',
+    monthLabel: 'November 2026',
+    absentCount: 0,
+    consecutiveAbsence: 0,
+    toGuardian: false,
+  })
+  assert.doesNotMatch(message, /Alpa 0/)
+  assert.match(message, /perlu ditindaklanjuti/)
 })

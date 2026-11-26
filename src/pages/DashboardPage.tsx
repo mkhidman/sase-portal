@@ -1,13 +1,16 @@
-import { AlertTriangle, CalendarCheck2, GraduationCap, Users } from 'lucide-react'
+import { AlertTriangle, CalendarCheck2, GraduationCap, MessageCircle, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../contexts/DataContext'
 import { useAuth } from '../contexts/AuthContext'
-import { averageAttendanceRate, formatDate, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, materialProgressFor, monthEndDate, monthValue } from '../lib/utils'
-import { buildAttendanceRisks } from '../lib/followUps'
+import { averageAttendanceRate, formatDate, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, materialProgressFor, monthEndDate, monthLabel, monthValue } from '../lib/utils'
+import { buildAttendanceRisks, normalizeWhatsappNumber, type AttendanceRisk } from '../lib/followUps'
+import { buildAbsenceInquiryMessage } from '../lib/followUpMessage'
+import { preferredContactForJamaah } from '../lib/contacts'
 import { buildMissedAttendance } from '../lib/missedAttendance'
 import { openMeetingTaskRows } from '../lib/meetingTasks'
 import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
+import { FollowUpModal } from '../components/FollowUpModal'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -24,11 +27,13 @@ export function DashboardPage() {
     attendanceSessions,
     materialCompletions,
     followUps,
+    guardianContacts,
     meetings,
     meetingTopics,
     meetingTasks,
   } = useData()
   const [selectedMonth, setSelectedMonth] = useState(monthValue())
+  const [followUpRisk, setFollowUpRisk] = useState<AttendanceRisk | null>(null)
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
 
@@ -86,15 +91,16 @@ export function DashboardPage() {
       ) : null}
 
       <section className="stats-grid three-columns">
-        <StatCard tone="mint" label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
-        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi pada bulan dipilih`} icon={<CalendarCheck2 size={20} />} />
-        <StatCard tone="violet" label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
+        <StatCard tone="mint" label="Total Warga" value={visibleJamaah.length} icon={<Users size={20} />} />
+        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} icon={<CalendarCheck2 size={20} />} />
+        <StatCard tone="violet" label="Kelas Dipantau" value={visibleClasses.length} icon={<GraduationCap size={20} />} />
       </section>
 
       <section className="dashboard-grid">
         <article className="card">
           <div className="card-heading">
-            <div><h2>Target Materi Bulanan</h2><p>Ketuntasan Hasda dan ASAD pada bulan yang dipilih.</p></div>
+            <div><h2>Target Materi Bulanan</h2></div>
+            <button className="text-button" onClick={() => navigate('/materi')}>Kelola semua</button>
           </div>
           <div className="progress-list">
             <ProgressBlock title="Penyampaian Hasda" {...hasda} />
@@ -104,7 +110,7 @@ export function DashboardPage() {
 
         <article className="card">
           <div className="card-heading">
-            <div><h2>Jadwal Terdekat</h2><p>Hanya hari ini dan tanggal berikutnya.</p></div>
+            <div><h2>Jadwal Terdekat</h2></div>
             <button className="text-button" onClick={() => navigate('/jadwal')}>Lihat semua</button>
           </div>
           <div className="schedule-list compact">
@@ -124,24 +130,56 @@ export function DashboardPage() {
 
       <article className="card dashboard-followup">
         <div className="card-heading">
-          <div><h2>Warga Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan yang dipilih.</p></div>
+          <div><h2>Warga Perlu Perhatian</h2></div>
           <button className="text-button" onClick={() => navigate('/tindak-lanjut')}>Kelola semua</button>
         </div>
         <div className="dashboard-risk-list">
-          {topRisks.map((risk) => (
-            <button type="button" key={`${risk.classId}-${risk.jamaah.id}`} onClick={() => navigate(`/tindak-lanjut?class=${risk.classId}`)}>
-              <span><strong>{risk.jamaah.fullName}</strong><small>{classMap.get(risk.classId)?.name ?? 'Kelas'} · {risk.reasons[0]}</small></span>
-              <span className={`badge ${risk.level === 'priority' ? 'danger' : 'warning'}`}>{risk.attendanceRate}%</span>
-            </button>
-          ))}
+          {topRisks.map((risk) => {
+            const className = classMap.get(risk.classId)?.name ?? 'Kelas'
+            const contact = preferredContactForJamaah(risk.jamaah, guardianContacts, jamaah)
+            const waNumber = contact ? normalizeWhatsappNumber(contact.phone) : ''
+            const waText = encodeURIComponent(buildAbsenceInquiryMessage({
+              jamaahName: risk.jamaah.fullName,
+              className,
+              monthLabel: monthLabel(selectedMonth),
+              absentCount: risk.absentCount,
+              consecutiveAbsence: risk.consecutiveAbsence,
+              toGuardian: contact?.source === 'guardian',
+            }))
+            return (
+              <div className="dashboard-risk-row" key={`${risk.classId}-${risk.jamaah.id}`}>
+                <span>
+                  <strong>{risk.jamaah.fullName}</strong>
+                  <span className="dashboard-risk-meta">
+                    <small>{className}</small>
+                    <span className={`badge ${risk.level === 'priority' ? 'danger' : 'warning'}`}>Alpa {risk.absentCount}</span>
+                  </span>
+                </span>
+                <div className="dashboard-risk-actions">
+                  {waNumber ? (
+                    <a className="button outline small" href={`https://wa.me/${waNumber}?text=${waText}`} target="_blank" rel="noreferrer" title={`WhatsApp ${contact?.relationship}: ${contact?.name}`}>
+                      <MessageCircle size={14} /> WhatsApp
+                    </a>
+                  ) : null}
+                  <button className="button primary small" type="button" onClick={() => setFollowUpRisk(risk)}>Kelola</button>
+                </div>
+              </div>
+            )
+          })}
           {!topRisks.length ? <div className="empty-state">Belum ada warga yang memerlukan tindak lanjut.</div> : null}
         </div>
       </article>
 
+      <FollowUpModal
+        risk={followUpRisk}
+        className={followUpRisk ? classMap.get(followUpRisk.classId)?.name ?? 'Kelas' : ''}
+        onClose={() => setFollowUpRisk(null)}
+      />
+
       {user?.role === 'superadmin' ? (
         <article className="card dashboard-followup">
           <div className="card-heading">
-            <div><h2>Hasil Musyawarah Belum Selesai</h2><p>Tugas dari seluruh musyawarah yang belum dicentang. Batas tanggal terdekat lebih dulu.</p></div>
+            <div><h2>Hasil Musyawarah Belum Selesai</h2></div>
             <button className="text-button" onClick={() => navigate('/musyawarah')}>Kelola semua</button>
           </div>
           <div className="dashboard-risk-list">

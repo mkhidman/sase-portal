@@ -1,16 +1,16 @@
-import { CalendarClock, CircleCheck, ExternalLink, MessageCircle, Search, Trash2, TriangleAlert, UserRoundCheck } from 'lucide-react'
+import { CalendarClock, CircleCheck, ExternalLink, MessageCircle, Search, TriangleAlert, UserRoundCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Modal } from '../components/Modal'
-import { useConfirm } from '../components/useConfirm'
+import { FollowUpModal } from '../components/FollowUpModal'
 import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
-import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
+import { type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
 import { buildAttendanceRisks, normalizeWhatsappNumber, type AttendanceRisk } from '../lib/followUps'
 import { preferredContactForJamaah } from '../lib/contacts'
-import { formatDate, jamaahSnapshotsAsOfDate, localIsoDate, monthEndDate, monthValue } from '../lib/utils'
-import type { FollowUpStatus, JamaahFollowUp } from '../types/domain'
+import { buildAbsenceInquiryMessage } from '../lib/followUpMessage'
+import { formatDate, jamaahSnapshotsAsOfDate, localIsoDate, monthEndDate, monthLabel, monthValue } from '../lib/utils'
+import type { FollowUpStatus } from '../types/domain'
 
 const STATUS_OPTIONS: FollowUpStatus[] = ['pending', 'contacted', 'visit_needed', 'resolved']
 
@@ -31,8 +31,6 @@ export function FollowUpsPage() {
     attendanceSessions,
     followUps,
     guardianContacts,
-    saveJamaahFollowUp,
-    deleteJamaahFollowUp,
     isPeriodClosed,
   } = useData()
   const [searchParams] = useSearchParams()
@@ -41,10 +39,7 @@ export function FollowUpsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | FollowUpStatus>('open')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<AttendanceRisk | null>(null)
-  const [form, setForm] = useState({ status: 'pending' as FollowUpStatus, notes: '', nextFollowUpDate: '' })
   const [message, setMessage] = useState<Feedback | null>(null)
-  const [working, setWorking] = useState(false)
-  const { confirm, dialog: confirmDialog } = useConfirm()
 
   const effectiveClassId = visibleClasses.some((item) => item.id === classId) ? classId : visibleClasses[0]?.id ?? ''
   const snapshotJamaah = useMemo(
@@ -74,65 +69,7 @@ export function FollowUpsPage() {
 
   function openFollowUp(risk: AttendanceRisk) {
     setSelected(risk)
-    setForm({
-      status: risk.followUp?.status ?? 'pending',
-      notes: risk.followUp?.notes ?? '',
-      nextFollowUpDate: risk.followUp?.nextFollowUpDate ?? '',
-    })
     setMessage(null)
-  }
-
-  async function save() {
-    if (!selected) return
-    setWorking(true)
-    setMessage(null)
-    try {
-      const now = new Date().toISOString()
-      const followUp: JamaahFollowUp = {
-        id: selected.followUp?.id ?? `new-${crypto.randomUUID()}`,
-        jamaahId: selected.jamaah.id,
-        classId: selected.classId,
-        periodMonth: selected.month,
-        status: form.status,
-        triggerType: selected.consecutiveAbsence >= 4 ? 'consecutive_absence' : 'manual',
-        attendanceRate: selected.attendanceRate,
-        absenceCount: selected.absentCount,
-        consecutiveAbsence: selected.consecutiveAbsence,
-        notes: form.notes.trim(),
-        nextFollowUpDate: form.status === 'resolved' ? '' : form.nextFollowUpDate,
-        recordedBy: selected.followUp?.recordedBy ?? null,
-        createdAt: selected.followUp?.createdAt ?? now,
-        updatedAt: now,
-      }
-      await saveJamaahFollowUp(followUp)
-      setSelected(null)
-      setMessage(feedbackOk('Tindak lanjut berhasil disimpan.'))
-    } catch (cause) {
-      setMessage(feedbackFrom(cause, 'Gagal menyimpan tindak lanjut.'))
-    } finally {
-      setWorking(false)
-    }
-  }
-
-  async function remove() {
-    if (!selected?.followUp) return
-    const approved = await confirm({
-      title: 'Hapus catatan tindak lanjut?',
-      description: `Catatan tindak lanjut untuk ${selected.jamaah.fullName} akan dihapus. Riwayat kehadirannya tidak ikut terhapus.`,
-      confirmLabel: 'Hapus Catatan',
-      tone: 'danger',
-    })
-    if (!approved) return
-    setWorking(true)
-    try {
-      await deleteJamaahFollowUp(selected.followUp.id)
-      setSelected(null)
-      setMessage(feedbackOk('Catatan tindak lanjut berhasil dihapus.'))
-    } catch (cause) {
-      setMessage(feedbackFrom(cause, 'Gagal menghapus tindak lanjut.'))
-    } finally {
-      setWorking(false)
-    }
   }
 
   return (
@@ -160,12 +97,19 @@ export function FollowUpsPage() {
             const status = risk.followUp?.status ?? 'pending'
             const preferredContact = preferredContactForJamaah(risk.jamaah, guardianContacts, jamaah)
             const waNumber = preferredContact ? normalizeWhatsappNumber(preferredContact.phone) : ''
+            const waText = encodeURIComponent(buildAbsenceInquiryMessage({
+              jamaahName: risk.jamaah.fullName,
+              className: classNameMap.get(risk.classId) ?? 'Kelas',
+              monthLabel: monthLabel(risk.month),
+              absentCount: risk.absentCount,
+              consecutiveAbsence: risk.consecutiveAbsence,
+              toGuardian: preferredContact?.source === 'guardian',
+            }))
             return (
               <article className={`followup-card ${risk.level === 'priority' ? 'priority' : ''}`} key={`${risk.classId}-${risk.jamaah.id}`}>
                 <div className="followup-main">
                   <Person name={risk.jamaah.fullName} meta={`${risk.jamaah.censusCategory} · ${classNameMap.get(risk.classId) ?? 'Kelas'}`} />
                   <div className="followup-metrics">
-                    <span><small>Kehadiran</small><strong>{risk.attendanceRate}%</strong></span>
                     <span><small>Hadir</small><strong>{risk.presentCount}/{risk.totalSessions}</strong></span>
                     <span><small>Alpa</small><strong>{risk.absentCount}</strong></span>
                     <span><small>Beruntun</small><strong>{risk.consecutiveAbsence}</strong></span>
@@ -177,7 +121,7 @@ export function FollowUpsPage() {
                   </div>
                 </div>
                 <div className="followup-actions">
-                  {waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" title={preferredContact ? `${preferredContact.relationship}: ${preferredContact.name}` : undefined}><MessageCircle size={14} /> {preferredContact?.source === 'guardian' ? 'WhatsApp Wali' : 'WhatsApp'} <ExternalLink size={12} /></a> : null}
+                  {waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}?text=${waText}`} target="_blank" rel="noreferrer" title={preferredContact ? `${preferredContact.relationship}: ${preferredContact.name}` : undefined}><MessageCircle size={14} /> {preferredContact?.source === 'guardian' ? 'WhatsApp Wali' : 'WhatsApp'} <ExternalLink size={12} /></a> : null}
                   <button className="button primary small" type="button" disabled={periodClosed} onClick={() => openFollowUp(risk)}>Kelola</button>
                 </div>
               </article>
@@ -188,26 +132,12 @@ export function FollowUpsPage() {
         <InlineMessage value={message} />
       </article>
 
-      <Modal open={Boolean(selected)} title="Catatan Tindak Lanjut" onClose={() => setSelected(null)} wide>
-        {selected ? (
-          <>
-            <div className="followup-modal-summary">
-              <Person name={selected.jamaah.fullName} meta={`${classNameMap.get(selected.classId) ?? 'Kelas'} · Kehadiran ${selected.attendanceRate}%`} />
-              <div className="badge-list">{selected.reasons.map((reason) => <span className="badge warning" key={reason}>{reason}</span>)}</div>
-            </div>
-            <div className="form-grid one-column">
-              <label>Status<select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as FollowUpStatus }))}>{STATUS_OPTIONS.map((status) => <option value={status} key={status}>{FOLLOW_UP_STATUS_LABELS[status]}</option>)}</select></label>
-              <label>Tanggal tindak lanjut berikutnya<input type="date" disabled={form.status === 'resolved'} value={form.status === 'resolved' ? '' : form.nextFollowUpDate} onChange={(event) => setForm((current) => ({ ...current, nextFollowUpDate: event.target.value }))} /></label>
-              <label>Catatan<textarea rows={5} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Contoh: sudah menghubungi wali, warga sedang sakit, rencana kunjungan…" /></label>
-            </div>
-            <div className="modal-inline-actions">
-              {selected.followUp ? <button className="button danger" type="button" disabled={working || periodClosed} onClick={() => void remove()}><Trash2 size={15} /> Hapus Catatan</button> : <span />}
-              <div><button className="button outline" type="button" onClick={() => setSelected(null)}>Batal</button><button className="button primary" type="button" disabled={working || periodClosed} onClick={() => void save()}>{working ? 'Menyimpan…' : 'Simpan Tindak Lanjut'}</button></div>
-            </div>
-          </>
-        ) : null}
-      </Modal>
-      {confirmDialog}
+      <FollowUpModal
+        risk={selected}
+        className={selected ? classNameMap.get(selected.classId) ?? 'Kelas' : ''}
+        onClose={() => setSelected(null)}
+        onSaved={setMessage}
+      />
     </>
   )
 }

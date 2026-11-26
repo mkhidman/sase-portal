@@ -28,7 +28,7 @@ export type StatDelta = { label: string; direction: 'up' | 'down' | 'flat' }
 export function StatCard({ label, value, note, icon, tone = 'mint', delta }: {
   label: string
   value: string | number
-  note: string
+  note?: string
   icon: ReactNode
   tone?: StatTone
   delta?: StatDelta
@@ -46,7 +46,7 @@ export function StatCard({ label, value, note, icon, tone = 'mint', delta }: {
             {delta.label}
           </span>
         ) : null}
-        <small>{note}</small>
+        {note ? <small>{note}</small> : null}
       </div>
     </article>
   )
@@ -104,7 +104,6 @@ export function ProgressBlock({ title, percent, done, total }: { title: string; 
       <div className="progress-heading">
         <div>
           <strong>{title}</strong>
-          <small>Target ketuntasan bulanan</small>
         </div>
         <span className={`badge ${percent === 100 ? 'success' : 'warning'}`}>{percent}%</span>
       </div>

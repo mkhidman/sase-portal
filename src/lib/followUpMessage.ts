@@ -41,3 +41,40 @@ export function buildFollowUpMessage({ material, monthLabel, groupLabel, names, 
     `_Data per ${generatedOn} - SASE Portal_`,
   ].join('\n')
 }
+
+export interface AbsenceInquiryInput {
+  jamaahName: string
+  className: string
+  monthLabel: string
+  absentCount: number
+  consecutiveAbsence: number
+  toGuardian: boolean
+}
+
+/**
+ * Pesan tanya kabar untuk warga yang absensinya bermasalah.
+ *
+ * Angkanya ikut terkirim ke orang tua, jadi penyusunannya tinggal di sini,
+ * bukan di halaman: kalau hitungannya keliru, yang menerima koreksi adalah
+ * wali, bukan pengurus -- dan di layar tidak ada yang berubah sebagai penanda.
+ * Baris yang dikirim pun tidak boleh berbunyi "Alpa 0 kali": baris Warga Perlu
+ * Perhatian bisa muncul hanya karena ada catatan tindak lanjut, tanpa satu pun
+ * alpa pada bulan itu.
+ */
+export function buildAbsenceInquiryMessage({
+  jamaahName, className, monthLabel, absentCount, consecutiveAbsence, toGuardian,
+}: AbsenceInquiryInput): string {
+  const sapaan = toGuardian ? `Bapak/Ibu wali dari *${jamaahName}*` : `*${jamaahName}*`
+  const catatan = absentCount > 0
+    ? `tercatat *Alpa ${absentCount} kali*${consecutiveAbsence >= 2 ? `, ${consecutiveAbsence} di antaranya berturut-turut` : ''}`
+    : 'tercatat perlu ditindaklanjuti'
+  return [
+    `Assalamu'alaikum ${sapaan},`,
+    '',
+    `Dari catatan absensi kelas *${className}* bulan ${monthLabel}, yang bersangkutan ${catatan}.`,
+    '',
+    'Mohon informasinya apakah ada kendala, supaya kami bisa bantu.',
+    '',
+    '_SASE Portal_',
+  ].join('\n')
+}
