@@ -247,6 +247,7 @@ a { color: inherit; }
 .page-header h1 { margin-bottom: 6px; font-size: var(--fs-5xl); letter-spacing: -.025em; }
 .page-header p { margin: 0; color: var(--muted); font-size: var(--fs-md); }
 .page-actions, .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
+.page-actions { align-items: flex-end; }
 .button { min-height: 40px; padding: 9px 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: var(--radius-sm); font-weight: 800; font-size: var(--fs-md); }
 .button.primary { background: var(--primary); color: white; }
 .button.primary:hover { background: var(--primary-dark); }
@@ -519,7 +520,7 @@ tr:last-child td { border-bottom: 0; }
   .login-card { padding: 21px; }
   .page-header { align-items: flex-start; flex-direction: column; }
   .page-actions { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-  .page-actions .button { flex: 0 0 auto; white-space: nowrap; }
+  .page-actions .button, .page-actions .month-filter { flex: 0 0 auto; white-space: nowrap; }
   .three-columns { grid-template-columns: 1fr; }
   .four-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .compact-stats .stat-card small { display: none; }

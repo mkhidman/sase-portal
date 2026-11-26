@@ -146,7 +146,7 @@ export function AppLayout() {
       <aside className="sidebar">
         <div className="brand-row">
           <span className="brand-mark">SP</span>
-          <span><strong>SASE Portal</strong><small>Administrasi warga pengajian</small></span>
+          <span><strong>SASE Portal</strong></span>
         </div>
         <nav className="sidebar-nav">
           <NavLink to="/" end className="sidebar-main-link"><LayoutDashboard size={18} /><span>Dashboard</span></NavLink>

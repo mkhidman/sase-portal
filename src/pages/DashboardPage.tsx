@@ -32,8 +32,7 @@ export function DashboardPage() {
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
 
-  const currentMonth = monthValue()
-  const visibleSessions = attendanceSessions.filter((session) => visibleClassIds.has(session.classId) && session.date.startsWith(currentMonth))
+  const visibleSessions = attendanceSessions.filter((session) => visibleClassIds.has(session.classId) && session.date.startsWith(selectedMonth))
   const averageAttendance = averageAttendanceRate(visibleSessions)
 
   const upcomingSchedules = schedules
@@ -48,7 +47,7 @@ export function DashboardPage() {
   const hasda = materialProgressFor('hasda', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
   const asad = materialProgressFor('asad', materialSnapshot, materialCompletions, selectedMonth, visibleClassIds, classNameMap)
   const attendanceRisks = visibleClasses
-    .flatMap((studyClass) => buildAttendanceRisks({ jamaah: visibleJamaah, sessions: attendanceSessions, followUps, classId: studyClass.id, month: currentMonth }))
+    .flatMap((studyClass) => buildAttendanceRisks({ jamaah: visibleJamaah, sessions: attendanceSessions, followUps, classId: studyClass.id, month: selectedMonth }))
     .filter((risk) => (risk.followUp?.status ?? 'pending') !== 'resolved')
     .sort((a, b) => (a.level === b.level ? a.attendanceRate - b.attendanceRate : a.level === 'priority' ? -1 : 1))
   const topRisks = attendanceRisks.slice(0, 5)
@@ -66,8 +65,13 @@ export function DashboardPage() {
     <>
       <PageHeader
         title="Dashboard"
-        description="Ringkasan operasional kelas, kehadiran, dan target materi."
-        actions={<button className="button primary" onClick={() => navigate('/absensi')}>Isi Absensi</button>}
+        actions={<>
+          <label className="month-filter">
+            <span>Bulan</span>
+            <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
+          </label>
+          <button className="button primary" onClick={() => navigate('/absensi')}>Isi Absensi</button>
+        </>}
       />
 
       {missedAttendance.length ? (
@@ -83,7 +87,7 @@ export function DashboardPage() {
 
       <section className="stats-grid three-columns">
         <StatCard tone="mint" label="Total Warga" value={visibleJamaah.length} note="Sesuai hak akses pengguna" icon={<Users size={20} />} />
-        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi bulan ini`} icon={<CalendarCheck2 size={20} />} />
+        <StatCard tone="sky" label="Rata-Rata Kehadiran" value={`${averageAttendance}%`} note={`${visibleSessions.length} sesi pada bulan dipilih`} icon={<CalendarCheck2 size={20} />} />
         <StatCard tone="violet" label="Kelas Dipantau" value={visibleClasses.length} note="Kelas yang dapat diakses" icon={<GraduationCap size={20} />} />
       </section>
 
@@ -91,10 +95,6 @@ export function DashboardPage() {
         <article className="card">
           <div className="card-heading">
             <div><h2>Target Materi Bulanan</h2><p>Ketuntasan Hasda dan ASAD pada bulan yang dipilih.</p></div>
-            <label className="month-filter">
-              <span>Bulan</span>
-              <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
-            </label>
           </div>
           <div className="progress-list">
             <ProgressBlock title="Penyampaian Hasda" {...hasda} />
@@ -124,7 +124,7 @@ export function DashboardPage() {
 
       <article className="card dashboard-followup">
         <div className="card-heading">
-          <div><h2>Warga Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan berjalan.</p></div>
+          <div><h2>Warga Perlu Perhatian</h2><p>Deteksi kehadiran rendah dan Alpa berulang pada bulan yang dipilih.</p></div>
           <button className="text-button" onClick={() => navigate('/tindak-lanjut')}>Kelola semua</button>
         </div>
         <div className="dashboard-risk-list">
