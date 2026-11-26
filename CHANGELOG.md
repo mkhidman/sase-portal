@@ -1,5 +1,10 @@
 ## Belum dirilis
 
+- **Logo lembaga menggantikan lencana "SP"** di sidebar, halaman Masuk, halaman wali, dan halaman offline, sekaligus menjadi favicon, ikon PWA, dan gambar preview Open Graph. Satu berkas `public/logo.jpg` dipakai semuanya — tidak ada varian ukuran yang bisa ketinggalan saat logonya berganti lagi.
+- `public/icons/icon-192.png`, `icon-512.png`, dan `og-image.png` dihapus karena tidak ada lagi yang menunjuknya. Ketiganya memuat lencana "SP" yang sudah tidak dipakai di mana pun, dan `og-image.png` masih mencantumkan subjudul "Administrasi warga pengajian" yang sudah dibuang dari sidebar.
+- `twitter:card` turun dari `summary_large_image` ke `summary`. Logonya persegi 1080×1080; kartu lebar akan memotongnya menjadi 1200×630 dan memangkas bagian atas-bawah lingkaran.
+- `CACHE_NAME` service worker dinaikkan ke `v15-0` supaya shell lama yang masih memuat dua berkas ikon yang kini tidak ada ikut dibuang saat `activate`.
+
 - Membuang subjudul **"Administrasi warga pengajian"** di sidebar dan pengantar **"Ringkasan operasional kelas, kehadiran, dan target materi."** di Dashboard. Keduanya hanya menamai ulang hal yang sudah terbaca dari menu dan judulnya sendiri. `PageHeader` kini menerima `description` opsional dan tidak merender `<p>` kosong, supaya tidak ada sisa jarak di bawah judul.
 - **Pilih bulan di Dashboard berlaku untuk seluruh halaman**, dipindah dari dalam kartu Target Materi Bulanan ke sebelah tombol Isi Absensi. Rata-rata kehadiran dan Warga Perlu Perhatian dulu dipaku ke bulan berjalan, jadi mengganti bulan hanya menggerakkan satu kartu dari tiga yang sebenarnya bergantung bulan — dan tidak ada petunjuk bahwa dua kartu lainnya tidak ikut. Jadwal Terdekat dan peringatan belum diabsen tetap relatif terhadap hari ini, bukan bulan.
 

@@ -1,11 +1,10 @@
-const CACHE_NAME = 'sase-portal-shell-v14-0'
+const CACHE_NAME = 'sase-portal-shell-v15-0'
 const APP_SHELL = [
   '/',
   '/offline.html',
   '/manifest.webmanifest',
   '/fonts/inter-latin-variable.woff2',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/logo.jpg',
 ]
 
 // Sengaja tanpa skipWaiting dan clients.claim: versi baru menunggu sampai seluruh

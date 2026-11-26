@@ -151,7 +151,7 @@ export function WaliPage() {
   return (
     <main className="wali-page">
       <header className="wali-header">
-        <span className="brand-mark">SP</span>
+        <img className="brand-mark" src="/logo.jpg" alt="" />
         <div>
           <strong>Absensi Keluarga</strong>
           <small>{view.wali} · {view.anggota.length} orang{rangeLabel ? ` · ${rangeLabel}` : ''}</small>

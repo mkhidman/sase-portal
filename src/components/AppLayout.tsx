@@ -145,7 +145,7 @@ export function AppLayout() {
       {!online ? <div className="offline-banner"><WifiOff size={15} /> Offline · data terakhir tetap dapat dibuka, absensi disimpan sebagai draft</div> : null}
       <aside className="sidebar">
         <div className="brand-row">
-          <span className="brand-mark">SP</span>
+          <img className="brand-mark" src="/logo.jpg" alt="" />
           <span><strong>SASE Portal</strong></span>
         </div>
         <nav className="sidebar-nav">

@@ -31,7 +31,7 @@ export function LoginPage() {
     <main className="login-page">
       <section className="login-card">
         <div className="login-brand">
-          <span className="brand-mark">SP</span>
+          <img className="brand-mark" src="/logo.jpg" alt="" />
           <span><strong>SASE Portal</strong><small>Sensus, absensi, dan pemantauan warga pengajian</small></span>
         </div>
         <div className="login-heading">
