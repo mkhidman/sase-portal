@@ -4,8 +4,8 @@
   "description": "Sistem sensus, keluarga, kelas, absensi, dan pemantauan warga pengajian.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f7f5",
-  "theme_color": "#123c2a",
+  "background_color": "#f5f8ff",
+  "theme_color": "#1a6fd5",
   "orientation": "portrait-primary",
   "icons": [
     {

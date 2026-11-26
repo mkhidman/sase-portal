@@ -1,5 +1,12 @@
 ## Belum dirilis
 
+- **Palet aplikasi mengikuti logo baru.** Warna utama pindah dari hijau tua `#0b8059` ke biru `#1a6fd5`, dan hijau muda logo masuk sebagai aksen (`--accent-bright`, isian progress dan bar pemuatan). Dua warna logonya sendiri terlalu terang untuk menanggung teks putih — `#8dc1ff` hanya 1,8:1 — jadi yang diambil **hue**-nya, bukan nilainya.
+- Nilai barunya **dipilih dari ambang kontras, bukan dari selera**, mengikuti catatan yang sudah ada di berkasnya: `--primary` 4,91:1 terhadap putih, `--muted` 4,59:1, `--text` 14,12:1, tint mint 5,08:1 dan sky 4,73:1 terhadap latarnya masing-masing.
+- 25 warna hijau yang ditulis langsung di luar blok token (abu-abu kehijauan untuk label tabel, border hover, latar chip) ikut digeser ke hue biru **dengan luminansi yang dipertahankan**, dicari secara numerik. Rasio kontras tiap warna tetap sama sampai dua angka di belakang koma — menggeser hue dengan mata akan menaikkan sebagian dan menurunkan sebagian tanpa ada yang menangkapnya.
+- **Token status tidak disentuh.** Hadir/Izin/Sakit/Alpa memakai hijau, biru, kuning, merah sebagai pembeda arti, dan border `.status-button` ditulis manual mengikat ke nilai itu. Tiga border hijau yang berpasangan dengan `--success-bg` sengaja dikecualikan dari penggeseran.
+- **Warna seri grafik juga tidak disentuh.** Keempatnya dipilih agar tetap terbedakan pada buta warna deutan; mengubahnya mengikuti logo berarti menebak ulang pemeriksaan itu dengan mata. Hanya `--chart-track` yang dinetralkan ke abu-abu kebiruan.
+- `theme_color` manifest, `<meta name="theme-color">`, dan palet halaman offline ikut berganti supaya bilah atas browser dan layar splash PWA tidak lagi hijau tua.
+
 - **Logo lembaga menggantikan lencana "SP"** di sidebar, halaman Masuk, halaman wali, dan halaman offline, sekaligus menjadi favicon, ikon PWA, dan gambar preview Open Graph. Satu berkas `public/logo.jpg` dipakai semuanya — tidak ada varian ukuran yang bisa ketinggalan saat logonya berganti lagi.
 - `public/icons/icon-192.png`, `icon-512.png`, dan `og-image.png` dihapus karena tidak ada lagi yang menunjuknya. Ketiganya memuat lencana "SP" yang sudah tidak dipakai di mana pun, dan `og-image.png` masih mencantumkan subjudul "Administrasi warga pengajian" yang sudah dibuang dari sidebar.
 - `twitter:card` turun dari `summary_large_image` ke `summary`. Logonya persegi 1080×1080; kartu lebar akan memotongnya menjadi 1200×630 dan memangkas bagian atas-bawah lingkaran.
