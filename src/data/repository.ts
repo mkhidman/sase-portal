@@ -1,5 +1,5 @@
 import { isDemoMode, supabase } from '../lib/supabase'
-import type { KbmClassReport } from '../lib/kbmReport'
+import type { KbmClassReport, KbmMemberRow } from '../lib/kbmReport'
 import type {
   CensusCategory,
   AppUser,
@@ -951,17 +951,29 @@ export async function fetchWaliView(token: string): Promise<WaliView | null> {
   return (data as WaliView | null) ?? null
 }
 
+/** Payload publik: tanpa pengenal internal, hanya nama dan angkanya. */
+export type PublicKbmMember = Omit<KbmMemberRow, 'jamaahId'>
+export interface PublicKbmClassReport extends Omit<KbmClassReport, 'members' | 'classId'> {
+  members: PublicKbmMember[]
+}
+
 export interface PublishedKbmReport {
   month: string
   publishedAt: string
-  report: KbmClassReport[]
+  report: PublicKbmClassReport[]
 }
 
 /** Menyimpan hasil laporan, bukan izin baca tabel -- lihat migration 031. */
 export async function publishKbmReport(month: string, report: KbmClassReport[]): Promise<string> {
   if (isDemoMode) return `demo-${month}`
   const client = requireSupabase()
-  const { data, error } = await client.rpc('publish_kbm_report', { target_month: month, report })
+  // jamaahId dibuang di sini, bukan di halaman: ini batas tempat data keluar ke
+  // tautan yang dibuka tanpa akun, dan pemanggil berikutnya tidak perlu ingat.
+  const payload: PublicKbmClassReport[] = report.map(({ classId: _classId, ...item }) => ({
+    ...item,
+    members: item.members.map(({ jamaahId: _jamaahId, ...rest }) => rest),
+  }))
+  const { data, error } = await client.rpc('publish_kbm_report', { target_month: month, report: payload })
   if (error) throw error
   if (typeof data !== 'string') throw new Error('Laporan tersimpan, tetapi tautannya tidak diterima.')
   return data

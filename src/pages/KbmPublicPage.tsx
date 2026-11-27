@@ -42,7 +42,7 @@ export function KbmPublicPage() {
       </header>
 
       {data.report.map((report) => (
-        <article className="card kbm-class-card" key={report.classId}>
+        <article className="card kbm-class-card" key={report.className}>
           <div className="card-heading">
             <div><h2>{report.className}</h2></div>
             <div className="kbm-class-meta">
@@ -51,8 +51,8 @@ export function KbmPublicPage() {
             </div>
           </div>
           <div className="kbm-chart" role="list">
-            {report.members.map((row) => (
-              <div className="kbm-bar" role="listitem" key={row.jamaahId}>
+            {report.members.map((row, index) => (
+              <div className="kbm-bar" role="listitem" key={`${row.fullName}-${index}`}>
                 <div className="kbm-bar-track">
                   <div className={`kbm-bar-fill ${row.percent >= 80 ? 'good' : row.percent >= 60 ? 'warn' : 'low'}`} style={{ height: `${row.recorded ? Math.max(row.percent, 4) : 0}%` }}>
                     {row.recorded ? <span>{row.percent}%</span> : null}
