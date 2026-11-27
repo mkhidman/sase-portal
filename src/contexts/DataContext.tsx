@@ -24,7 +24,6 @@ import {
   removeSchedule,
   upsertAttendanceSession,
   upsertJamaah,
-  importJamaahBatch,
   upsertMaterialCompletion,
   upsertSchedule,
   createAdmin,
@@ -86,7 +85,6 @@ interface DataContextValue extends BootstrapData {
   /** `silent` menyegarkan data tanpa menyalakan bar pemuatan — untuk penyegaran latar yang tidak ditunggu siapa pun. */
   reload: (options?: { silent?: boolean }) => Promise<void>
   saveJamaah: (jamaah: Jamaah) => Promise<void>
-  importJamaah: (jamaah: Jamaah[]) => Promise<number>
   saveSchedule: (schedule: Schedule) => Promise<void>
   deleteSchedule: (scheduleId: string) => Promise<void>
   saveAttendance: (input: SaveAttendanceInput) => Promise<AttendanceSession>
@@ -317,37 +315,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             ? current.jamaah.map((item) => (item.id === input.id ? saved : item))
             : [...current.jamaah, saved],
         }))
-      },
-      async importJamaah(items) {
-        if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat mengimpor data sensus.')
-        const saved = await importJamaahBatch(items)
-        if (!isDemoMode) {
-          await reload()
-          return saved.length
-        }
-
-        const now = new Date().toISOString()
-        const inactiveHistories: JamaahStatusHistory[] = saved
-          .filter((item) => !item.active)
-          .map((item) => ({
-            id: crypto.randomUUID(),
-            jamaahId: item.id,
-            previousActive: true,
-            newActive: false,
-            reason: 'other',
-            effectiveDate: localIsoDate(),
-            notes: 'Diimpor sebagai data nonaktif.',
-            classIds: [...item.classIds],
-            changedBy: user.id,
-            createdAt: now,
-          }))
-        const normalized = saved.map((item) => item.active ? item : { ...item, classIds: [] })
-        await updateData((current) => ({
-          ...current,
-          jamaah: [...current.jamaah, ...normalized],
-          statusHistory: [...inactiveHistories, ...current.statusHistory],
-        }))
-        return saved.length
       },
       async saveSchedule(input) {
         if (isPeriodClosed(input.date.slice(0, 7))) throw new Error('Periode bulan ini sudah ditutup. Buka kembali periode dari Laporan Bulanan untuk melakukan perubahan.')

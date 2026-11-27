@@ -6,11 +6,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { averageAttendanceRate, formatDate, jamaahSnapshotsAsOfDate, localIsoDate, materialDisplayName, materialProgressFor, monthEndDate, monthLabel, monthValue } from '../lib/utils'
 import { buildAttendanceRisks, normalizeWhatsappNumber, type AttendanceRisk } from '../lib/followUps'
 import { buildAbsenceInquiryMessage } from '../lib/followUpMessage'
+import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { preferredContactForJamaah } from '../lib/contacts'
 import { buildMissedAttendance } from '../lib/missedAttendance'
 import { openMeetingTaskRows } from '../lib/meetingTasks'
-import { PageHeader, ProgressBlock, StatCard } from '../components/UI'
+import { InlineMessage, PageHeader, ProgressBlock, StatCard } from '../components/UI'
 import { FollowUpModal } from '../components/FollowUpModal'
+import { MonthField } from '../components/MonthField'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -31,9 +33,26 @@ export function DashboardPage() {
     meetings,
     meetingTopics,
     meetingTasks,
+    toggleMeetingTaskDone,
   } = useData()
   const [selectedMonth, setSelectedMonth] = useState(monthValue())
   const [followUpRisk, setFollowUpRisk] = useState<AttendanceRisk | null>(null)
+  const [busyTaskId, setBusyTaskId] = useState('')
+  const [taskMessage, setTaskMessage] = useState<{ feedback: Feedback; undoId: string; taskName: string } | null>(null)
+
+  async function setTaskDone(taskId: string, taskName: string, done: boolean) {
+    setBusyTaskId(taskId)
+    try {
+      await toggleMeetingTaskDone(taskId, done)
+      setTaskMessage(done
+        ? { feedback: feedbackOk(`"${taskName}" ditandai selesai.`), undoId: taskId, taskName }
+        : { feedback: feedbackOk(`"${taskName}" dikembalikan ke daftar tugas.`), undoId: '', taskName })
+    } catch (cause) {
+      setTaskMessage({ feedback: feedbackFrom(cause, 'Gagal mengubah status tugas.'), undoId: '', taskName })
+    } finally {
+      setBusyTaskId('')
+    }
+  }
   const classMap = useMemo(() => new Map(classes.map((item) => [item.id, item])), [classes])
   const visibleClassIds = useMemo(() => new Set(visibleClasses.map((item) => item.id)), [visibleClasses])
 
@@ -73,7 +92,7 @@ export function DashboardPage() {
         actions={<>
           <label className="month-filter">
             <span>Bulan</span>
-            <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
+            <MonthField value={selectedMonth} onChange={setSelectedMonth} />
           </label>
           <button className="button primary" onClick={() => navigate('/absensi')}>Isi Absensi</button>
         </>}
@@ -148,20 +167,21 @@ export function DashboardPage() {
             }))
             return (
               <div className="dashboard-risk-row" key={`${risk.classId}-${risk.jamaah.id}`}>
-                <span>
+                {/* Tombol, bukan div ber-onClick: barisnya harus bisa dicapai Tab dan
+                    Enter, dan tautan WhatsApp tidak boleh bersarang di dalamnya. */}
+                <button type="button" className="dashboard-risk-main" onClick={() => setFollowUpRisk(risk)} title={`Kelola tindak lanjut ${risk.jamaah.fullName}`}>
                   <strong>{risk.jamaah.fullName}</strong>
                   <span className="dashboard-risk-meta">
                     <small>{className}</small>
                     <span className={`badge ${risk.level === 'priority' ? 'danger' : 'warning'}`}>Alpa {risk.absentCount}</span>
                   </span>
-                </span>
+                </button>
                 <div className="dashboard-risk-actions">
                   {waNumber ? (
                     <a className="button outline small" href={`https://wa.me/${waNumber}?text=${waText}`} target="_blank" rel="noreferrer" title={`WhatsApp ${contact?.relationship}: ${contact?.name}`}>
                       <MessageCircle size={14} /> WhatsApp
                     </a>
                   ) : null}
-                  <button className="button primary small" type="button" onClick={() => setFollowUpRisk(risk)}>Kelola</button>
                 </div>
               </div>
             )
@@ -184,15 +204,30 @@ export function DashboardPage() {
           </div>
           <div className="dashboard-risk-list">
             {openMeetingTasks.slice(0, 5).map((row) => (
-              <button type="button" key={row.task.id} onClick={() => navigate('/musyawarah')}>
+              <label className="dashboard-task-row" key={row.task.id}>
+                <input
+                  type="checkbox"
+                  checked={false}
+                  disabled={busyTaskId !== ''}
+                  aria-label={`Tandai selesai: ${row.task.task}`}
+                  onChange={() => void setTaskDone(row.task.id, row.task.task, true)}
+                />
                 <span><strong>{row.task.task}</strong><small>{jamaahNameMap.get(row.task.picJamaahId) ?? 'Warga tidak ditemukan'} · {row.meeting.title}</small></span>
                 {row.task.dueDate
                   ? <span className={`badge ${row.overdue ? 'danger' : 'muted'}`}>{row.overdue ? 'Terlambat' : formatDate(row.task.dueDate)}</span>
                   : <span className="badge muted">Tanpa batas</span>}
-              </button>
+              </label>
             ))}
             {!openMeetingTasks.length ? <div className="empty-state">Tidak ada tugas musyawarah yang menunggu.</div> : null}
           </div>
+          {taskMessage ? (
+            <div className="dashboard-task-feedback">
+              <InlineMessage value={taskMessage.feedback} />
+              {/* Baris yang dicentang langsung hilang dari daftar, jadi pembatalannya
+                  harus ada di sini -- di Dashboard tidak ada lagi tempat menemukannya. */}
+              {taskMessage.undoId ? <button className="button outline small" type="button" disabled={busyTaskId !== ''} onClick={() => void setTaskDone(taskMessage.undoId, taskMessage.taskName, false)}>Batalkan</button> : null}
+            </div>
+          ) : null}
         </article>
       ) : null}
     </>

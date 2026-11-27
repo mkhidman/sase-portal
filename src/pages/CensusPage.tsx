@@ -1,16 +1,16 @@
-import { Archive, ArrowDownNarrowWide, ArrowUpNarrowWide, Download, Eye, FileDown, FileSpreadsheet, GitMerge, Layers, Mars, Plus, Search, Upload, UsersRound, Venus } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { Archive, ArrowDownNarrowWide, ArrowUpNarrowWide, Eye, FileText, GitMerge, Layers, Mars, Plus, Search, UsersRound, Venus } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { GenderComposition } from '../components/GenderComposition'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
+import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { ATTENDANCE_LABELS, ATTENDANCE_OPTIONS, CENSUS_CATEGORIES } from '../lib/constants'
-import { readSheet } from 'read-excel-file/browser'
-import { buildJamaahImportPreview, type JamaahImportPreview } from '../lib/sheetImport'
-import { ageFromBirthDate, attendanceCounts, downloadSheet, formatDate, localIsoDate, materialDisplayName, monthLabel, percentage } from '../lib/utils'
+import { buildCensusPdfGroups, downloadCensusPdf } from '../lib/censusPdf'
+import { ageFromBirthDate, attendanceCounts, formatDate, localIsoDate, materialDisplayName, monthLabel, monthValue, percentage } from '../lib/utils'
 import type { AttendanceStatus, CensusCategory, Gender, Jamaah } from '../types/domain'
 
 const EMPTY_FORM: Jamaah = {
@@ -25,7 +25,7 @@ const EMPTY_FORM: Jamaah = {
 }
 
 export function CensusPage() {
-  const { jamaah, classes, classNameMap, attendanceSessions, saveJamaah, importJamaah } = useData()
+  const { jamaah, classes, classNameMap, attendanceSessions, saveJamaah } = useData()
   const [params] = useSearchParams()
   const handledEditId = useRef('')
   const [search, setSearch] = useState('')
@@ -42,12 +42,6 @@ export function CensusPage() {
   const [detailStatus, setDetailStatus] = useState<AttendanceStatus | ''>('')
   const [detailOldestFirst, setDetailOldestFirst] = useState(false)
 
-  const [importOpen, setImportOpen] = useState(false)
-  const [importRows, setImportRows] = useState<JamaahImportPreview[]>([])
-  const [importFileName, setImportFileName] = useState('')
-  const [importError, setImportError] = useState<string | null>(null)
-  const [importing, setImporting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const active = jamaah.filter((item) => item.active)
   const censusGenderSummary = useMemo(() => CENSUS_CATEGORIES.map((categoryName) => {
@@ -66,12 +60,6 @@ export function CensusPage() {
   }, [category, gender, jamaah, search])
 
   const pagination = usePagination(filtered, `${search}|${category}|${gender}`)
-
-  const importSummary = useMemo(() => ({
-    valid: importRows.filter((row) => row.status === 'valid').length,
-    invalid: importRows.filter((row) => row.status === 'invalid').length,
-    duplicate: importRows.filter((row) => row.status === 'duplicate').length,
-  }), [importRows])
 
   const personAttendance = useMemo(() => {
     if (!attendancePerson) return []
@@ -150,90 +138,23 @@ export function CensusPage() {
     }
   }
 
-  async function exportData() {
-    await downloadSheet('data-sensus-warga.xlsx', [
-      ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'Usia', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
-      ...jamaah.map((item) => [
-        item.fullName,
-        item.gender,
-        item.birthDate,
-        ageFromBirthDate(item.birthDate) ?? '',
-        item.phone,
-        item.censusCategory,
-        item.classIds.map((id) => classes.find((studyClass) => studyClass.id === id)?.name ?? id).join(' | '),
-        item.active ? 'Aktif' : 'Nonaktif',
-      ]),
-    ])
-  }
-
-  async function exportCensusSummary() {
-    await downloadSheet('ringkasan-kategori-sensus.xlsx', [
-      ['Kategori Sensus', 'Laki-laki', 'Perempuan', 'Total'],
-      ...censusGenderSummary.map((item) => [item.categoryName, item.male, item.female, item.total]),
-      ['TOTAL', active.filter((item) => item.gender === 'Laki-laki').length, active.filter((item) => item.gender === 'Perempuan').length, active.length],
-    ])
-  }
-
-  async function downloadTemplate() {
-    await downloadSheet('template-import-sensus-warga.xlsx', [
-      ['Nama', 'Jenis Kelamin', 'Tanggal Lahir', 'WhatsApp', 'Kategori Sensus', 'Kelas Pengajian', 'Status'],
-      ['Ahmad Fauzan', 'Laki-laki', '2014-04-14', '081234567890', 'Caberawit', 'Caberawit Kelas C', 'Aktif'],
-      ['Nur Aisyah', 'Perempuan', '', '081234567891', 'Remaja', 'Remaja | Pengajian Umum', 'Aktif'],
-    ])
-  }
-
-  function openImport() {
-    setImportRows([])
-    setImportFileName('')
-    setImportError(null)
-    setImportOpen(true)
-  }
-
-  async function readImportFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file) return
-    setImportFileName(file.name)
-    setImportError(null)
-    try {
-      const sheet = await readSheet(file)
-      setImportRows(buildJamaahImportPreview(sheet, jamaah, classes, CENSUS_CATEGORIES))
-    } catch (cause) {
-      setImportRows([])
-      setImportError(cause instanceof Error ? cause.message : 'File Excel tidak dapat dibaca.')
-    } finally {
-      event.target.value = ''
-    }
-  }
-
-  async function submitImport() {
-    const valid = importRows.flatMap((row) => row.status === 'valid' && row.jamaah ? [row.jamaah] : [])
-    if (!valid.length) {
-      setImportError('Tidak ada baris valid yang dapat diimpor.')
-      return
-    }
-    setImporting(true)
-    setImportError(null)
-    try {
-      const imported = await importJamaah(valid)
-      setImportOpen(false)
-      setPageMessage(`${imported} warga berhasil diimpor. ${importSummary.duplicate} duplikat dan ${importSummary.invalid} baris bermasalah dilewati.`)
-    } catch (cause) {
-      setImportError(cause instanceof Error ? cause.message : 'Import data gagal.')
-    } finally {
-      setImporting(false)
-    }
+  function exportCensusPdf() {
+    const month = monthValue()
+    downloadCensusPdf({
+      title: 'DAFTAR SENSUS KELOMPOK SADANG SERANG',
+      periodLabel: `PERIODE BULAN ${monthLabel(month).toUpperCase()}`,
+      groups: buildCensusPdfGroups(jamaah, CENSUS_CATEGORIES),
+    }, `daftar-warga-${month}.pdf`)
   }
 
   return (
     <>
       <PageHeader
         title="Data Sensus Warga"
-        description="Kategori sensus dipisahkan dari kelas pengajian. Perubahan status aktif dikelola melalui Status & Arsip agar riwayatnya tersimpan."
         actions={
           <>
             <Link className="button outline" to="/arsip-jamaah"><Archive size={16} /> Status & Arsip</Link>
-            <button className="button outline" onClick={openImport}><Upload size={16} /> Import Excel</button>
-            <button className="button outline" onClick={() => void exportData()}><Download size={16} /> Ekspor Excel</button>
+            <button className="button outline" onClick={exportCensusPdf}><FileText size={16} /> Ekspor PDF</button>
             <Link className="button outline" to="/data-duplikat"><GitMerge size={16} /> Data Duplikat</Link>
             <button className="button primary" onClick={openCreate}><Plus size={16} /> Tambah Warga</button>
           </>
@@ -243,19 +164,17 @@ export function CensusPage() {
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard tone="mint" label="Total Aktif" value={active.length} note="Seluruh kategori" icon={<UsersRound size={20} />} />
-        <StatCard tone="sky" label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} note="Data sensus aktif" icon={<Mars size={20} />} />
-        <StatCard tone="violet" label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} note="Data sensus aktif" icon={<Venus size={20} />} />
-        <StatCard tone="mint" label="Kategori Sensus" value={CENSUS_CATEGORIES.length} note="Kategori utama" icon={<Layers size={20} />} />
+        <StatCard tone="mint" label="Total Aktif" value={active.length} icon={<UsersRound size={20} />} />
+        <StatCard tone="sky" label="Laki-laki" value={active.filter((item) => item.gender === 'Laki-laki').length} icon={<Mars size={20} />} />
+        <StatCard tone="violet" label="Perempuan" value={active.filter((item) => item.gender === 'Perempuan').length} icon={<Venus size={20} />} />
+        <StatCard tone="mint" label="Kategori Sensus" value={CENSUS_CATEGORIES.length} icon={<Layers size={20} />} />
       </section>
 
       <article className="card census-composition-card">
         <div className="card-heading">
           <div>
             <h2>Ringkasan Kategori Sensus</h2>
-            <p>Jumlah warga aktif laki-laki dan perempuan pada setiap kategori sensus. Panjang batang sebanding dengan kategori terbesar.</p>
           </div>
-          <button className="button outline small" type="button" onClick={() => void exportCensusSummary()}><FileDown size={15} /> Ekspor Ringkasan</button>
         </div>
         <GenderComposition rows={censusGenderSummary.map((item) => ({ key: item.categoryName, label: item.categoryName, male: item.male, female: item.female, total: item.total }))} />
       </article>
@@ -300,7 +219,7 @@ export function CensusPage() {
         <div className="form-grid">
           <label>Nama lengkap *<input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} /></label>
           <label>Jenis kelamin<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as Gender })}><option>Laki-laki</option><option>Perempuan</option></select></label>
-          <label>Tanggal lahir (opsional)<input type="date" max={localIsoDate()} value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: event.target.value })} /></label>
+          <label>Tanggal lahir (opsional)<DateField max={localIsoDate()} value={form.birthDate} onChange={(birthDate) => setForm({ ...form, birthDate })} /></label>
           <label>Nomor WhatsApp<input inputMode="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
           <label>Kategori sensus<select value={form.censusCategory} onChange={(event) => setForm({ ...form, censusCategory: event.target.value as CensusCategory })}>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
           <div className="status-readonly-field"><span>Status</span><strong className={`badge ${form.active ? 'success' : 'danger'}`}>{form.active ? 'Aktif' : 'Nonaktif'}</strong><small>Gunakan menu Status & Arsip untuk mengubah status agar alasan dan tanggal efektif tercatat.</small></div>
@@ -376,62 +295,6 @@ export function CensusPage() {
             </div>
           </>
         ) : null}
-      </Modal>
-
-      <Modal
-        open={importOpen}
-        title="Import Data Sensus"
-        onClose={() => !importing && setImportOpen(false)}
-        wide
-        footer={
-          <>
-            <button className="button outline" disabled={importing} onClick={() => setImportOpen(false)}>Batal</button>
-            <button className="button primary" disabled={importing || importSummary.valid === 0} onClick={() => void submitImport()}>
-              {importing ? 'Mengimpor…' : `Import ${importSummary.valid} Warga`}
-            </button>
-          </>
-        }
-      >
-        <div className="import-intro">
-          <div>
-            <strong>Gunakan format Excel (.xlsx) agar data lama dapat dimasukkan sekaligus.</strong>
-            <p>Tanggal lahir boleh dikosongkan. Nama kelas yang lebih dari satu dipisahkan dengan tanda <code>|</code>. Baris duplikat tidak akan diimpor.</p>
-          </div>
-          <button className="button soft" onClick={() => void downloadTemplate()}><FileDown size={16} /> Unduh Template</button>
-        </div>
-
-        <input ref={fileInputRef} className="visually-hidden" type="file" accept=".xlsx" onChange={(event) => void readImportFile(event)} />
-        <button className="import-dropzone" type="button" onClick={() => fileInputRef.current?.click()}>
-          <FileSpreadsheet size={28} />
-          <span><strong>{importFileName || 'Pilih file Excel'}</strong><small>Klik untuk memilih atau mengganti file</small></span>
-        </button>
-
-        {importRows.length ? (
-          <>
-            <div className="import-summary">
-              <div><span>Siap diimpor</span><strong>{importSummary.valid}</strong></div>
-              <div><span>Duplikat</span><strong>{importSummary.duplicate}</strong></div>
-              <div><span>Bermasalah</span><strong>{importSummary.invalid}</strong></div>
-            </div>
-            <div className="import-preview table-wrap">
-              <table role="table">
-                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Baris</th><th scope="col" role="columnheader">Nama</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Keterangan</th></tr></thead>
-                <tbody role="rowgroup">
-                  {importRows.slice(0, 100).map((row) => (
-                    <tr role="row" key={row.rowNumber}>
-                      <td role="cell" data-label="Baris">{row.rowNumber}</td>
-                      <td role="cell" data-label="Nama"><strong>{row.rawName || 'Tanpa nama'}</strong></td>
-                      <td role="cell" data-label="Status"><span className={`badge ${row.status === 'valid' ? 'success' : row.status === 'duplicate' ? 'warning' : 'danger'}`}>{row.status === 'valid' ? 'Valid' : row.status === 'duplicate' ? 'Duplikat' : 'Perlu diperbaiki'}</span></td>
-                      <td role="cell" data-label="Keterangan" data-cell="full">{row.messages.join(' ') || `${row.jamaah?.censusCategory ?? ''} · ${row.jamaah?.classIds.length ?? 0} kelas`}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {importRows.length > 100 ? <p className="modal-help">Preview dibatasi 100 baris pertama. Seluruh baris valid tetap akan diimpor.</p> : null}
-          </>
-        ) : null}
-        {importError ? <div className="form-error">{importError}</div> : null}
       </Modal>
     </>
   )

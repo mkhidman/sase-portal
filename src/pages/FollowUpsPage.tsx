@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { FollowUpModal } from '../components/FollowUpModal'
 import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
+import { MonthField } from '../components/MonthField'
 import { type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
@@ -79,14 +80,14 @@ export function FollowUpsPage() {
       {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Catatan tindak lanjut hanya dapat dilihat.</div> : null}
 
       <section className="stats-grid three-columns">
-        <StatCard tone="sky" label="Perlu Ditindaklanjuti" value={openCount} note="Belum berstatus selesai" icon={<UserRoundCheck size={20} />} />
-        <StatCard tone="amber" label="Prioritas" value={priorityCount} note="Alpa ≥6 kali atau 4 sesi beruntun" icon={<TriangleAlert size={20} />} />
-        <StatCard tone="amber" label="Jatuh Tempo" value={dueCount} note="Tanggal tindak lanjut hari ini/lewat" icon={<CalendarClock size={20} />} />
+        <StatCard tone="sky" label="Perlu Ditindaklanjuti" value={openCount} icon={<UserRoundCheck size={20} />} />
+        <StatCard tone="amber" label="Prioritas" value={priorityCount} icon={<TriangleAlert size={20} />} />
+        <StatCard tone="amber" label="Jatuh Tempo" value={dueCount} icon={<CalendarClock size={20} />} />
       </section>
 
       <article className="card">
         <div className="followup-filters">
-          <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+          <label>Bulan<MonthField value={month} onChange={setMonth} /></label>
           <label>Kelas<select value={effectiveClassId} onChange={(event) => setClassId(event.target.value)}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
           <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}><option value="open">Belum selesai</option><option value="all">Semua status</option>{STATUS_OPTIONS.map((status) => <option value={status} key={status}>{FOLLOW_UP_STATUS_LABELS[status]}</option>)}</select></label>
         </div>

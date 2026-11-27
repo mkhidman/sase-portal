@@ -25,10 +25,9 @@ export type StatTone = 'mint' | 'sky' | 'violet' | 'amber'
  */
 export type StatDelta = { label: string; direction: 'up' | 'down' | 'flat' }
 
-export function StatCard({ label, value, note, icon, tone = 'mint', delta }: {
+export function StatCard({ label, value, icon, tone = 'mint', delta }: {
   label: string
   value: string | number
-  note?: string
   icon: ReactNode
   tone?: StatTone
   delta?: StatDelta
@@ -46,7 +45,6 @@ export function StatCard({ label, value, note, icon, tone = 'mint', delta }: {
             {delta.label}
           </span>
         ) : null}
-        {note ? <small>{note}</small> : null}
       </div>
     </article>
   )

@@ -464,26 +464,6 @@ export async function upsertJamaah(jamaah: Jamaah): Promise<Jamaah> {
   return { ...jamaah, id }
 }
 
-export async function importJamaahBatch(items: Jamaah[]): Promise<Jamaah[]> {
-  if (isDemoMode) return items
-  if (!items.length) return []
-  const client = requireSupabase()
-  const payload = items.map((item) => ({
-    id: item.id,
-    fullName: item.fullName,
-    gender: item.gender,
-    birthDate: item.birthDate,
-    phone: item.phone || null,
-    censusCategory: item.censusCategory,
-    active: item.active,
-    classIds: item.classIds,
-  }))
-  const { data, error } = await client.rpc('bulk_import_jamaah', { items: payload })
-  if (error) throw error
-  if (typeof data !== 'number') throw new Error('Import selesai, tetapi jumlah data tidak dapat diverifikasi.')
-  return items
-}
-
 export async function upsertSchedule(schedule: Schedule): Promise<Schedule> {
   if (isDemoMode) return schedule
   const client = requireSupabase()

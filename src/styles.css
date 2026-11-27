@@ -250,7 +250,7 @@ a { color: inherit; }
 .page-header h1 { margin-bottom: 6px; font-size: var(--fs-5xl); letter-spacing: -.025em; }
 .page-header p { margin: 0; color: var(--muted); font-size: var(--fs-md); }
 .page-actions, .button-row { display: flex; gap: 9px; flex-wrap: wrap; }
-.page-actions { align-items: flex-end; }
+.page-actions { align-items: flex-end; justify-content: flex-end; }
 .button { min-height: 40px; padding: 9px 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: var(--radius-sm); font-weight: 800; font-size: var(--fs-md); }
 .button.primary { background: var(--primary); color: white; }
 .button.primary:hover { background: var(--primary-dark); }
@@ -274,7 +274,6 @@ a { color: inherit; }
 .stat-card > div { min-width: 0; flex: 1 1 110px; display: grid; }
 .stat-label { color: var(--muted); font-size: var(--fs-sm); }
 .stat-value { margin: 6px 0 4px; font-size: var(--fs-5xl); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.stat-card small { color: var(--muted); font-size: var(--fs-xs); }
 .stat-icon { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--tint-mint-bg); color: var(--tint-mint-fg); font-weight: 900; }
 .stat-icon[data-tone="sky"] { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
 .stat-icon[data-tone="violet"] { background: var(--tint-violet-bg); color: var(--tint-violet-fg); }
@@ -340,6 +339,41 @@ a { color: inherit; }
 .month-filter { display: grid; gap: 4px; justify-items: start; }
 .month-filter > span { color: var(--muted); font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .month-filter input { padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-sm); }
+
+/* Pemilih bulan dan tanggal sendiri. Panel bawaan browser tidak bisa ditata
+   dari CSS sama sekali, jadi satu-satunya jalan menyeragamkannya dengan
+   aplikasi adalah menggambar sendiri. */
+.picker-field { position: relative; }
+.picker-trigger { width: 100%; min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: var(--fs-sm); font-weight: 700; text-align: left; }
+.picker-trigger:hover:not(:disabled) { border-color: var(--primary); }
+.picker-trigger > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-trigger svg:first-child { flex: 0 0 auto; color: var(--primary); }
+.picker-trigger svg:last-child { flex: 0 0 auto; color: var(--muted); transition: transform .18s ease; }
+.picker-trigger svg.rotated { transform: rotate(180deg); }
+.picker-panel { position: fixed; z-index: 1200; min-width: 232px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-float); }
+.picker-panel.wide { min-width: 278px; }
+.picker-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
+.picker-head strong, .picker-head-label { flex: 1; text-align: center; font-size: var(--fs-md); font-weight: 800; }
+.picker-head-label { padding: 5px 8px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); }
+.picker-head-label:hover { background: var(--surface-sunken); }
+.picker-head > button:not(.picker-head-label) { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+.picker-head > button:not(.picker-head-label):hover { border-color: var(--primary); color: var(--primary); }
+.picker-grid { display: grid; gap: 5px; }
+.picker-grid.months { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.picker-grid.weekdays { grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; color: var(--muted); font-size: var(--fs-2xs); font-weight: 800; text-align: center; }
+.picker-grid.days { grid-template-columns: repeat(7, 1fr); }
+.picker-grid button { padding: 9px 4px; border: 1px solid transparent; border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--text); font-size: var(--fs-sm); font-weight: 700; }
+.picker-grid.days button { padding: 7px 0; }
+.picker-grid button:hover:not(:disabled) { border-color: var(--primary); }
+.picker-grid button:disabled { background: none; color: var(--muted); opacity: .45; }
+/* Hari/bulan berjalan ditandai garis, bukan warna isian: warna isian sudah
+   dipakai untuk yang sedang dipilih, dan keduanya bisa jatuh pada sel yang sama. */
+.picker-grid button.current { border-color: var(--primary); }
+.picker-grid button.selected { background: var(--primary); border-color: var(--primary); color: white; }
+.picker-foot { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.picker-foot button { flex: 1; padding: 7px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--primary); font-size: var(--fs-xs); font-weight: 800; }
+.picker-foot button:hover:not(:disabled) { border-color: var(--primary); }
+
 .dashboard-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 15px; align-items: start; }
 .progress-list { display: grid; gap: 12px; }
 .progress-list.two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -526,7 +560,6 @@ tr:last-child td { border-bottom: 0; }
   .page-actions .button, .page-actions .month-filter { flex: 0 0 auto; white-space: nowrap; }
   .three-columns { grid-template-columns: 1fr; }
   .four-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .compact-stats .stat-card small { display: none; }
   .dashboard-help { align-items: flex-start; flex-wrap: wrap; }
   .progress-list.two-columns { grid-template-columns: 1fr; }
   .card-heading { align-items: flex-start; flex-direction: column; }
@@ -654,23 +687,7 @@ tr:last-child td { border-bottom: 0; }
 .class-check-box { width: 19px; height: 19px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid #b3b9bf; border-radius: var(--radius-xs); background: var(--surface); color: white; font-size: var(--fs-sm); font-weight: 900; }
 .class-check.selected .class-check-box { border-color: var(--primary); background: var(--primary); }
 
-.import-intro { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; padding: 13px; border-radius: var(--radius-md); background: var(--surface-sunken); }
-.import-intro strong { display: block; margin-bottom: 4px; font-size: var(--fs-md); }
-.import-intro p { margin: 0; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
-.import-intro code { padding: 1px 5px; border-radius: var(--radius-xs); background: #eaedf0; color: var(--primary-dark); font-weight: 900; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; }
-.import-dropzone { width: 100%; min-height: 92px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px; border: 1.5px dashed #b3bcc6; border-radius: var(--radius-md); background: var(--surface-raised); color: var(--primary); }
-.import-dropzone:hover { border-color: var(--primary); background: var(--surface-soft); }
-.import-dropzone > span { display: grid; gap: 3px; text-align: left; }
-.import-dropzone strong { color: var(--text); font-size: var(--fs-md); }
-.import-dropzone small { color: var(--muted); font-size: var(--fs-2xs); }
-.import-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 14px 0; }
-.import-summary > div { padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
-.import-summary span { display: block; margin-bottom: 4px; color: var(--muted); font-size: var(--fs-2xs); }
-.import-summary strong { font-size: var(--fs-3xl); }
-.import-preview { max-height: 310px; }
-.import-preview table { min-width: 680px; }
-.import-preview td:last-child { max-width: 330px; color: var(--muted); line-height: 1.4; }
 
 @media (max-width: 820px) {
   .admin-class-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -685,9 +702,6 @@ tr:last-child td { border-bottom: 0; }
   .admin-class-heading { align-items: stretch; flex-direction: column; }
   .admin-class-tools { justify-content: space-between; }
   .admin-class-picker { grid-template-columns: 1fr; }
-  .import-intro { align-items: stretch; flex-direction: column; }
-  .import-intro .button { width: 100%; }
-  .import-summary { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Fase 4: PWA, status koneksi, backup, audit, dan draft absensi */
@@ -764,14 +778,26 @@ tr:last-child td { border-bottom: 0; }
 /* Phase 5: attendance monitoring and follow-up */
 .dashboard-risk-list { display: grid; gap: 8px; }
 .dashboard-risk-list > button, .dashboard-risk-row { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); text-align: left; }
-.dashboard-risk-list > button:hover, .dashboard-risk-row:hover { border-color: #b8c4d4; background: var(--surface-sunken); }
-.dashboard-risk-list > button > span:first-child, .dashboard-risk-row > span:first-child { min-width: 0; display: grid; gap: 3px; }
+.dashboard-risk-list > button:hover, .dashboard-risk-row:has(> .dashboard-risk-main:hover) { border-color: #b8c4d4; background: var(--surface-sunken); }
+.dashboard-risk-list > button > span:first-child { min-width: 0; display: grid; gap: 3px; }
+/* Hanya blok nama yang bisa diklik; sorotan hover mengikuti area itu, bukan
+   seluruh baris, supaya zona tombol WhatsApp tidak ikut terlihat bisa diklik. */
+.dashboard-risk-main { min-width: 0; display: grid; gap: 3px; justify-items: start; padding: 0; border: 0; background: none; color: inherit; text-align: left; }
 .dashboard-risk-list strong { font-size: var(--fs-sm); }
 .dashboard-risk-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
 /* Lencana Alpa ikut blok nama, jadi panjang nama tidak lagi menggesernya. */
 .dashboard-risk-meta { min-width: 0; display: flex; align-items: center; gap: 7px; }
 .dashboard-risk-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .dashboard-risk-actions a { text-decoration: none; }
+/* Baris tugas musyawarah: <label> supaya seluruh baris mencentang kotaknya,
+   bukan hanya kotak 16px-nya. */
+.dashboard-task-row { width: 100%; display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); cursor: pointer; }
+.dashboard-task-row:hover { border-color: #b8c4d4; background: var(--surface-sunken); }
+.dashboard-task-row:has(input:disabled) { cursor: progress; opacity: .6; }
+.dashboard-task-row input { width: 17px; height: 17px; flex: 0 0 auto; accent-color: var(--primary); cursor: inherit; }
+.dashboard-task-row > span:not(.badge) { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.dashboard-task-feedback { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.dashboard-task-feedback .inline-message { flex: 1; margin: 0; }
 .dashboard-risk-list small { overflow: hidden; color: var(--muted); font-size: var(--fs-2xs); text-overflow: ellipsis; white-space: nowrap; }
 .followup-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-bottom: 12px; }
 .followup-search { margin-bottom: 13px; }
@@ -1148,7 +1174,7 @@ textarea:focus { border-color: #8ea0b7; box-shadow: 0 0 0 3px rgba(26, 111, 213,
 
 @media (max-width: 820px) {
   .task-draft-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .task-draft-row select, .task-draft-row input[type="date"] { grid-column: 1 / -1; }
+  .task-draft-row select, .task-draft-row .picker-field { grid-column: 1 / -1; }
   .meeting-task-list > li { align-items: flex-start; flex-direction: column; }
   .meeting-task-list > li > small { text-align: left; }
 }
@@ -1655,6 +1681,7 @@ textarea:focus { border-color: #8ea0b7; box-shadow: 0 0 0 3px rgba(26, 111, 213,
 .app-main > *:not(.app-loading-bar) {
   animation: riseIn .42s cubic-bezier(.22, 1, .36, 1) both;
 }
+
 .app-main > *:nth-child(1) { animation-delay: .02s; }
 .app-main > *:nth-child(2) { animation-delay: .06s; }
 .app-main > *:nth-child(3) { animation-delay: .10s; }

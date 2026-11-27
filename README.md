@@ -6,7 +6,7 @@ Fase 12 development aplikasi sensus, kelas pengajian, absensi, ketuntasan Hasda/
 
 - Login Superadmin dan Admin/Wali Kelas menggunakan Supabase Auth.
 - Satu Admin dapat mengampu beberapa kelas dengan pembatasan Row Level Security.
-- Data sensus dengan tanggal lahir opsional dan import massal Excel (.xlsx).
+- Data sensus dengan tanggal lahir opsional dan ekspor daftar sensus ke PDF siap cetak (satu halaman lanskap, dikelompokkan per kategori dan jenis kelamin).
 - Rekap absensi per warga dapat disaring per bulan, kelas, dan status, serta diurutkan dari tanggal terlama atau terbaru.
 - Satu jamaah dapat mengikuti banyak kelas pengajian.
 - Jadwal pengajian terhubung langsung ke absensi.

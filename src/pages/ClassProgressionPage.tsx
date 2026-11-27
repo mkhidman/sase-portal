@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
+import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CLASS_PROGRESSION } from '../lib/constants'
@@ -192,10 +193,10 @@ export function ClassProgressionPage() {
       </section>
 
       <section className="stats-grid four-columns compact-stats progression-stats">
-        <StatCard tone="sky" label="Anggota Kelas Asal" value={sourceMembers.length} note={sourceClass?.name ?? 'Pilih kelas'} icon={<UsersRound size={18} />} />
-        <StatCard tone="mint" label="Warga Dipilih" value={selectedIds.length} note="Siap dipindahkan" icon={<CheckSquare2 size={18} />} />
-        <StatCard tone="violet" label="Kelas Tujuan" value={targetClass?.name ?? '-'} note={recommendedTarget?.id === targetClassId ? 'Rekomendasi alur' : 'Pilihan manual'} icon={<Shuffle size={18} />} />
-        <StatCard tone="mint" label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} note={updateCensus ? 'Disesuaikan otomatis' : 'Tidak diubah'} icon={<Sparkles size={18} />} />
+        <StatCard tone="sky" label="Anggota Kelas Asal" value={sourceMembers.length} icon={<UsersRound size={18} />} />
+        <StatCard tone="mint" label="Warga Dipilih" value={selectedIds.length} icon={<CheckSquare2 size={18} />} />
+        <StatCard tone="violet" label="Kelas Tujuan" value={targetClass?.name ?? '-'} icon={<Shuffle size={18} />} />
+        <StatCard tone="mint" label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} icon={<Sparkles size={18} />} />
       </section>
 
       <article className="card progression-workspace">
@@ -218,7 +219,7 @@ export function ClassProgressionPage() {
             </select>
           </label>
           <label>Tanggal efektif
-            <input type="date" max={localIsoDate()} value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
+            <DateField max={localIsoDate()} value={effectiveDate} onChange={setEffectiveDate} />
           </label>
         </div>
 

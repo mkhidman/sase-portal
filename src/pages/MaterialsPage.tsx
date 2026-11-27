@@ -2,6 +2,7 @@ import { Check, Copy, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { PageHeader, Person, ProgressBlock } from '../components/UI'
+import { MonthField } from '../components/MonthField'
 import { useData } from '../contexts/DataContext'
 import { MATERIAL_LABELS } from '../lib/constants'
 import { buildFollowUpMessage, pendingNames } from '../lib/followUpMessage'
@@ -126,7 +127,7 @@ export function MaterialsPage() {
       <div className="notice"><strong>Hasda:</strong> Pra Remaja, Remaja, Pra Nikah, Menikah, Duda & Janda. <strong>ASAD:</strong> Caberawit Kelas A–C, Pra Remaja, Remaja, Pra Nikah, Menikah, Duda & Janda.</div>
       <article className="card">
         <div className="material-filters">
-          <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+          <label>Bulan<MonthField value={month} onChange={setMonth} /></label>
           <label>Materi<select value={materialType} onChange={(event) => { setMaterialType(event.target.value as 'hasda' | 'asad'); setGroup('Semua Peserta') }}><option value="hasda">Hasda</option><option value="asad">ASAD</option></select></label>
           <label>Kelompok peserta<select value={effectiveGroup} onChange={(event) => setGroup(event.target.value)}>{groups.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Urutkan daftar<select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>{SORT_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>

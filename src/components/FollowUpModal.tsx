@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Modal } from './Modal'
 import { useConfirm } from './useConfirm'
 import { InlineMessage, Person } from './UI'
+import { DateField } from './DateField'
 import { useData } from '../contexts/DataContext'
 import { FOLLOW_UP_STATUS_LABELS } from '../lib/constants'
 import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
@@ -104,7 +105,7 @@ export function FollowUpModal({ risk, className, onClose, onSaved }: {
             {periodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Catatan tindak lanjut hanya dapat dilihat.</div> : null}
             <div className="form-grid one-column">
               <label>Status<select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as FollowUpStatus }))}>{STATUS_OPTIONS.map((status) => <option value={status} key={status}>{FOLLOW_UP_STATUS_LABELS[status]}</option>)}</select></label>
-              <label>Tanggal tindak lanjut berikutnya<input type="date" disabled={form.status === 'resolved'} value={form.status === 'resolved' ? '' : form.nextFollowUpDate} onChange={(event) => setForm((current) => ({ ...current, nextFollowUpDate: event.target.value }))} /></label>
+              <label>Tanggal tindak lanjut berikutnya<DateField disabled={form.status === 'resolved'} value={form.status === 'resolved' ? '' : form.nextFollowUpDate} onChange={(nextFollowUpDate) => setForm((current) => ({ ...current, nextFollowUpDate }))} /></label>
               <label>Catatan<textarea rows={5} value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Contoh: sudah menghubungi wali, warga sedang sakit, rencana kunjungan…" /></label>
             </div>
             <InlineMessage value={message} />

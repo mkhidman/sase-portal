@@ -20,6 +20,7 @@ import { Modal } from '../components/Modal'
 import { useConfirm } from '../components/useConfirm'
 import { Pagination } from '../components/Pagination'
 import { EmptyState, InlineMessage, PageHeader, Person, StatCard } from '../components/UI'
+import { MonthField } from '../components/MonthField'
 import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
@@ -395,10 +396,10 @@ export function FamilyContactsPage() {
       />
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard tone="mint" label="Keluarga Tercatat" value={accessibleFamilies.length} note="Kelompok keluarga yang dapat dilihat" icon={<House size={20} />} />
-        <StatCard tone="sky" label="Warga Terhubung" value={linkedJamaahCount} note="Memiliki data keluarga" icon={<UsersRound size={20} />} />
-        <StatCard tone="violet" label="Wali Tertaut" value={visibleContacts.filter((item) => item.guardianJamaahId).length} note={`${visibleContacts.length} relasi wali tercatat`} icon={<UserRound size={20} />} />
-        <StatCard tone="amber" label="Tanpa Kontak" value={withoutContact} note="Tidak memiliki nomor sendiri/wali" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="mint" label="Keluarga Tercatat" value={accessibleFamilies.length} icon={<House size={20} />} />
+        <StatCard tone="sky" label="Warga Terhubung" value={linkedJamaahCount} icon={<UsersRound size={20} />} />
+        <StatCard tone="violet" label="Wali Tertaut" value={visibleContacts.filter((item) => item.guardianJamaahId).length} icon={<UserRound size={20} />} />
+        <StatCard tone="amber" label="Tanpa Kontak" value={withoutContact} icon={<TriangleAlert size={20} />} />
       </section>
 
       <InlineMessage value={message} className="page-message" />
@@ -491,8 +492,8 @@ export function FamilyContactsPage() {
           </label>
           {windowDraft.windowPreset === 'custom' ? (
             <div className="form-grid">
-              <label>Dari bulan *<input type="month" value={windowDraft.fromMonth} onChange={(event) => setWindowDraft({ ...windowDraft, fromMonth: event.target.value })} /></label>
-              <label>Sampai bulan *<input type="month" value={windowDraft.toMonth} onChange={(event) => setWindowDraft({ ...windowDraft, toMonth: event.target.value })} /></label>
+              <label>Dari bulan *<MonthField value={windowDraft.fromMonth} onChange={(fromMonth) => setWindowDraft({ ...windowDraft, fromMonth })} /></label>
+              <label>Sampai bulan *<MonthField value={windowDraft.toMonth} onChange={(toMonth) => setWindowDraft({ ...windowDraft, toMonth })} /></label>
             </div>
           ) : null}
           <InlineMessage value={windowMessage ?? feedbackInfo(`Yang terlihat wali: ${windowPreview}.`)} />

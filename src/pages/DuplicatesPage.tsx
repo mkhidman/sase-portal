@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, Person } from '../components/UI'
+import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { CENSUS_CATEGORIES } from '../lib/constants'
@@ -185,7 +186,7 @@ export function DuplicatesPage() {
             <div className="form-grid merge-profile-grid">
               <label className="field"><span>Nama lengkap</span><input value={mergeProfile.fullName} onChange={(event) => setMergeProfile({ ...mergeProfile, fullName: event.target.value })} /></label>
               <label className="field"><span>Jenis kelamin</span><select value={mergeProfile.gender} onChange={(event) => setMergeProfile({ ...mergeProfile, gender: event.target.value as Jamaah['gender'] })}><option>Laki-laki</option><option>Perempuan</option></select></label>
-              <label className="field"><span>Tanggal lahir (opsional)</span><input type="date" value={mergeProfile.birthDate} onChange={(event) => setMergeProfile({ ...mergeProfile, birthDate: event.target.value })} /></label>
+              <label className="field"><span>Tanggal lahir (opsional)</span><DateField value={mergeProfile.birthDate} onChange={(birthDate) => setMergeProfile({ ...mergeProfile, birthDate })} /></label>
               <label className="field"><span>Nomor WhatsApp</span><input value={mergeProfile.phone} onChange={(event) => setMergeProfile({ ...mergeProfile, phone: event.target.value })} /></label>
               <label className="field"><span>Kategori sensus</span><select value={mergeProfile.censusCategory} onChange={(event) => setMergeProfile({ ...mergeProfile, censusCategory: event.target.value as Jamaah['censusCategory'] })}>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label className="field"><span>Status warga</span><select value={String(mergeProfile.active)} disabled><option value="true">Aktif</option><option value="false">Nonaktif</option></select><small>Status aktif dipertahankan bila salah satu data masih aktif.</small></label>

@@ -64,12 +64,12 @@ export interface MonthlyReportPdfInput {
 
 type PdfPage = string[]
 
-const PAGE_WIDTH = 842
-const PAGE_HEIGHT = 595
-const MARGIN = 34
+export const PAGE_WIDTH = 842
+export const PAGE_HEIGHT = 595
+export const MARGIN = 34
 const CONTENT_BOTTOM = 34
 
-function latinText(value: unknown): string {
+export function latinText(value: unknown): string {
   return String(value ?? '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -83,7 +83,7 @@ function escapePdfText(value: unknown): string {
   return latinText(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
 }
 
-function approximateTextWidth(text: string, fontSize: number): number {
+export function approximateTextWidth(text: string, fontSize: number): number {
   return latinText(text).length * fontSize * 0.49
 }
 
@@ -126,7 +126,7 @@ function textCommand(text: unknown, x: number, y: number, size = 8, bold = false
   return `BT /${bold ? 'F2' : 'F1'} ${size} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${escapePdfText(text)}) Tj ET`
 }
 
-class PdfDocument {
+export class PdfDocument {
   private pages: PdfPage[] = [[]]
   private pageIndex = 0
   private y = PAGE_HEIGHT - MARGIN

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { InlineMessage, PageHeader, Person } from '../components/UI'
 import { useConfirm } from '../components/useConfirm'
+import { DateField } from '../components/DateField'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { feedbackError, feedbackFrom, feedbackInfo, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
@@ -330,7 +331,7 @@ export function AttendancePage() {
       <article className="card attendance-card">
         <div className="attendance-filters">
           <label>Kelas pengajian<select value={classId} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setClassId(event.target.value) }}>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-          <label>Tanggal<input type="date" max={localIsoDate()} value={date} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setDate(event.target.value) }} /></label>
+          <label>Tanggal<DateField max={localIsoDate()} value={date} disabled={generatedReadOnly} onChange={(next) => { persistDraftNow(); setDate(next) }} /></label>
           <label>Materi<select value={materialType} disabled={generatedReadOnly} onChange={(event) => { persistDraftNow(); setMaterialType(event.target.value as MaterialType); setMaterialName('') }}>{Object.entries(MATERIAL_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Jenis kelamin<select value={genderFilter} onChange={(event) => setGenderFilter(event.target.value as 'all' | Gender)}><option value="all">Semua warga</option><option value="Laki-laki">Laki-laki saja</option><option value="Perempuan">Perempuan saja</option></select></label>
           <label className="attendance-notes-field">Materi sambung / keterangan<textarea rows={3} value={notes} disabled={periodClosed || futureDate || generatedReadOnly} onChange={(event) => { setNotes(event.target.value); setDirty(true); setMessage(null) }} placeholder="Contoh: lanjut Bab 3 halaman 12, tugas pekan depan, atau catatan pengajian lainnya." /></label>

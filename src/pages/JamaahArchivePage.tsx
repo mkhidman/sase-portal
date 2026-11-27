@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, Person, StatCard } from '../components/UI'
+import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { JAMAAH_DEACTIVATION_REASONS, JAMAAH_STATUS_REASON_LABELS } from '../lib/constants'
@@ -182,10 +183,10 @@ export function JamaahArchivePage() {
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
 
       <section className="stats-grid four-columns compact-stats archive-stats">
-        <StatCard tone="mint" label="Warga Aktif" value={activeCount} note="Masuk kelas dan absensi" icon={<UserCheck size={18} />} />
-        <StatCard tone="violet" label="Warga Nonaktif" value={inactiveCount} note="Tersimpan dalam arsip" icon={<Archive size={18} />} />
-        <StatCard tone="sky" label="Perubahan Bulan Ini" value={changesThisMonth} note="Aktif maupun nonaktif" icon={<CalendarDays size={18} />} />
-        <StatCard tone="mint" label="Pernah Aktif Kembali" value={restoredCount} note="Riwayat reaktivasi" icon={<RotateCcw size={18} />} />
+        <StatCard tone="mint" label="Warga Aktif" value={activeCount} icon={<UserCheck size={18} />} />
+        <StatCard tone="violet" label="Warga Nonaktif" value={inactiveCount} icon={<Archive size={18} />} />
+        <StatCard tone="sky" label="Perubahan Bulan Ini" value={changesThisMonth} icon={<CalendarDays size={18} />} />
+        <StatCard tone="mint" label="Pernah Aktif Kembali" value={restoredCount} icon={<RotateCcw size={18} />} />
       </section>
 
       <div className="notice archive-notice">
@@ -266,7 +267,7 @@ export function JamaahArchivePage() {
               <div><strong>{selectedPerson.fullName}</strong><p>{changeMode === 'reactivate' ? 'Warga akan kembali muncul pada kelas dan absensi baru.' : 'Data lama tidak dihapus dan tetap tersedia pada laporan historis.'}</p></div>
             </div>
             <div className="form-grid archive-form-grid">
-              <label>Tanggal efektif *<input type="date" max={localIsoDate()} value={form.effectiveDate} onChange={(event) => setForm({ ...form, effectiveDate: event.target.value })} /></label>
+              <label>Tanggal efektif *<DateField max={localIsoDate()} value={form.effectiveDate} onChange={(effectiveDate) => setForm({ ...form, effectiveDate })} /></label>
               {changeMode === 'deactivate' ? (
                 <label>Alasan *<select value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value as JamaahStatusReason })}>{JAMAAH_DEACTIVATION_REASONS.map((reason) => <option key={reason} value={reason}>{JAMAAH_STATUS_REASON_LABELS[reason]}</option>)}</select></label>
               ) : (

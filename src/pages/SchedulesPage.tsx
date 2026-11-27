@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import { EmptyState, InlineMessage, PageHeader } from '../components/UI'
 import { useConfirm } from '../components/useConfirm'
+import { DateField } from '../components/DateField'
 import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { buildMonthGrid, formatTimeRange, isWeekend, shiftMonth, WEEKDAY_LABELS } from '../lib/calendar'
@@ -307,7 +308,7 @@ export function SchedulesPage() {
       <Modal open={modalOpen} title={editing ? 'Ubah Jadwal' : 'Tambah Jadwal'} onClose={() => setModalOpen(false)} footer={<><button className="button outline" onClick={() => setModalOpen(false)}>Batal</button><button className="button primary" disabled={saving || formPeriodClosed} onClick={() => void submit()}>{saving ? 'Menyimpan…' : 'Simpan Jadwal'}</button></>}>
         {formPeriodClosed ? <div className="notice danger-notice">Periode bulan ini sudah ditutup. Jadwal tidak dapat {editing ? 'diubah' : 'ditambahkan'}.</div> : null}
         <div className="form-grid one-column">
-          <label>Tanggal<input type="date" min={editing ? undefined : today} value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
+          <label>Tanggal<DateField min={editing ? undefined : today} value={form.date} onChange={(date) => setForm({ ...form, date })} /></label>
           <div className="form-grid">
             <label>Jam mulai<input type="time" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label>
             <label>Jam selesai<input type="time" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label>

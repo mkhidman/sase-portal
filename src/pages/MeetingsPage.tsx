@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Modal } from '../components/Modal'
 import { useConfirm } from '../components/useConfirm'
 import { EmptyState, InlineMessage, PageHeader, StatCard } from '../components/UI'
+import { DateField } from '../components/DateField'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
@@ -200,10 +201,10 @@ export function MeetingsPage() {
       />
 
       <section className="stats-grid four-columns compact-stats">
-        <StatCard tone="mint" label="Notulensi Tercatat" value={meetings.length} note="Seluruh musyawarah yang tercatat" icon={<ClipboardList size={20} />} />
-        <StatCard tone="sky" label="Tugas Belum Selesai" value={openRows.length} note="Menunggu dikerjakan atau dicentang" icon={<ListChecks size={20} />} />
-        <StatCard tone="amber" label="Lewat Batas Tanggal" value={overdueCount} note="Belum selesai padahal sudah jatuh tempo" icon={<CircleAlert size={20} />} />
-        <StatCard tone="violet" label="Tugas Selesai" value={doneCount} note="Sudah dicentang selesai" icon={<CalendarDays size={20} />} />
+        <StatCard tone="mint" label="Notulensi Tercatat" value={meetings.length} icon={<ClipboardList size={20} />} />
+        <StatCard tone="sky" label="Tugas Belum Selesai" value={openRows.length} icon={<ListChecks size={20} />} />
+        <StatCard tone="amber" label="Lewat Batas Tanggal" value={overdueCount} icon={<CircleAlert size={20} />} />
+        <StatCard tone="violet" label="Tugas Selesai" value={doneCount} icon={<CalendarDays size={20} />} />
       </section>
 
       <InlineMessage value={message} className="page-message" />
@@ -318,7 +319,7 @@ export function MeetingsPage() {
       >
         <div className="form-grid">
           <label>Judul musyawarah *<input value={header.title} onChange={(event) => setHeader({ ...header, title: event.target.value })} placeholder="Contoh: Musyawarah Pengurus" /></label>
-          <label>Tanggal musyawarah *<input type="date" max={today} value={header.meetingDate} onChange={(event) => setHeader({ ...header, meetingDate: event.target.value })} /></label>
+          <label>Tanggal musyawarah *<DateField max={today} value={header.meetingDate} onChange={(meetingDate) => setHeader({ ...header, meetingDate })} /></label>
         </div>
         {headerPeriodClosed ? <div className="form-error">Periode {header.meetingDate.slice(0, 7)} sudah ditutup. Buka kembali periode dari Laporan Bulanan untuk menyimpan notulensi bulan itu.</div> : null}
 
@@ -343,7 +344,7 @@ export function MeetingsPage() {
                     <option value="">Penanggung jawab…</option>
                     {picCandidates.map((person) => <option key={person.id} value={person.id}>{person.fullName}</option>)}
                   </select>
-                  <input type="date" value={task.dueDate} onChange={(event) => updateTask(topic.id, task.id, { dueDate: event.target.value })} aria-label="Batas tanggal" />
+                  <DateField value={task.dueDate} onChange={(dueDate) => updateTask(topic.id, task.id, { dueDate })} />
                   <button className="icon-button danger-icon" type="button" aria-label="Hapus tugas" onClick={() => updateTopic(topic.id, { tasks: topic.tasks.filter((item) => item.id !== task.id) })}><X size={15} /></button>
                 </div>
               ))}

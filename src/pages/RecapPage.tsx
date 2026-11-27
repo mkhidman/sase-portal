@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal'
 import { useConfirm } from '../components/useConfirm'
 import { Pagination } from '../components/Pagination'
 import { EmptyState, InlineMessage, PageHeader, Person, ProgressBlock, StatCard } from '../components/UI'
+import { MonthField } from '../components/MonthField'
 import { feedbackFrom, feedbackOk, type Feedback } from '../lib/feedback'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
@@ -100,14 +101,14 @@ export function RecapPage() {
       <PageHeader title="Rekap Keseluruhan Pengajian" description="Seluruh sesi kelas yang dapat diakses, termasuk Hasda dan ASAD." actions={<button className="button outline" onClick={() => void exportSessions()}><Download size={16} /> Ekspor Sesi Excel</button>} />
 
       <section className="stats-grid three-columns">
-        <StatCard tone="sky" label="Total Sesi" value={sessions.length} note="Sesuai filter aktif" icon={<ClipboardList size={20} />} />
-        <StatCard tone="mint" label="Rata-Rata Hadir" value={`${averageAttendance}%`} note="Gabungan seluruh sesi" icon={<Percent size={20} />} />
-        <StatCard tone="amber" label="Perlu Penyusulan" value={pending} note="Hasda/ASAD belum tuntas" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="sky" label="Total Sesi" value={sessions.length} icon={<ClipboardList size={20} />} />
+        <StatCard tone="mint" label="Rata-Rata Hadir" value={`${averageAttendance}%`} icon={<Percent size={20} />} />
+        <StatCard tone="amber" label="Perlu Penyusulan" value={pending} icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card">
         <div className="toolbar recap-toolbar">
-          <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+          <label>Bulan<MonthField value={month} onChange={setMonth} /></label>
           <label>Kelas<select value={classId} onChange={(event) => setClassId(event.target.value)}><option value="all">Semua kelas</option>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         </div>
         <div className="session-list">

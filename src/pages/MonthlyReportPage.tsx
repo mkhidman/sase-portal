@@ -4,6 +4,7 @@ import { GenderComposition, type GenderCompositionRow } from '../components/Gend
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { PageHeader, StatCard } from '../components/UI'
+import { MonthField } from '../components/MonthField'
 import { useAuth } from '../contexts/AuthContext'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
@@ -257,15 +258,15 @@ export function MonthlyReportPage() {
       </article>
 
       <section className="stats-grid four-columns report-stats">
-        <StatCard tone="sky" label="Total Sesi" value={sessions.length} note="Pada filter bulan dan kelas" icon={<ClipboardList size={20} />} />
-        <StatCard tone="mint" label="Kehadiran" value={`${averageAttendance}%`} note={`${totalPresent} hadir dari ${totalRecords} catatan`} icon={<Percent size={20} />} />
-        <StatCard tone="violet" label="Peserta Tercatat" value={uniqueJamaah} note="Unik pada seluruh sesi" icon={<UsersRound size={20} />} />
-        <StatCard tone="amber" label="Tindak Lanjut" value={openFollowUps} note="Belum selesai" icon={<TriangleAlert size={20} />} />
+        <StatCard tone="sky" label="Total Sesi" value={sessions.length} icon={<ClipboardList size={20} />} />
+        <StatCard tone="mint" label="Kehadiran" value={`${averageAttendance}%`} icon={<Percent size={20} />} />
+        <StatCard tone="violet" label="Peserta Tercatat" value={uniqueJamaah} icon={<UsersRound size={20} />} />
+        <StatCard tone="amber" label="Tindak Lanjut" value={openFollowUps} icon={<TriangleAlert size={20} />} />
       </section>
 
       <article className="card monthly-census-composition">
         <div className="monthly-report-filters">
-          <label>Bulan<input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+          <label>Bulan<MonthField value={month} onChange={setMonth} /></label>
           <label>Kelas<select value={classId} onChange={(event) => setClassId(event.target.value)}><option value="all">Semua kelas</option>{visibleClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         </div>
         <div className="card-heading">
