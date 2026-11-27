@@ -1,7 +1,6 @@
 import {
   Archive,
   CalendarDays,
-  Download,
   History,
   RotateCcw,
   Search,
@@ -16,7 +15,7 @@ import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
 import { JAMAAH_DEACTIVATION_REASONS, JAMAAH_STATUS_REASON_LABELS } from '../lib/constants'
-import { downloadSheet, formatDate, formatDateTime, localIsoDate } from '../lib/utils'
+import { formatDate, formatDateTime, localIsoDate } from '../lib/utils'
 import type { Jamaah, JamaahStatusHistory, JamaahStatusReason } from '../types/domain'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -57,7 +56,6 @@ export function JamaahArchivePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
 
-  const personMap = useMemo(() => new Map(jamaah.map((item) => [item.id, item])), [jamaah])
   const historiesByPerson = useMemo(() => {
     const map = new Map<string, JamaahStatusHistory[]>()
     statusHistory.forEach((item) => {
@@ -155,29 +153,12 @@ export function JamaahArchivePage() {
     }
   }
 
-  async function exportHistory() {
-    await downloadSheet('riwayat-status-warga.xlsx', [
-      ['Tanggal Efektif', 'Nama Warga', 'Perubahan', 'Alasan', 'Kelas Terkait', 'Catatan', 'Waktu Dicatat'],
-      ...statusHistory.map((item) => [
-        item.effectiveDate,
-        personMap.get(item.jamaahId)?.fullName ?? 'Warga',
-        item.newActive ? 'Diaktifkan kembali' : 'Dinonaktifkan / diarsipkan',
-        JAMAAH_STATUS_REASON_LABELS[item.reason],
-        item.classIds.map((id) => classNameMap.get(id) ?? id).join(' | '),
-        item.notes,
-        item.createdAt,
-      ]),
-    ])
-  }
-
   const selectedHistory = historyPerson ? historiesByPerson.get(historyPerson.id) ?? [] : []
 
   return (
     <>
       <PageHeader
         title="Status & Arsip Warga"
-        description="Nonaktifkan warga tanpa menghapus absensi lama, simpan alasan dan tanggal efektif, lalu aktifkan kembali bila diperlukan."
-        actions={<button className="button outline" type="button" onClick={() => void exportHistory()}><Download size={16} /> Ekspor Riwayat</button>}
       />
 
       {pageMessage ? <div className="inline-message page-message">{pageMessage}</div> : null}
@@ -209,11 +190,10 @@ export function JamaahArchivePage() {
 
         <div className="table-wrap archive-table">
           <table role="table">
-            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Aksi</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kategori</th><th scope="col" role="columnheader">Kelas aktif/terakhir</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Perubahan terakhir</th></tr></thead>
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Aksi</th><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Perubahan terakhir</th></tr></thead>
             <tbody role="rowgroup">
               {pagination.pageItems.map((person) => {
                 const latest = latestHistory(person.id)
-                const classIds = lastKnownClasses(person)
                 return (
                   <tr role="row" key={person.id}>
                     <td role="cell" data-label="Aksi" data-cell="full">
@@ -225,8 +205,6 @@ export function JamaahArchivePage() {
                       </div>
                     </td>
                     <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.phone || 'Nomor belum diisi'}`} /></td>
-                    <td role="cell" data-label="Kategori"><span className="badge info">{person.censusCategory}</span></td>
-                    <td role="cell" data-label="Kelas aktif/terakhir"><div className="badge-list">{classIds.length ? classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>) : <span className="muted-copy">Belum ada kelas</span>}</div></td>
                     <td role="cell" data-label="Status"><span className={`badge ${person.active ? 'success' : 'danger'}`}>{person.active ? 'Aktif' : 'Nonaktif'}</span></td>
                     <td role="cell" data-label="Perubahan terakhir">
                       {latest ? (

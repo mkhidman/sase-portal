@@ -53,11 +53,11 @@ export function CensusPage() {
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
-    return jamaah.filter((item) => {
+    return active.filter((item) => {
       const text = [item.fullName, item.phone, item.censusCategory].join(' ').toLowerCase()
       return (!query || text.includes(query)) && (!category || item.censusCategory === category) && (!gender || item.gender === gender)
     })
-  }, [category, gender, jamaah, search])
+  }, [active, category, gender, search])
 
   const pagination = usePagination(filtered, `${search}|${category}|${gender}`)
 
@@ -185,9 +185,9 @@ export function CensusPage() {
           <select value={category} onChange={(event) => setCategory(event.target.value as CensusCategory | '')}><option value="">Semua kategori</option>{CENSUS_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select>
           <select value={gender} onChange={(event) => setGender(event.target.value as Gender | '')}><option value="">Semua gender</option><option>Laki-laki</option><option>Perempuan</option></select>
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap census-table">
           <table role="table">
-            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Usia</th><th scope="col" role="columnheader">Kategori sensus</th><th scope="col" role="columnheader">Kelas pengajian</th><th scope="col" role="columnheader">Status</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
             <tbody role="rowgroup">
               {pagination.pageItems.map((item) => (
                 <tr role="row" key={item.id}>
@@ -196,10 +196,6 @@ export function CensusPage() {
                       <Person name={item.fullName} meta={`${item.gender} · ${item.phone || 'Nomor belum diisi'}`} />
                     </button>
                   </td>
-                  <td role="cell" data-label="Usia">{item.birthDate ? `${ageFromBirthDate(item.birthDate)} tahun` : 'Belum diisi'}</td>
-                  <td role="cell" data-label="Kategori sensus"><span className="badge info">{item.censusCategory}</span></td>
-                  <td role="cell" data-label="Kelas pengajian"><div className="badge-list">{item.classIds.map((id) => <span className="badge muted" key={id}>{classes.find((studyClass) => studyClass.id === id)?.name ?? 'Kelas'}</span>)}</div></td>
-                  <td role="cell" data-label="Status"><span className={`badge ${item.active ? 'success' : 'danger'}`}>{item.active ? 'Aktif' : 'Nonaktif'}</span></td>
                   <td role="cell" data-label="Aksi" data-cell="full"><div className="table-actions"><button className="text-button" onClick={() => setAttendancePerson(item)}><Eye size={14} /> Absensi</button><button className="text-button" onClick={() => openEdit(item)}>Edit</button></div></td>
                 </tr>
               ))}
@@ -230,7 +226,7 @@ export function CensusPage() {
 
       <Modal
         open={Boolean(attendancePerson)}
-        title="Rekap Absensi Warga"
+        title="Detail Warga"
         onClose={() => setAttendancePerson(null)}
         wide
       >
@@ -247,6 +243,18 @@ export function CensusPage() {
                 <span>{personAttendanceCounts.present} hadir dari {visiblePersonAttendance.length} pencatatan{detailFiltered ? ' terpilih' : ''}</span>
               </div>
             </div>
+            <dl className="person-facts">
+              <div><dt>Jenis kelamin</dt><dd>{attendancePerson.gender}</dd></div>
+              <div><dt>Kategori sensus</dt><dd>{attendancePerson.censusCategory}</dd></div>
+              <div><dt>Tanggal lahir</dt><dd>{attendancePerson.birthDate ? `${formatDate(attendancePerson.birthDate)} · ${ageFromBirthDate(attendancePerson.birthDate)} tahun` : 'Belum diisi'}</dd></div>
+              <div><dt>Nomor WhatsApp</dt><dd>{attendancePerson.phone || 'Belum diisi'}</dd></div>
+              <div className="span-two">
+                <dt>Kelas pengajian</dt>
+                <dd>{attendancePerson.classIds.length
+                  ? <div className="badge-list">{attendancePerson.classIds.map((id) => <span className="badge muted" key={id}>{classNameMap.get(id) ?? 'Kelas'}</span>)}</div>
+                  : 'Belum terdaftar di kelas mana pun'}</dd>
+              </div>
+            </dl>
             <div className="detail-counts">
               <span className="badge success">Hadir {personAttendanceCounts.present}</span>
               <span className="badge info">Izin {personAttendanceCounts.excused}</span>

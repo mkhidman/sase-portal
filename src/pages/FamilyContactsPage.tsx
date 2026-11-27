@@ -98,6 +98,8 @@ export function FamilyContactsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<Feedback | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const [detailFamily, setDetailFamily] = useState<Family | null>(null)
+  const [detailPerson, setDetailPerson] = useState<Jamaah | null>(null)
   const { confirm, dialog: confirmDialog } = useConfirm()
   const [waliShare, setWaliShare] = useState<{ jamaahId: string; waliName: string; link: string; waUrl: string } | null>(null)
   const [windowDraft, setWindowDraft] = useState<WaliWindow>(WALI_WINDOW_DEFAULT)
@@ -133,6 +135,13 @@ export function FamilyContactsPage() {
   }, [pageJamaah, search])
 
   const contactPagination = usePagination(contactRows, search)
+  const familyPagination = usePagination(visibleFamilies, search)
+
+  /** Anggota yang boleh dilihat pengguna ini. Dipakai bersama tabel ringkas dan modal detail. */
+  const membersOfFamily = (familyId: string) => familyMembers
+    .filter((item) => item.familyId === familyId && (canManage || visibleIds.has(item.jamaahId)))
+    .map((item) => ({ member: item, person: jamaahMap.get(item.jamaahId) }))
+    .filter((row): row is { member: typeof row.member; person: Jamaah } => Boolean(row.person))
 
   const visibleContacts = guardianContacts.filter((item) => visibleIds.has(item.jamaahId))
   const linkedJamaahCount = new Set(familyMembers.filter((item) => canManage || visibleIds.has(item.jamaahId)).map((item) => item.jamaahId)).size
@@ -391,7 +400,7 @@ export function FamilyContactsPage() {
     <>
       <PageHeader
         title="Keluarga & Kontak Wali"
-        description={canManage ? 'Kelompokkan warga dalam keluarga dan tautkan wali ke data warga yang sudah tercatat.' : 'Daftar lengkap warga aktif, keluarga, dan wali dari kelas yang Anda ampu.'}
+        description={canManage ? undefined : 'Daftar lengkap warga aktif, keluarga, dan wali dari kelas yang Anda ampu.'}
         actions={canManage ? <><button className="button outline" onClick={() => openCreateGuardian()}><UserRound size={16} /> Tambah Wali</button><button className="button primary" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button></> : undefined}
       />
 
@@ -408,67 +417,167 @@ export function FamilyContactsPage() {
 
       <article className="card family-section">
         <div className="card-heading"><div><h2>Daftar Keluarga</h2><p>Satu warga hanya dapat terhubung ke satu keluarga, tetapi dapat memiliki beberapa kontak wali.</p></div></div>
-        <div className="family-card-grid">
-          {visibleFamilies.map((family) => {
-            const members = familyMembers.filter((item) => item.familyId === family.id && (canManage || visibleIds.has(item.jamaahId)))
-            return (
-              <section className="family-card" key={family.id}>
-                <header>
-                  <span className="family-icon"><House size={18} /></span>
-                  <div><strong>{family.name}</strong><small>{family.address || 'Alamat belum diisi'}</small></div>
-                  {canManage ? <div className="family-card-actions"><button className="icon-button" onClick={() => openEditFamily(family)} aria-label="Edit keluarga"><Pencil size={15} /></button><button className="icon-button danger-icon" onClick={() => void removeSelectedFamily(family)} aria-label="Hapus keluarga"><Trash2 size={15} /></button></div> : null}
-                </header>
-                <div className="family-members">
-                  {members.map((member) => {
-                    const person = jamaahMap.get(member.jamaahId)
-                    return person ? <div key={member.jamaahId}><Person name={person.fullName} meta={`${member.relationship} · ${person.censusCategory}`} />{member.isPrimaryContact ? <span className="badge info">Kontak keluarga</span> : null}</div> : null
-                  })}
-                  {!members.length ? <div className="empty-state">Tidak ada anggota yang dapat dilihat.</div> : null}
-                </div>
-                {family.notes ? <p className="family-notes">{family.notes}</p> : null}
-              </section>
-            )
-          })}
-          {!visibleFamilies.length ? <div className="family-empty"><EmptyState icon={<House size={20} />} title="Belum ada data keluarga" description="Kelompokkan warga ke dalam keluarga agar kontak wali dan hubungan antaranggota mudah ditelusuri." action={canManage ? <button className="button primary" type="button" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button> : undefined} /></div> : null}
+        <div className="table-wrap family-table">
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Keluarga</th><th scope="col" role="columnheader">Anggota</th><th scope="col" role="columnheader">Kontak keluarga</th>{canManage ? <th scope="col" role="columnheader">Aksi</th> : null}</tr></thead>
+            <tbody role="rowgroup">
+              {familyPagination.pageItems.map((family) => {
+                const rows = membersOfFamily(family.id)
+                const primary = rows.find((row) => row.member.isPrimaryContact)?.person
+                return (
+                  <tr role="row" key={family.id}>
+                    <td role="cell" data-cell="primary">
+                      <button className="person-detail-button" type="button" onClick={() => setDetailFamily(family)} title={`Lihat anggota ${family.name}`}>
+                        <Person name={family.name} meta={family.address || 'Alamat belum diisi'} />
+                      </button>
+                    </td>
+                    <td role="cell" data-label="Anggota">{rows.length} orang</td>
+                    <td role="cell" data-label="Kontak keluarga">{primary ? primary.fullName : <span className="muted-copy">Belum ditentukan</span>}</td>
+                    {canManage ? (
+                      <td role="cell" data-label="Aksi" data-cell="full">
+                        <div className="table-actions">
+                          <button className="icon-button" onClick={() => openEditFamily(family)} aria-label={`Edit ${family.name}`}><Pencil size={15} /></button>
+                          <button className="icon-button danger-icon" onClick={() => void removeSelectedFamily(family)} aria-label={`Hapus ${family.name}`}><Trash2 size={15} /></button>
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                )
+              })}
+              {!visibleFamilies.length ? <tr role="row"><td role="cell" colSpan={canManage ? 4 : 3}><EmptyState icon={<House size={20} />} title="Belum ada data keluarga" description="Kelompokkan warga ke dalam keluarga agar kontak wali dan hubungan antaranggota mudah ditelusuri." action={canManage ? <button className="button primary" type="button" onClick={openCreateFamily}><Plus size={16} /> Tambah Keluarga</button> : undefined} /></td></tr> : null}
+            </tbody>
+          </table>
         </div>
+        <Pagination page={familyPagination.page} pageSize={familyPagination.pageSize} totalItems={visibleFamilies.length} onPageChange={familyPagination.setPage} onPageSizeChange={familyPagination.setPageSize} />
       </article>
 
       <article className="card family-section">
         <div className="card-heading"><div><h2>Data Warga dan Wali</h2><p>Wali dipilih dari data warga. Nomor warga diprioritaskan; jika kosong, sistem menggunakan nomor wali utama yang tertaut.</p></div></div>
         <div className="table-wrap guardian-table">
           <table role="table">
-            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Profil & Kelas</th><th scope="col" role="columnheader">Keluarga</th><th scope="col" role="columnheader">Kontak Utama</th><th scope="col" role="columnheader">Kontak Lain</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
+            <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Warga</th><th scope="col" role="columnheader">Kontak Utama</th><th scope="col" role="columnheader">Aksi</th></tr></thead>
             <tbody role="rowgroup">
               {contactPagination.pageItems.map((person) => {
-                const membership = membershipByJamaah.get(person.id)
-                const family = membership ? familyMap.get(membership.familyId) : null
-                const contacts = guardianContacts.filter((item) => item.jamaahId === person.id).sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
                 const preferred = preferredContactForJamaah(person, guardianContacts, jamaah)
                 const waNumber = preferred ? normalizeWhatsappNumber(preferred.phone) : ''
-                const isGuardian = guardianContacts.some((item) => item.guardianJamaahId === person.id && item.jamaahId !== person.id)
-                const hasWaliAccess = waliAccess.some((item) => item.jamaahId === person.id)
-                const age = ageFromBirthDate(person.birthDate)
-                const classNames = person.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
                 return (
                   <tr role="row" key={person.id}>
-                    <td role="cell" data-cell="primary"><Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />{!person.active ? <span className="badge danger">Nonaktif</span> : null}</td>
-                    <td role="cell" data-label="Profil & kelas"><div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div><div className="table-subtle">{person.birthDate ? `${formatDate(person.birthDate)} · ${age} tahun` : 'Tanggal lahir belum diisi'}</div><div className="table-subtle">{person.phone || 'Nomor pribadi belum diisi'}</div></td>
-                    <td role="cell" data-label="Keluarga">{family ? <><strong>{family.name}</strong><div className="table-subtle">{membership?.relationship}</div></> : <span className="muted-copy">Belum terhubung</span>}</td>
+                    <td role="cell" data-cell="primary">
+                      <button className="person-detail-button" type="button" onClick={() => setDetailPerson(person)} title={`Lihat detail ${person.fullName}`}>
+                        <Person name={person.fullName} meta={`${person.gender} · ${person.censusCategory}`} />
+                      </button>
+                      {!person.active ? <span className="badge danger">Nonaktif</span> : null}
+                    </td>
                     <td role="cell" data-label="Kontak utama">{preferred ? <><strong>{preferred.name}</strong><div className="table-subtle">{preferred.relationship} · {preferred.phone}</div></> : <span className="badge warning">Belum ada kontak</span>}</td>
-                    <td role="cell" data-label="Kontak lain" data-cell="full"><div className="guardian-contact-list">{contacts.map((contact) => {
-                      const resolved = resolvedGuardian(contact)
-                      return <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}><span>{resolved.name}</span><small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small></button>
-                    })}{!contacts.length ? <span className="muted-copy">—</span> : null}</div></td>
-                    <td role="cell" data-label="Aksi" data-cell="full"><div className="button-row compact-actions">{waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}{canManage ? <button className="button soft small" onClick={() => openCreateGuardian(person)}><Plus size={14} /> Wali</button> : null}{canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(person, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}{canManage && hasWaliAccess ? <button className="button soft small" onClick={() => openWaliModal(person)}><CalendarCog size={14} /> Rentang</button> : null}{canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(person)}><Link2Off size={14} /> Cabut</button> : null}</div></td>
+                    <td role="cell" data-label="Aksi" data-cell="full">
+                      <div className="table-actions">
+                        {waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp</a> : null}
+                        <button className="button soft small" type="button" onClick={() => setDetailPerson(person)}>Detail</button>
+                      </div>
+                    </td>
                   </tr>
                 )
               })}
-              {!contactRows.length ? <tr role="row"><td role="cell" colSpan={6}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
+              {!contactRows.length ? <tr role="row"><td role="cell" colSpan={3}><div className="empty-state">Tidak ada warga yang sesuai pencarian.</div></td></tr> : null}
             </tbody>
           </table>
         </div>
         <Pagination page={contactPagination.page} pageSize={contactPagination.pageSize} totalItems={contactRows.length} onPageChange={contactPagination.setPage} onPageSizeChange={contactPagination.setPageSize} />
       </article>
+
+      <Modal
+        open={Boolean(detailPerson)}
+        title="Detail Warga & Wali"
+        onClose={() => setDetailPerson(null)}
+        wide
+      >
+        {detailPerson ? (() => {
+          const membership = membershipByJamaah.get(detailPerson.id)
+          const family = membership ? familyMap.get(membership.familyId) : null
+          const contacts = guardianContacts.filter((item) => item.jamaahId === detailPerson.id).sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+          const isGuardian = guardianContacts.some((item) => item.guardianJamaahId === detailPerson.id && item.jamaahId !== detailPerson.id)
+          const hasWaliAccess = waliAccess.some((item) => item.jamaahId === detailPerson.id)
+          const age = ageFromBirthDate(detailPerson.birthDate)
+          const classNames = detailPerson.classIds.map((id) => classes.find((item) => item.id === id)?.name).filter(Boolean)
+          const waNumber = (() => {
+            const preferred = preferredContactForJamaah(detailPerson, guardianContacts, jamaah)
+            return preferred ? normalizeWhatsappNumber(preferred.phone) : ''
+          })()
+          return (
+            <>
+              <div className="followup-modal-summary">
+                <Person name={detailPerson.fullName} meta={`${detailPerson.gender} · ${detailPerson.censusCategory}`} />
+                {!detailPerson.active ? <span className="badge danger">Nonaktif</span> : null}
+              </div>
+              <dl className="person-facts">
+                <div><dt>Tanggal lahir</dt><dd>{detailPerson.birthDate ? `${formatDate(detailPerson.birthDate)} · ${age} tahun` : 'Belum diisi'}</dd></div>
+                <div><dt>Nomor pribadi</dt><dd>{detailPerson.phone || 'Belum diisi'}</dd></div>
+                <div><dt>Keluarga</dt><dd>{family ? `${family.name}${membership?.relationship ? ` · ${membership.relationship}` : ''}` : 'Belum terhubung'}</dd></div>
+                <div><dt>Akses wali</dt><dd>{hasWaliAccess ? 'Aktif' : 'Belum aktif'}</dd></div>
+                <div className="span-two">
+                  <dt>Kelas pengajian</dt>
+                  <dd>{classNames.length ? <div className="badge-list">{classNames.map((name) => <span className="badge muted" key={name}>{name}</span>)}</div> : 'Belum terdaftar di kelas mana pun'}</dd>
+                </div>
+                <div className="span-two">
+                  <dt>Kontak wali</dt>
+                  <dd>
+                    <div className="guardian-contact-list">
+                      {contacts.map((contact) => {
+                        const resolved = resolvedGuardian(contact)
+                        return (
+                          <button className="guardian-contact-chip" key={contact.id} type="button" onClick={() => canManage && openEditGuardian(contact)} disabled={!canManage}>
+                            <span>{resolved.name}</span>
+                            <small>{contact.relationship}{contact.isPrimary ? ' · Utama' : ''}{resolved.linked ? ' · Tertaut' : ' · Data lama'}</small>
+                          </button>
+                        )
+                      })}
+                      {!contacts.length ? <span className="badge warning">Belum ada wali</span> : null}
+                    </div>
+                  </dd>
+                </div>
+              </dl>
+              <div className="button-row compact-actions">
+                {waNumber ? <a className="button outline small" href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp <ExternalLink size={11} /></a> : null}
+                {canManage ? <button className={`button small ${contacts.length ? 'soft' : 'primary'}`} onClick={() => openCreateGuardian(detailPerson)}><Plus size={14} /> {contacts.length ? 'Tambah Wali Lain' : 'Tambah Wali'}</button> : null}
+                {canManage && isGuardian ? <button className="button soft small" onClick={() => void shareWaliAccess(detailPerson, waNumber)}><KeyRound size={14} /> {hasWaliAccess ? 'Tautan Baru' : 'Aktifkan Akses'}</button> : null}
+                {canManage && hasWaliAccess ? <button className="button soft small" onClick={() => openWaliModal(detailPerson)}><CalendarCog size={14} /> Rentang</button> : null}
+                {canManage && hasWaliAccess ? <button className="button outline small" onClick={() => void revokeWaliAccess(detailPerson)}><Link2Off size={14} /> Cabut</button> : null}
+              </div>
+            </>
+          )
+        })() : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(detailFamily)}
+        title="Detail Keluarga"
+        onClose={() => setDetailFamily(null)}
+        wide
+      >
+        {detailFamily ? (
+          <>
+            <div className="followup-modal-summary">
+              <Person name={detailFamily.name} meta={detailFamily.address || 'Alamat belum diisi'} />
+              {detailFamily.notes ? <p className="family-notes">{detailFamily.notes}</p> : null}
+            </div>
+            <div className="family-members">
+              {membersOfFamily(detailFamily.id).map(({ member, person }) => (
+                <div key={member.jamaahId}>
+                  <Person name={person.fullName} meta={`${member.relationship} · ${person.censusCategory}`} />
+                  {member.isPrimaryContact ? <span className="badge info">Kontak keluarga</span> : null}
+                </div>
+              ))}
+              {!membersOfFamily(detailFamily.id).length ? <div className="empty-state">Tidak ada anggota yang dapat dilihat.</div> : null}
+            </div>
+            {canManage ? (
+              <div className="modal-inline-actions">
+                <button className="button danger" type="button" onClick={() => { const target = detailFamily; setDetailFamily(null); void removeSelectedFamily(target) }}><Trash2 size={15} /> Hapus Keluarga</button>
+                <div><button className="button outline" type="button" onClick={() => setDetailFamily(null)}>Tutup</button><button className="button primary" type="button" onClick={() => { const target = detailFamily; setDetailFamily(null); openEditFamily(target) }}><Pencil size={15} /> Edit Keluarga</button></div>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </Modal>
 
       <Modal
         open={Boolean(waliShare)}
