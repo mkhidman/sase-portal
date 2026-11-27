@@ -215,3 +215,29 @@ test('percentage tidak membagi dengan nol', () => {
   assert.equal(percentage(0, 0), 0)
   assert.equal(percentage(1, 3), 33)
 })
+
+// Peristiwa "lepas dari kelas" tidak punya kelas tujuan: to_class_id null. Kalau
+// pemutar-mundurnya salah menangani itu, laporan bulan lampau akan menampilkan
+// warga ini sebagai 'Menikah' -- dan kategori itu dikecualikan dari target
+// Hasda/ASAD, sehingga penyebut ketuntasan bulan yang sudah dicetak ikut bergeser
+// tanpa satu pun pesan di layar.
+test('melepas kelas sesudah tanggal potret tidak mengubah kategori bulan itu', () => {
+  const orang = warga({ id: 'w1', classIds: ['umum', '5-unsur'], censusCategory: 'Menikah' })
+  const riwayat = [pindahKelas({
+    jamaahId: 'w1',
+    fromClassId: 'pra-nikah',
+    toClassId: null,
+    previousCensusCategory: 'Usia Nikah',
+    newCensusCategory: 'Menikah',
+    changeType: 'release',
+    effectiveDate: '2026-08-01',
+  })]
+
+  const sebelum = jamaahSnapshotsAsOfDate([orang], riwayat, [], '2026-07-31')[0]!
+  assert.equal(sebelum.censusCategory, 'Usia Nikah')
+  assert.deepEqual([...sebelum.classIds].sort(), ['5-unsur', 'pra-nikah', 'umum'])
+
+  const sesudah = jamaahSnapshotsAsOfDate([orang], riwayat, [], '2026-08-31')[0]!
+  assert.equal(sesudah.censusCategory, 'Menikah')
+  assert.deepEqual([...sesudah.classIds].sort(), ['5-unsur', 'umum'])
+})

@@ -1,6 +1,6 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan tujuh migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan delapan migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
@@ -10,7 +10,18 @@ supabase/migrations/026_akses_wali.sql
 supabase/migrations/027_wali_token_tanpa_pgcrypto.sql
 supabase/migrations/028_wali_rentang_tampilan.sql
 supabase/migrations/029_rls_sekali_per_statement.sql
+supabase/migrations/030_lepas_kelas_dan_kategori.sql
 ```
+
+## Migration 030 (Lepas dari kelas + ubah kategori)
+
+Menambah nilai `release` pada `change_type`, dan membuat ulang `bulk_transition_jamaah_classes` dengan satu parameter baru `target_census_category` serta kelas tujuan yang boleh `null`.
+
+- **Tidak ada tabel atau kolom baru.** `class_membership_history` sejak migration 008 sudah mengizinkan `to_class_id` null, dan check constraint-nya hanya menuntut salah satu dari `from_class_id`/`to_class_id` terisi. Peristiwa pelepasan kelas sudah terwakili apa adanya.
+- **Fungsi lamanya di-`drop` lebih dulu.** Parameternya bertambah satu, jadi `create or replace` saja akan meninggalkan dua fungsi bernama sama dengan tanda tangan berbeda, dan PostgREST bisa memanggil yang keliru.
+- **Nama check constraint dicari dari katalog**, tidak ditebak. Kalau namanya ternyata berbeda dari dugaan, `drop constraint if exists` akan lewat tanpa keluhan, constraint lama tetap hidup, dan setiap pelepasan kelas gagal dengan `violates check constraint` yang tidak jelas asalnya.
+- Perilaku kenaikan dan mutasi kelas yang lama **tidak berubah**: dengan kelas tujuan terisi, jalurnya persis seperti sebelumnya.
+- Frontend lama tetap berjalan setelah migration ini (parameter barunya punya default), tetapi frontend baru **tidak** berjalan tanpa migration ini — pemanggilan dengan 8 argumen akan gagal dengan `PGRST202`.
 
 ## Migration 029 (Policy baca sekali per statement)
 

@@ -1,5 +1,6 @@
 import { isDemoMode, supabase } from '../lib/supabase'
 import type {
+  CensusCategory,
   AppUser,
   AuditLog,
   AttendanceSession,
@@ -723,11 +724,14 @@ export async function upsertReportingPeriod(input: {
 export interface ClassTransitionInput {
   jamaahIds: string[]
   fromClassId: string
+  /** Kosong berarti warga dilepas dari kelas asal tanpa masuk kelas mana pun. */
   toClassId: string
   effectiveDate: string
   changeType: ClassChangeType
   notes: string
   updateCensusCategory: boolean
+  /** Wajib saat toClassId kosong: tanpa kelas tujuan tidak ada nama kelas yang bisa dipakai menurunkan kategori. */
+  targetCensusCategory?: CensusCategory
 }
 
 export async function bulkTransitionJamaahClasses(input: ClassTransitionInput): Promise<number> {
@@ -736,11 +740,12 @@ export async function bulkTransitionJamaahClasses(input: ClassTransitionInput): 
   const { data, error } = await client.rpc('bulk_transition_jamaah_classes', {
     target_jamaah_ids: input.jamaahIds,
     source_class_id: input.fromClassId,
-    destination_class_id: input.toClassId,
+    destination_class_id: input.toClassId || null,
     transition_date: input.effectiveDate,
     transition_type: input.changeType,
     transition_notes: input.notes || null,
     update_census: input.updateCensusCategory,
+    target_census_category: input.targetCensusCategory ?? null,
   })
   if (error) throw error
   if (typeof data !== 'number') throw new Error('Perubahan kelas selesai, tetapi jumlah data tidak dapat diverifikasi.')

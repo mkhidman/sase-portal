@@ -572,7 +572,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       async applyClassTransition(input) {
         if (user?.role !== 'superadmin') throw new Error('Hanya Superadmin yang dapat melakukan kenaikan atau mutasi kelas.')
         if (!input.jamaahIds.length) throw new Error('Pilih minimal satu warga.')
-        if (input.fromClassId === input.toClassId) throw new Error('Kelas asal dan kelas tujuan harus berbeda.')
+        const releasing = !input.toClassId
+        if (!releasing && input.fromClassId === input.toClassId) throw new Error('Kelas asal dan kelas tujuan harus berbeda.')
+        // Dicerminkan bulk_transition_jamaah_classes: tanpa kelas tujuan tidak ada
+        // nama kelas yang bisa dipakai menurunkan kategori, jadi harus disebut.
+        if (releasing && !input.targetCensusCategory) throw new Error('Pilih kategori sensus tujuan ketika melepas warga tanpa kelas tujuan.')
         if (input.effectiveDate > localIsoDate()) throw new Error('Tanggal efektif tidak boleh berada di masa depan.')
         if (isPeriodClosed(input.effectiveDate.slice(0, 7))) throw new Error('Periode tanggal efektif sudah ditutup.')
 
@@ -583,8 +587,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
 
         const sourceClass = data.classes.find((item) => item.id === input.fromClassId)
-        const targetClass = data.classes.find((item) => item.id === input.toClassId)
-        if (!sourceClass || !targetClass) throw new Error('Kelas asal atau kelas tujuan tidak ditemukan.')
+        const targetClass = releasing ? null : data.classes.find((item) => item.id === input.toClassId)
+        if (!sourceClass || (!releasing && !targetClass)) throw new Error('Kelas asal atau kelas tujuan tidak ditemukan.')
         const selectedSet = new Set(input.jamaahIds)
         const now = new Date().toISOString()
         const histories: ClassMembershipHistory[] = []
@@ -592,15 +596,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const nextJamaah = data.jamaah.map((person) => {
           if (!selectedSet.has(person.id) || !person.classIds.includes(input.fromClassId)) return person
-          const nextCategory: CensusCategory = input.updateCensusCategory
-            ? censusCategoryForClassName(targetClass.name, person.censusCategory)
-            : person.censusCategory
-          const nextClassIds = [...new Set([...person.classIds.filter((id) => id !== input.fromClassId), input.toClassId])]
+          const nextCategory: CensusCategory = releasing
+            ? input.targetCensusCategory!
+            : input.updateCensusCategory
+              ? censusCategoryForClassName(targetClass!.name, person.censusCategory)
+              : person.censusCategory
+          const withoutSource = person.classIds.filter((id) => id !== input.fromClassId)
+          const nextClassIds = releasing ? withoutSource : [...new Set([...withoutSource, input.toClassId])]
           histories.push({
             id: crypto.randomUUID(),
             jamaahId: person.id,
             fromClassId: input.fromClassId,
-            toClassId: input.toClassId,
+            toClassId: input.toClassId || null,
             previousCensusCategory: person.censusCategory,
             newCensusCategory: nextCategory,
             effectiveDate: input.effectiveDate,

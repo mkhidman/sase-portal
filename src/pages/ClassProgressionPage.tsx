@@ -15,7 +15,7 @@ import { PageHeader, Person, StatCard } from '../components/UI'
 import { DateField } from '../components/DateField'
 import { useData } from '../contexts/DataContext'
 import { usePagination } from '../hooks/usePagination'
-import { CLASS_PROGRESSION } from '../lib/constants'
+import { CENSUS_CATEGORIES, CLASS_PROGRESSION } from '../lib/constants'
 import {
   censusCategoryForClassName,
   downloadSheet,
@@ -23,11 +23,12 @@ import {
   formatDateTime,
   localIsoDate,
 } from '../lib/utils'
-import type { ClassChangeType } from '../types/domain'
+import type { CensusCategory, ClassChangeType } from '../types/domain'
 
 function changeTypeLabel(value: ClassChangeType): string {
   if (value === 'promotion') return 'Kenaikan kelas'
   if (value === 'transfer') return 'Mutasi kelas'
+  if (value === 'release') return 'Lepas dari kelas'
   return 'Penyesuaian manual'
 }
 
@@ -50,6 +51,7 @@ export function ClassProgressionPage() {
   const [changeType, setChangeType] = useState<ClassChangeType>('promotion')
   const [effectiveDate, setEffectiveDate] = useState(localIsoDate())
   const [updateCensus, setUpdateCensus] = useState(true)
+  const [releaseCategory, setReleaseCategory] = useState<CensusCategory>('Menikah')
   const [notes, setNotes] = useState('')
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -60,6 +62,7 @@ export function ClassProgressionPage() {
   const [historySearch, setHistorySearch] = useState('')
   const [historyClassId, setHistoryClassId] = useState('all')
 
+  const releasing = changeType === 'release'
   const sourceClass = activeClasses.find((item) => item.id === sourceClassId)
   const targetClass = activeClasses.find((item) => item.id === targetClassId)
   const recommendedTargetName = sourceClass ? CLASS_PROGRESSION[sourceClass.name] : undefined
@@ -74,6 +77,10 @@ export function ClassProgressionPage() {
     const recommendedName = CLASS_PROGRESSION[sourceClass.name]
     const recommended = activeClasses.find((item) => item.name === recommendedName)
     const currentTargetValid = activeClasses.some((item) => item.id === targetClassId && item.id !== sourceClass.id)
+    if (changeType === 'release') {
+      setSelectedIds([])
+      return
+    }
     if (!currentTargetValid || changeType === 'promotion') {
       setTargetClassId(recommended?.id ?? activeClasses.find((item) => item.id !== sourceClass.id)?.id ?? '')
     }
@@ -96,11 +103,13 @@ export function ClassProgressionPage() {
 
   const selectedMembers = sourceMembers.filter((person) => selectedIds.includes(person.id))
   const allFilteredSelected = filteredMembers.length > 0 && filteredMembers.every((person) => selectedIds.includes(person.id))
-  const targetCensusCategory = targetClass
-    ? censusCategoryForClassName(targetClass.name, selectedMembers[0]?.censusCategory ?? sourceMembers[0]?.censusCategory ?? 'Caberawit')
-    : null
+  const targetCensusCategory = releasing
+    ? releaseCategory
+    : targetClass
+      ? censusCategoryForClassName(targetClass.name, selectedMembers[0]?.censusCategory ?? sourceMembers[0]?.censusCategory ?? 'Caberawit')
+      : null
   const closed = effectiveDate ? isPeriodClosed(effectiveDate.slice(0, 7)) : false
-  const sameClass = Boolean(sourceClassId && targetClassId && sourceClassId === targetClassId)
+  const sameClass = !releasing && Boolean(sourceClassId && targetClassId && sourceClassId === targetClassId)
 
   function toggleMember(id: string) {
     setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
@@ -117,23 +126,26 @@ export function ClassProgressionPage() {
   }
 
   async function submitTransition() {
-    if (!sourceClassId || !targetClassId || !effectiveDate || !selectedIds.length || sameClass) return
+    if (!sourceClassId || (!releasing && !targetClassId) || !effectiveDate || !selectedIds.length || sameClass) return
     setSaving(true)
     setMessage(null)
     try {
       const count = await applyClassTransition({
         jamaahIds: selectedIds,
         fromClassId: sourceClassId,
-        toClassId: targetClassId,
+        toClassId: releasing ? '' : targetClassId,
         effectiveDate,
         changeType,
         notes: notes.trim(),
         updateCensusCategory: updateCensus,
+        targetCensusCategory: releasing ? releaseCategory : undefined,
       })
       setConfirmOpen(false)
       setSelectedIds([])
       setNotes('')
-      setMessage(`${count} warga berhasil dipindahkan dari ${sourceClass?.name ?? 'kelas asal'} ke ${targetClass?.name ?? 'kelas tujuan'}.`)
+      setMessage(releasing
+        ? `${count} warga dilepas dari ${sourceClass?.name ?? 'kelas asal'} dan kategorinya menjadi ${releaseCategory}.`
+        : `${count} warga berhasil dipindahkan dari ${sourceClass?.name ?? 'kelas asal'} ke ${targetClass?.name ?? 'kelas tujuan'}.`)
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : 'Perubahan kelas gagal disimpan.')
     } finally {
@@ -195,8 +207,8 @@ export function ClassProgressionPage() {
       <section className="stats-grid four-columns compact-stats progression-stats">
         <StatCard tone="sky" label="Anggota Kelas Asal" value={sourceMembers.length} icon={<UsersRound size={18} />} />
         <StatCard tone="mint" label="Warga Dipilih" value={selectedIds.length} icon={<CheckSquare2 size={18} />} />
-        <StatCard tone="violet" label="Kelas Tujuan" value={targetClass?.name ?? '-'} icon={<Shuffle size={18} />} />
-        <StatCard tone="mint" label="Kategori Baru" value={updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} icon={<Sparkles size={18} />} />
+        <StatCard tone="violet" label="Kelas Tujuan" value={releasing ? 'Dilepas' : targetClass?.name ?? '-'} icon={<Shuffle size={18} />} />
+        <StatCard tone="mint" label="Kategori Baru" value={releasing || updateCensus ? targetCensusCategory ?? '-' : 'Tetap'} icon={<Sparkles size={18} />} />
       </section>
 
       <article className="card progression-workspace">
@@ -206,6 +218,7 @@ export function ClassProgressionPage() {
               <option value="promotion">Kenaikan kelas</option>
               <option value="transfer">Mutasi kelas</option>
               <option value="manual">Penyesuaian manual</option>
+              <option value="release">Lepas dari kelas</option>
             </select>
           </label>
           <label>Kelas asal
@@ -213,27 +226,45 @@ export function ClassProgressionPage() {
               {activeClasses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
           </label>
-          <label>Kelas tujuan
-            <select value={targetClassId} onChange={(event) => setTargetClassId(event.target.value)}>
-              {activeClasses.filter((item) => item.id !== sourceClassId).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
+          {releasing ? (
+            <label>Kategori sensus tujuan
+              <select value={releaseCategory} onChange={(event) => setReleaseCategory(event.target.value as CensusCategory)}>
+                {CENSUS_CATEGORIES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+          ) : (
+            <label>Kelas tujuan
+              <select value={targetClassId} onChange={(event) => setTargetClassId(event.target.value)}>
+                {activeClasses.filter((item) => item.id !== sourceClassId).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </label>
+          )}
           <label>Tanggal efektif
             <DateField max={localIsoDate()} value={effectiveDate} onChange={setEffectiveDate} />
           </label>
         </div>
 
-        <div className="progression-options">
-          <label className={`switch-card ${updateCensus ? 'selected' : ''}`}>
-            <input type="checkbox" checked={updateCensus} onChange={(event) => setUpdateCensus(event.target.checked)} />
-            <span><strong>Sesuaikan kategori sensus</strong><small>Kategori utama mengikuti kelas tujuan. Kelas tambahan seperti Pengajian Umum dan 5 Unsur tetap dipertahankan.</small></span>
-          </label>
-          {recommendedTarget && targetClassId !== recommendedTarget.id ? (
-            <button className="button soft small" type="button" onClick={() => setTargetClassId(recommendedTarget.id)}>
-              <Sparkles size={14} /> Gunakan rekomendasi: {recommendedTarget.name}
-            </button>
-          ) : null}
-        </div>
+        {/* Baris ini flex space-between dan .switch-card memakai display:flex --
+            atribut hidden tidak mempan di sana, dan sebuah .notice di dalamnya
+            akan terjepit. Jadi barisnya diganti seluruhnya, bukan disembunyikan. */}
+        {releasing ? (
+          <div className="notice progression-release-note">
+            Warga dilepas dari kelas asal tanpa kelas tujuan, dan kategori sensusnya diubah pada tanggal efektif di atas.
+            Kelas lain yang diikuti — Pengajian Umum, 5 Unsur, dan sejenisnya — tidak tersentuh.
+          </div>
+        ) : (
+          <div className="progression-options">
+            <label className={`switch-card ${updateCensus ? 'selected' : ''}`}>
+              <input type="checkbox" checked={updateCensus} onChange={(event) => setUpdateCensus(event.target.checked)} />
+              <span><strong>Sesuaikan kategori sensus</strong><small>Kategori utama mengikuti kelas tujuan. Kelas tambahan seperti Pengajian Umum dan 5 Unsur tetap dipertahankan.</small></span>
+            </label>
+            {recommendedTarget && targetClassId !== recommendedTarget.id ? (
+              <button className="button soft small" type="button" onClick={() => setTargetClassId(recommendedTarget.id)}>
+                <Sparkles size={14} /> Gunakan rekomendasi: {recommendedTarget.name}
+              </button>
+            ) : null}
+          </div>
+        )}
 
         {closed ? <div className="notice danger-notice">Tanggal efektif berada pada periode yang sudah ditutup. Buka kembali periode atau pilih tanggal lain.</div> : null}
         {sameClass ? <div className="notice danger-notice">Kelas asal dan kelas tujuan harus berbeda.</div> : null}
@@ -251,14 +282,14 @@ export function ClassProgressionPage() {
             <tbody role="rowgroup">
               {filteredMembers.length ? memberPagination.pageItems.map((person) => {
                 const otherClasses = person.classIds.filter((id) => id !== sourceClassId).map((id) => classNameMap.get(id) ?? 'Kelas')
-                const nextCategory = targetClass ? censusCategoryForClassName(targetClass.name, person.censusCategory) : person.censusCategory
+                const nextCategory = releasing ? releaseCategory : targetClass ? censusCategoryForClassName(targetClass.name, person.censusCategory) : person.censusCategory
                 return (
                   <tr role="row" className={selectedIds.includes(person.id) ? 'selected-row' : ''} key={person.id}>
                     <td role="cell" data-label="Pilih"><input className="row-checkbox" type="checkbox" checked={selectedIds.includes(person.id)} onChange={() => toggleMember(person.id)} aria-label={`Pilih ${person.fullName}`} /></td>
                     <td role="cell" data-cell="primary"><Person name={person.fullName} meta={person.phone || 'Nomor belum diisi'} /></td>
                     <td role="cell" data-label="Kategori saat ini"><span className="badge info">{person.censusCategory}</span></td>
                     <td role="cell" data-label="Kelas lain tetap dipertahankan"><div className="badge-list">{otherClasses.length ? otherClasses.map((name) => <span className="badge muted" key={name}>{name}</span>) : <span className="muted-copy">Tidak ada</span>}</div></td>
-                    <td role="cell" data-label="Rencana" data-cell="full"><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{targetClass?.name ?? '-'}</strong>{updateCensus && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
+                    <td role="cell" data-label="Rencana" data-cell="full"><div className="transition-preview"><span>{sourceClass?.name ?? '-'}</span><ArrowRight size={13} /><strong>{releasing ? 'Dilepas' : targetClass?.name ?? '-'}</strong>{(releasing || updateCensus) && nextCategory !== person.censusCategory ? <small>{person.censusCategory} → {nextCategory}</small> : null}</div></td>
                   </tr>
                 )
               }) : <tr role="row"><td role="cell" colSpan={5}><div className="empty-state">Belum ada warga aktif pada kelas asal ini.</div></td></tr>}
@@ -317,12 +348,12 @@ export function ClassProgressionPage() {
           <span className="transition-confirmation-icon"><Shuffle size={22} /></span>
           <div>
             <strong>{changeTypeLabel(changeType)} untuk {selectedIds.length} warga</strong>
-            <p>{sourceClass?.name ?? '-'} <ArrowRight size={13} /> {targetClass?.name ?? '-'}</p>
+            <p>{sourceClass?.name ?? '-'} <ArrowRight size={13} /> {releasing ? 'tanpa kelas tujuan' : targetClass?.name ?? '-'}</p>
           </div>
         </div>
         <div className="confirmation-list">
           <span><small>Tanggal efektif</small><strong>{effectiveDate ? formatDate(effectiveDate) : '-'}</strong></span>
-          <span><small>Kategori sensus</small><strong>{updateCensus ? 'Disesuaikan otomatis' : 'Tetap seperti sekarang'}</strong></span>
+          <span><small>Kategori sensus</small><strong>{releasing ? releaseCategory : updateCensus ? 'Disesuaikan otomatis' : 'Tetap seperti sekarang'}</strong></span>
           <span><small>Kelas tambahan</small><strong>Tetap dipertahankan</strong></span>
         </div>
         <p className="modal-help">Perubahan akan dicatat pada histori. Absensi dan laporan sesi yang sudah tersimpan tidak dihapus.</p>
