@@ -23,11 +23,13 @@ const loaders = {
   materials: () => import('./pages/MaterialsPage'),
   meetings: () => import('./pages/MeetingsPage'),
   monthlyReport: () => import('./pages/MonthlyReportPage'),
+  kbmReport: () => import('./pages/KbmReportPage'),
   notFound: () => import('./pages/NotFoundPage'),
   recap: () => import('./pages/RecapPage'),
   schedules: () => import('./pages/SchedulesPage'),
   settings: () => import('./pages/SettingsPage'),
   wali: () => import('./pages/WaliPage'),
+  kbmPublic: () => import('./pages/KbmPublicPage'),
 }
 
 const AttendancePage = lazy(() => loaders.attendance().then((m) => ({ default: m.AttendancePage })))
@@ -41,11 +43,13 @@ const JamaahArchivePage = lazy(() => loaders.jamaahArchive().then((m) => ({ defa
 const MaterialsPage = lazy(() => loaders.materials().then((m) => ({ default: m.MaterialsPage })))
 const MeetingsPage = lazy(() => loaders.meetings().then((m) => ({ default: m.MeetingsPage })))
 const MonthlyReportPage = lazy(() => loaders.monthlyReport().then((m) => ({ default: m.MonthlyReportPage })))
+const KbmReportPage = lazy(() => loaders.kbmReport().then((m) => ({ default: m.KbmReportPage })))
 const NotFoundPage = lazy(() => loaders.notFound().then((m) => ({ default: m.NotFoundPage })))
 const RecapPage = lazy(() => loaders.recap().then((m) => ({ default: m.RecapPage })))
 const SchedulesPage = lazy(() => loaders.schedules().then((m) => ({ default: m.SchedulesPage })))
 const SettingsPage = lazy(() => loaders.settings().then((m) => ({ default: m.SettingsPage })))
 const WaliPage = lazy(() => loaders.wali().then((m) => ({ default: m.WaliPage })))
+const KbmPublicPage = lazy(() => loaders.kbmPublic().then((m) => ({ default: m.KbmPublicPage })))
 
 // Setelah tampilan pertama selesai, seluruh halaman diunduh diam-diam supaya service worker
 // menyimpannya. Tanpa ini, halaman yang belum pernah dibuka akan gagal saat perangkat offline.
@@ -70,6 +74,7 @@ export default function App() {
               {/* Dibuka orang tua tanpa akun. Sengaja di luar ProtectedRoute dan tidak memakai useData,
                   supaya kunjungannya tidak menarik bootstrap maupun membuka kanal realtime. */}
               <Route path="/wali/:token" element={<WaliPage />} />
+              <Route path="/kbm/:token" element={<KbmPublicPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="ganti-password" element={<PasswordChangePage />} />
                 <Route element={<PasswordReadyRoute />}>
@@ -82,6 +87,7 @@ export default function App() {
                   <Route path="keluarga-wali" element={<FamilyContactsPage />} />
                   <Route path="rekap" element={<RecapPage />} />
                   <Route path="laporan-bulanan" element={<MonthlyReportPage />} />
+                  <Route path="laporan-kbm" element={<KbmReportPage />} />
                   <Route element={<SuperadminRoute />}>
                     <Route path="sensus" element={<CensusPage />} />
                     <Route path="data-duplikat" element={<DuplicatesPage />} />

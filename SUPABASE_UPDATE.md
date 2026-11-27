@@ -1,6 +1,6 @@
 # Update Supabase Terbaru
 
-Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan delapan migration berikut melalui Supabase SQL Editor, berurutan:
+Untuk project yang sebelumnya sudah menjalankan migration 001–022, jalankan sembilan migration berikut melalui Supabase SQL Editor, berurutan:
 
 ```text
 supabase/migrations/023_musyawarah.sql
@@ -11,7 +11,19 @@ supabase/migrations/027_wali_token_tanpa_pgcrypto.sql
 supabase/migrations/028_wali_rentang_tampilan.sql
 supabase/migrations/029_rls_sekali_per_statement.sql
 supabase/migrations/030_lepas_kelas_dan_kategori.sql
+supabase/migrations/031_tautan_laporan_kbm.sql
 ```
+
+## Migration 031 (Tautan publik Laporan KBM)
+
+Membuat tabel `kbm_report_links` dan tiga fungsi: `publish_kbm_report` serta `revoke_kbm_report` (Superadmin), dan `kbm_report` yang dapat dipanggil `anon`.
+
+- Yang disimpan adalah **hasil laporan** bulan itu dalam `jsonb`, bukan izin membaca tabel. Aturan perhitungannya hidup di `src/lib/kbmReport.ts`; menulis ulangnya dalam SQL berarti dua salinan aturan yang pasti berbeda suatu saat tanpa ada yang menangkapnya.
+- Sekaligus membuat angka yang sudah dibagikan ke orang tua **tidak berubah sendiri** ketika absensi bulan itu dikoreksi kemudian. Menerbitkan ulang adalah tindakan sadar.
+- `kbm_report` adalah fungsi kedua di projek ini yang diberi `grant execute ... to anon`, setelah `wali_attendance`. Ia mengembalikan `null` untuk token yang tidak dikenal, bukan melempar galat, supaya tautan yang sudah dicabut tidak menampilkan pesan teknis ke orang tua.
+- Token **dipertahankan saat menerbitkan ulang**: tautan yang sudah dibagikan harus tetap hidup ketika angkanya diperbarui. Hanya tombol Cabut yang mematikannya.
+- `kbm_report_links` **tidak** didaftarkan ke publication `supabase_realtime`: tidak ada klien yang berlangganan, dan menyiarkan baris berisi token tidak ada gunanya.
+- Frontend baru **tidak berjalan tanpa migration ini** — tombol Terbitkan Tautan akan gagal dengan `PGRST202`. Halaman dan ekspor PDF-nya tetap berfungsi.
 
 ## Migration 030 (Lepas dari kelas + ubah kategori)
 

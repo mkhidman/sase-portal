@@ -1111,6 +1111,25 @@ textarea:focus { border-color: #8ea0b7; box-shadow: 0 0 0 3px rgba(26, 111, 213,
 .family-table .table-actions { flex-wrap: nowrap; justify-content: flex-end; }
 .guardian-table th:last-child, .guardian-table td:last-child { width: 1%; white-space: nowrap; }
 .guardian-table .table-actions { flex-wrap: nowrap; justify-content: flex-end; }
+
+/* Laporan KBM: satu batang per generus, batang kuning pertama adalah jumlah
+   pertemuan -- bentuk yang sudah dipakai laporan cetak ke orang tua selama ini. */
+.kbm-scope { margin-bottom: var(--card-gap, 14px); }
+.kbm-share { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.kbm-share code { display: block; margin-top: 4px; color: var(--primary-dark); font-size: var(--fs-xs); word-break: break-all; }
+.kbm-class-meta { display: flex; gap: 18px; }
+.kbm-class-meta span { display: grid; gap: 2px; text-align: right; }
+.kbm-class-meta small { color: var(--muted); font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.kbm-class-meta strong { font-size: var(--fs-lg); }
+.kbm-chart { display: flex; align-items: flex-end; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.kbm-bar { min-width: 56px; flex: 0 0 auto; display: grid; justify-items: center; gap: 5px; }
+.kbm-bar-track { width: 100%; height: 150px; display: flex; align-items: flex-end; border-radius: var(--radius-sm); background: var(--chart-track); }
+.kbm-bar-fill { width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 5px; border-radius: var(--radius-sm); color: white; font-size: var(--fs-2xs); font-weight: 800; }
+.kbm-bar-fill.good { background: var(--primary); }
+.kbm-bar-fill.warn { background: var(--chart-series-3); }
+.kbm-bar-fill.low { background: var(--chart-series-4); }
+.kbm-bar small { max-width: 72px; overflow: hidden; color: var(--text); font-size: var(--fs-2xs); font-weight: 700; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.kbm-bar em { color: var(--muted); font-size: var(--fs-2xs); font-style: normal; }
 .family-members > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid #eff1f2; }
 .family-members .person { min-width: 0; }
 .family-notes { padding: 0 13px 13px; color: var(--muted); font-size: var(--fs-2xs) !important; line-height: 1.5; }

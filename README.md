@@ -250,6 +250,7 @@ Fitur fase ini mencakup status aktif/nonaktif Admin, login terakhir, reset passw
 - Pada konteks kelas digunakan istilah **Anggota Kelas**.
 - Pada konteks absensi dan laporan sesi digunakan istilah **Peserta**.
 - Nama tabel, tipe TypeScript, route, dan migration yang masih memakai `jamaah` tidak diubah agar kompatibilitas Supabase tetap terjaga.
+- Laporan Pencapaian KBM bulanan: grafik kehadiran per generus untuk pertemuan dengan orang tua, dapat diekspor PDF dan diterbitkan sebagai tautan publik `/kbm/<token>`.
 - Metadata Open Graph untuk WhatsApp/media sosial berada di `index.html`, dan gambar previewnya memakai `public/logo.jpg` — berkas yang sama dengan favicon, ikon PWA, dan lencana di sidebar.
 
 ## Penyesuaian operasional Admin

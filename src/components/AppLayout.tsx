@@ -11,6 +11,7 @@ import {
   Database,
   Download,
   FileChartColumn,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   RefreshCw,
@@ -68,6 +69,7 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
         items: [
           { to: '/rekap', label: 'Rekap Keseluruhan', icon: ChartNoAxesColumn },
           { to: '/laporan-bulanan', label: 'Laporan Bulanan', icon: FileChartColumn },
+          { to: '/laporan-kbm', label: 'Laporan KBM', icon: GraduationCap },
         ],
       },
       {
@@ -102,6 +104,7 @@ function navigationFor(role: 'superadmin' | 'admin'): NavGroup[] {
       items: [
         { to: '/rekap', label: 'Rekap Keseluruhan', icon: ChartNoAxesColumn },
         { to: '/laporan-bulanan', label: 'Laporan Bulanan', icon: FileChartColumn },
+        { to: '/laporan-kbm', label: 'Laporan KBM', icon: GraduationCap },
       ],
     },
   ]

@@ -1,4 +1,5 @@
 import { isDemoMode, supabase } from '../lib/supabase'
+import type { KbmClassReport } from '../lib/kbmReport'
 import type {
   CensusCategory,
   AppUser,
@@ -948,4 +949,36 @@ export async function fetchWaliView(token: string): Promise<WaliView | null> {
   const { data, error } = await client.rpc('wali_attendance', { access_token: token })
   if (error) throw error
   return (data as WaliView | null) ?? null
+}
+
+export interface PublishedKbmReport {
+  month: string
+  publishedAt: string
+  report: KbmClassReport[]
+}
+
+/** Menyimpan hasil laporan, bukan izin baca tabel -- lihat migration 031. */
+export async function publishKbmReport(month: string, report: KbmClassReport[]): Promise<string> {
+  if (isDemoMode) return `demo-${month}`
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('publish_kbm_report', { target_month: month, report })
+  if (error) throw error
+  if (typeof data !== 'string') throw new Error('Laporan tersimpan, tetapi tautannya tidak diterima.')
+  return data
+}
+
+export async function revokeKbmReport(month: string): Promise<void> {
+  if (isDemoMode) return
+  const client = requireSupabase()
+  const { error } = await client.rpc('revoke_kbm_report', { target_month: month })
+  if (error) throw error
+}
+
+/** Dipanggil halaman publik tanpa sesi login, jadi tidak boleh menyentuh loadBootstrap. */
+export async function fetchPublishedKbmReport(token: string): Promise<PublishedKbmReport | null> {
+  if (isDemoMode) return null
+  const client = requireSupabase()
+  const { data, error } = await client.rpc('kbm_report', { access_token: token })
+  if (error) throw error
+  return (data as PublishedKbmReport | null) ?? null
 }
